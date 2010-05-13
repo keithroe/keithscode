@@ -5,9 +5,6 @@ require $dir + '/test_helper'
 class TestParser < Test::Unit::TestCase
   
   @@working_progs = %w( 
-                       matrix.tig
-                       merge.tig
-                       queens.tig
                        test1.tig
                        test2.tig
                        test3.tig
@@ -56,17 +53,23 @@ class TestParser < Test::Unit::TestCase
                        test46.tig
                        test47.tig
                        test48.tig
+                       matrix.tig
+                       merge.tig
+                       queens.tig
+                       db.tig
                       ).collect { |t| $dir + '/progs/' + t } 
 
-  @@broken_progs = %w( db.tig test49.tig).collect { |t| $dir + '/progs/' + t } 
+  @@broken_progs = %w( test49.tig).collect { |t| $dir + '/progs/' + t } 
 
   def test_working_progs
     puts ""
     parser = TigerParser.new
     @@working_progs.each do |filename|
       print "Parsing '#{filename}' ... "
+      $stdout.flush
       assert_nothing_raised() { parser.scan_file filename }
       puts " success."
+      $stdout.flush
     end
     puts ""
   end
@@ -75,8 +78,10 @@ class TestParser < Test::Unit::TestCase
     parser = TigerParser.new
     @@broken_progs.each do |filename|
       print "Parsing '#{filename}' ... "
+      $stdout.flush
       assert_raises( TigerParser::ScanError, Racc::ParseError ) { parser.scan_file filename }
       puts " failed as expected."
+      $stdout.flush
     end
   end
 end
