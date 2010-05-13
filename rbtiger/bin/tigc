@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+
+require File.dirname(__FILE__) + '/../lib/rbtiger'
+
+class TigerCompiler
+
+  def initialize filename
+    @filename = filename
+  end
+
+  def run
+    parse
+    typeCheck
+  end
+
+  def parse
+    @ast = TigerParser.new.scan_file @filename
+  end
+  
+  def typeCheck 
+    AbstractSyntax.printGraph( @ast )
+  end
+end
+
+exit if ARGV.empty?
+
+filename = ARGV.shift
+TigerCompiler.new( filename ).run
+
