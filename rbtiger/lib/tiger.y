@@ -177,8 +177,6 @@ rule
                       
 
 ---- header ----
-require 'tiger_lex'
-require 'AbstractSyntax'
 
 ---- inner ----
 
@@ -188,17 +186,4 @@ end
 
 ---- footer ----
 
-exit  if ARGV.size == 0
-filename = ARGV.shift
-
-class TigerParser
- def next_token
-  x = @rex_tokens.shift
-  puts x
-  x
- end
-end
-parser = TigerParser.new
-graph = parser.scan_file filename
-AbstractSyntax.printGraph( graph )
 
