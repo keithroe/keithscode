@@ -1,4 +1,5 @@
 
+module RBTiger
 
 class AbstractSyntax
   attr_accessor :pos
@@ -55,7 +56,7 @@ end
 #
 ################################################################################
 
-class ASSymbol < AbstractSyntax
+class Symbol < AbstractSyntax
   attr_accessor :string
 
   def initialize( string )
@@ -419,3 +420,5 @@ class GtOp < Op
 end
 class GeOp < Op 
 end
+
+end # module RBTiger

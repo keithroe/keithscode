@@ -63,7 +63,7 @@ class TestParser < Test::Unit::TestCase
 
   def test_working_progs
     puts ""
-    parser = TigerParser.new
+    parser = RBTiger::Parser.new
     @@working_progs.each do |filename|
       print "Parsing '#{filename}' ... "
       $stdout.flush
@@ -75,11 +75,11 @@ class TestParser < Test::Unit::TestCase
   end
   def test_broken_progs
     puts ""
-    parser = TigerParser.new
+    parser = RBTiger::Parser.new
     @@broken_progs.each do |filename|
       print "Parsing '#{filename}' ... "
       $stdout.flush
-      assert_raises( TigerParser::ScanError, Racc::ParseError ) { parser.scan_file filename }
+      assert_raises( RBTiger::Parser::ScanError, Racc::ParseError ) { parser.scan_file filename }
       puts " failed as expected."
       $stdout.flush
     end

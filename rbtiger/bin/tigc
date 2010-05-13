@@ -14,11 +14,11 @@ class TigerCompiler
   end
 
   def parse
-    @ast = TigerParser.new.scan_file @filename
+    @ast = RBTiger::Parser.new.scan_file @filename
   end
   
   def typeCheck 
-    AbstractSyntax.printGraph( @ast )
+    RBTiger::AbstractSyntax.printGraph( @ast )
   end
 end
 
