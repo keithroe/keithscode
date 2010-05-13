@@ -61,14 +61,17 @@ class TestParser < Test::Unit::TestCase
   @@broken_progs = %w( db.tig test49.tig).collect { |t| $dir + '/progs/' + t } 
 
   def test_working_progs
+    puts ""
     parser = TigerParser.new
     @@working_progs.each do |filename|
       print "Parsing '#{filename}' ... "
       assert_nothing_raised() { parser.scan_file filename }
       puts " success."
     end
+    puts ""
   end
   def test_broken_progs
+    puts ""
     parser = TigerParser.new
     @@broken_progs.each do |filename|
       print "Parsing '#{filename}' ... "
