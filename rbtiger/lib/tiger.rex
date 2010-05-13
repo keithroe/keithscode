@@ -10,12 +10,17 @@ class TigerParser
 macro
   COMMENTBEGIN  \/\*
   COMMENTEND    \*\/
+
+  STRINGBEGIN   \"
+  STRING        [^\"\\\n]+
+  STRINGNEWLINE \\n 
+  STRINGQUOTE   \\\" 
+  STRINGEND     \"
   
   BLANK         [\ \t]+
   NEWLINE       \n 
 
   ID            [A-Za-z_][A-Za-z_0-9]*
-  STRING        \"[^\"\n]*\" 
   INT           [0-9]+
   COMMA         \,
   COLON         \:
@@ -66,6 +71,14 @@ rule
  :COMMENT  [^\*]+                    {                     nil;  } 
  :COMMENT  \*[^\/]                   {                     nil;  } 
           
+          {STRINGBEGIN}              { state = :STRING; @stringval =  "";     nil;  }
+ :STRING  {STRINGEND}                { state = nil;     [ :STRING, ASSymbol.new( "STRING", @stringval, @lineno ) ]  }
+ :STRING  {STRING}                   {                  @stringval += text;   nil;  } 
+ :STRING  {STRINGNEWLINE}            {                  @stringval += "\n";   nil;  } 
+ :STRING  {STRINGQUOTE}              {                  @stringval += '"';    nil;  } 
+
+          
+          
           {BLANK}                    # skip
           {NEWLINE}                  
 
@@ -112,7 +125,6 @@ rule
           {TYPE}                     { [ :TYPE,        ASSymbol.new( "TYPE",      text, @lineno ) ] }
 
           
-          {STRING}                   { [ :STRING,      ASSymbol.new( "STRING",    text.gsub( /\A"/m, "" ).gsub( /"\Z/m, "" ), @lineno ) ] }
           {ID}                       { [ :ID,          ASSymbol.new( "ID",        text, @lineno ) ] }
 
      
@@ -122,6 +134,7 @@ rule
 
 inner
   
+   @@stringval = ""
 #  class Symbol
 #    attr_reader :lineno
 #    attr_reader :value
