@@ -56,23 +56,15 @@ end
 ################################################################################
 
 class ASSymbol < AbstractSyntax
-  attr_accessor :token_type
-  attr_accessor :value
-  attr_accessor :lineno
+  attr_accessor :string
 
-  def initialize( token_type, value, lineno )
-    @token_type = token_type
-    @value      = value
-    @lineno     = lineno
-    @ordered_vars = %w(@token_type @value) 
+  def initialize( string )
+    @string = string 
+    @ordered_vars = %w(@string ) 
   end
 
   def shape
     "box"
-  end
-
-  def to_s
-    "#{@token_type}: <#{@value}> at #{@lineno}"
   end
 end
 

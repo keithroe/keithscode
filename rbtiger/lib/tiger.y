@@ -22,7 +22,7 @@ rule
   Exp               : LET Decs IN ExpSeq END
                     { result = LetExp.new val[1] , val[3] }
                     | FOR ID ASSIGN Exp TO Exp DO Exp 
-                    { result = ForExp.new val[1], true, val[3], val[5], val[7] }
+                    { result = ForExp.new ASSymbol.new( val[1].value ), true, val[3], val[5], val[7] }
                     | IF Exp THEN Exp 
                     { result = IfExp.new val[1], val[3], nil }
                     | IF Exp THEN Exp ELSE Exp
@@ -44,15 +44,15 @@ rule
   RealPrimaryExp    : NIL
                     { result = NilExp.new }
                     | INT 
-                    { result = IntExp.new val[0] }
+                    { result = IntExp.new val[0].value }
                     | STRING
-                    { result = StringExp.new val[0] }
+                    { result = StringExp.new val[0].value }
                     | ID LBRACK Exp RBRACK OF PrimaryExp 
-                    { result = ArrayExp.new val[0], val[2], val[5] }
+                    { result = ArrayExp.new ASSymbol.new( val[0].value ), val[2], val[5] }
                     | ID LBRACE FieldInits RBRACE
-                    { result = RecordExp.new val[0], val[2] }
+                    { result = RecordExp.new ASSymbol.new( val[0].value ), val[2] }
                     | ID LPAREN ParamList  RPAREN
-                    { result = CallExp.new val[0], val[2] }
+                    { result = CallExp.new ASSymbol.new( val[0].value ), val[2] }
                     | LValue
 
 
@@ -72,12 +72,12 @@ rule
                     { result.push [ val[0] ] }
 
   TypeDec           : TYPE ID EQ Type
-                    { result =  TypeDec.new val[1], val[3]  }
+                    { result =  TypeDec.new ASSymbol.new( val[1].value ), val[3]  }
 
   Type              : ID
-                    { result = NameType.new val[0] }
+                    { result = NameType.new ASSymbol.new( val[0].value ) }
                     | ARRAY OF ID
-                    { result = ArrayType.new val[2] }
+                    { result = ArrayType.new ASSymbol.new( val[2].value ) }
                     | LBRACE TypeFields RBRACE
                     { result = RecordType.new val[1] }
 
@@ -89,7 +89,7 @@ rule
                     { result.push val[2] }
 
   TypeField         : ID COLON ID
-                    { result = [ val[0], val[2] ] }
+                    { result = [ ASSymbol.new( val[0].value ), ASSymbol.new( val[2].value ) ] }
 
   
   FieldInits        :
@@ -100,18 +100,18 @@ rule
                     { result.push val[2] }
 
   FieldInit         : ID EQ Exp
-                    { result = [ val[0], val[2] ] }
+                    { result = [ ASSymbol.new( val[0].value ), val[2] ] }
 
 
   FuncDec           : FUNCTION ID LPAREN TypeFields RPAREN EQ Exp 
-                    { result = FuncDecs.new [ FuncDec.new( val[1], val[3], nil, val[6] ) ] }
+                    { result = FuncDecs.new [ FuncDec.new( ASSymbol.new( val[1].value ), val[3], nil, val[6] ) ] }
                     | FUNCTION ID LPAREN TypeFields RPAREN COLON ID EQ Exp 
-                    { result = FuncDecs.new [ FuncDec.new( val[1], val[3], val[6], val[8] ) ] }
+                    { result = FuncDecs.new [ FuncDec.new( ASSymbol.new( val[1].value ), val[3], ASSymbol.new( val[6].value ), val[8] ) ] }
 
   VarDec            : VAR ID ASSIGN Exp
-                    { result = VarDec.new val[1], nil, val[3], true }
+                    { result = VarDec.new ASSymbol.new( val[1].value ), nil, val[3], true }
                     | VAR ID COLON ID ASSIGN Exp
-                    { result = VarDec.new val[1], val[3], val[5], true }
+                    { result = VarDec.new ASSymbol.new( val[1].value ), ASSymbol.new( val[3].value ), val[5], true }
 
   ExpSeq            : 
                     { result = [] }
@@ -128,15 +128,15 @@ rule
                     { result.push val[2] }
 
   LValue            : ID
-                    { result = SimpleVar.new val[0] }
+                    { result = SimpleVar.new ASSymbol.new( val[0].value ) }
                     | FieldLValue
                     | SubscriptLValue
 
   FieldLValue       : LValue DOT ID
-                    { result = RecordVar.new val[0], val[2] }
+                    { result = RecordVar.new val[0], ASSymbol.new( val[2].value ) }
 
   SubscriptLValue   : ID LBRACK Exp RBRACK
-                    { result = SubscriptVar.new val[0], val[2] }
+                    { result = SubscriptVar.new ASSymbol.new( val[0].value ), val[2] }
                     | FieldLValue LBRACK Exp RBRACK
                     { result = SubscriptVar.new val[0], val[2] }
                     | SubscriptVar LBRACK Exp RBRACK
