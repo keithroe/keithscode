@@ -62,26 +62,16 @@ class TestParser < Test::Unit::TestCase
   @@broken_progs = %w( test49.tig).collect { |t| $dir + '/progs/' + t } 
 
   def test_working_progs
-    puts ""
     parser = RBTiger::Parser.new
     @@working_progs.each do |filename|
-      print "Parsing '#{filename}' ... "
-      $stdout.flush
       assert_nothing_raised() { parser.scan_file filename }
-      puts " success."
-      $stdout.flush
     end
-    puts ""
   end
+
   def test_broken_progs
-    puts ""
     parser = RBTiger::Parser.new
     @@broken_progs.each do |filename|
-      print "Parsing '#{filename}' ... "
-      $stdout.flush
       assert_raises( RBTiger::Parser::ScanError, Racc::ParseError ) { parser.scan_file filename }
-      puts " failed as expected."
-      $stdout.flush
     end
   end
 end
