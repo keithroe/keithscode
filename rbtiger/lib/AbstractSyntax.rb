@@ -1,6 +1,12 @@
 
 module RBTiger
 
+################################################################################
+#
+# Base AS class
+#
+################################################################################
+  
 class AbstractSyntax
   attr_accessor :pos
   attr_reader   :ordered_vars
@@ -38,7 +44,6 @@ class AbstractSyntax
           element.printNode( "#{varname}[#{i}]" )if element.is_a? AbstractSyntax
         end
       else
-        #@@stream.puts "  #Skipping member #{self.name}::#{varname} -> #{obj.class}"
         nstr += "#{varname} = #{obj}\\n"
       end
     end
@@ -49,6 +54,7 @@ class AbstractSyntax
     
   end
 end
+
 
 ################################################################################
 #
@@ -81,7 +87,6 @@ class Symbol < AbstractSyntax
     "box"
   end
 end
-
 
 
 ################################################################################
@@ -239,6 +244,7 @@ class ArrayExp < Exp
   end
 end
 
+
 ################################################################################
 #
 # Declarations
@@ -358,6 +364,7 @@ class ArrayType < Type
   end
 end
 
+
 ################################################################################
 #
 # Variable accesors 
@@ -400,6 +407,7 @@ class SubscriptVar < Var
     @ordered_vars = %w(@var_name @subscript_exp) 
   end
 end
+
 
 ################################################################################
 #
