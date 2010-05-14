@@ -57,7 +57,20 @@ end
 ################################################################################
 
 class Symbol < AbstractSyntax
+
+  private_class_method :new
   attr_accessor :string
+
+  # Global table of symbols.  Ensures 1 symbol per string
+  @@table = Hash.new do |hash, key|
+    symbol = new( key )
+    hash[key] = symbol
+    symbol
+  end
+
+  def Symbol.create( string )
+      @@table[string]
+  end
 
   def initialize( string )
     @string = string 

@@ -22,7 +22,7 @@ rule
   Exp               : LET Decs IN ExpSeq END
                     { result = RBTiger::LetExp.new val[1] , val[3] }
                     | FOR ID ASSIGN Exp TO Exp DO Exp 
-                    { result = RBTiger::ForExp.new RBTiger::Symbol.new( val[1].value ), true, val[3], val[5], val[7] }
+                    { result = RBTiger::ForExp.new RBTiger::Symbol.create(val[1].value), true, val[3], val[5], val[7] }
                     | IF Exp THEN Exp 
                     { result = RBTiger::IfExp.new val[1], val[3], nil }
                     | IF Exp THEN Exp ELSE Exp
@@ -48,11 +48,11 @@ rule
                     | STRING
                     { result = RBTiger::StringExp.new val[0].value }
                     | ID LBRACK Exp RBRACK OF PrimaryExp 
-                    { result = RBTiger::ArrayExp.new RBTiger::Symbol.new( val[0].value ), val[2], val[5] }
+                    { result = RBTiger::ArrayExp.new RBTiger::Symbol.create( val[0].value ), val[2], val[5] }
                     | ID LBRACE FieldInits RBRACE
-                    { result = RBTiger::RecordExp.new RBTiger::Symbol.new( val[0].value ), val[2] }
+                    { result = RBTiger::RecordExp.new RBTiger::Symbol.create( val[0].value ), val[2] }
                     | ID LPAREN ParamList  RPAREN
-                    { result = RBTiger::CallExp.new RBTiger::Symbol.new( val[0].value ), val[2] }
+                    { result = RBTiger::CallExp.new RBTiger::Symbol.create( val[0].value ), val[2] }
                     | LValue
 
 
@@ -72,12 +72,12 @@ rule
                     { result.push [ val[0] ] }
 
   TypeDec           : TYPE ID EQ Type
-                    { result = RBTiger::TypeDec.new RBTiger::Symbol.new( val[1].value ), val[3]  }
+                    { result = RBTiger::TypeDec.new RBTiger::Symbol.create( val[1].value ), val[3]  }
 
   Type              : ID
-                    { result = RBTiger::NameType.new RBTiger::Symbol.new( val[0].value ) }
+                    { result = RBTiger::NameType.new RBTiger::Symbol.create( val[0].value ) }
                     | ARRAY OF ID
-                    { result = RBTiger::ArrayType.new RBTiger::Symbol.new( val[2].value ) }
+                    { result = RBTiger::ArrayType.new RBTiger::Symbol.create( val[2].value ) }
                     | LBRACE TypeFields RBRACE
                     { result = RBTiger::RecordType.new val[1] }
 
@@ -89,7 +89,7 @@ rule
                     { result.push val[2] }
 
   TypeField         : ID COLON ID
-                    { result = [ RBTiger::Symbol.new( val[0].value ), RBTiger::Symbol.new( val[2].value ) ] }
+                    { result = [ RBTiger::Symbol.create( val[0].value ), RBTiger::Symbol.create( val[2].value ) ] }
 
   
   FieldInits        :
@@ -100,20 +100,21 @@ rule
                     { result.push val[2] }
 
   FieldInit         : ID EQ Exp
-                    { result = [ RBTiger::Symbol.new( val[0].value ), val[2] ] }
+                    { result = [ RBTiger::Symbol.create( val[0].value ), val[2] ] }
 
 
   FuncDec           : FUNCTION ID LPAREN TypeFields RPAREN EQ Exp 
-                    { result = RBTiger::FuncDecs.new [ RBTiger::FuncDec.new( RBTiger::Symbol.new( val[1].value ),
+                    { result = RBTiger::FuncDecs.new [ RBTiger::FuncDec.new( RBTiger::Symbol.create( val[1].value ),
                                                        val[3], nil, val[6] ) ] }
                     | FUNCTION ID LPAREN TypeFields RPAREN COLON ID EQ Exp 
-                    { result = RBTiger::FuncDecs.new [ RBTiger::FuncDec.new( RBTiger::Symbol.new( val[1].value ),
-                                                       val[3], RBTiger::Symbol.new( val[6].value ), val[8] ) ] }
+                    { result = RBTiger::FuncDecs.new [ RBTiger::FuncDec.new( RBTiger::Symbol.create( val[1].value ),
+                                                       val[3], RBTiger::Symbol.create( val[6].value ), val[8] ) ] }
 
   VarDec            : VAR ID ASSIGN Exp
-                    { result = RBTiger::VarDec.new RBTiger::Symbol.new( val[1].value ), nil, val[3], true }
+                    { result = RBTiger::VarDec.new RBTiger::Symbol.create( val[1].value ), nil, val[3], true }
                     | VAR ID COLON ID ASSIGN Exp
-                    { result = RBTiger::VarDec.new RBTiger::Symbol.new( val[1].value ), RBTiger::Symbol.new( val[3].value ), val[5], true }
+                    { result = RBTiger::VarDec.new RBTiger::Symbol.create( val[1].value ),
+                                                   RBTiger::Symbol.create( val[3].value ), val[5], true }
 
   ExpSeq            : 
                     { result = [] }
@@ -130,15 +131,15 @@ rule
                     { result.push val[2] }
 
   LValue            : ID
-                    { result = RBTiger::SimpleVar.new RBTiger::Symbol.new( val[0].value ) }
+                    { result = RBTiger::SimpleVar.new RBTiger::Symbol.create( val[0].value ) }
                     | FieldLValue
                     | SubscriptLValue
 
   FieldLValue       : LValue DOT ID
-                    { result = RBTiger::RecordVar.new val[0], RBTiger::Symbol.new( val[2].value ) }
+                    { result = RBTiger::RecordVar.new val[0], RBTiger::Symbol.create( val[2].value ) }
 
   SubscriptLValue   : ID LBRACK Exp RBRACK
-                    { result = RBTiger::SubscriptVar.new RBTiger::Symbol.new( val[0].value ), val[2] }
+                    { result = RBTiger::SubscriptVar.new RBTiger::Symbol.create( val[0].value ), val[2] }
                     | FieldLValue LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new val[0], val[2] }
                     | SubscriptVar LBRACK Exp RBRACK
