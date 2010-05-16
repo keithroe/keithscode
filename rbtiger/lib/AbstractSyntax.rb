@@ -102,7 +102,6 @@ class Exp < AbstractSyntax
 end
 
 class NilExp < Exp
-
 end
 
 class IntExp < Exp
@@ -111,6 +110,10 @@ class IntExp < Exp
   def initialize( value )
     @value = value
     @ordered_vars = %w(@value) 
+  end
+
+  def translate
+    return [ nil, IntType.new ]
   end
 end
 
