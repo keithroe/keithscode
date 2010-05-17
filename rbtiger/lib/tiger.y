@@ -30,7 +30,7 @@ rule
                     | WHILE Exp DO Exp 
                     { result = RBTiger::WhileExp.new val[1], val[3] }
                     | LValue ASSIGN Exp 
-                    { result = RBTiger::ArrayExp.new val[0], val[2], RBTiger::NilExp.new }
+                    { result = RBTiger::AssignExp.new val[0], val[2] }
                     | PrimaryExp
                     | AdditiveExp
                     | MultiplicativeExp
@@ -54,7 +54,6 @@ rule
                     | ID LPAREN ParamList  RPAREN
                     { result = RBTiger::CallExp.new RBTiger::Symbol.create( val[0].value ), val[2] }
                     | LValue
-
 
   Decs              : 
                     { result = [] }
@@ -136,7 +135,7 @@ rule
                     | SubscriptLValue
 
   FieldLValue       : LValue DOT ID
-                    { result = RBTiger::RecordVar.new val[0], RBTiger::Symbol.create( val[2].value ) }
+                    { result = RBTiger::RecordVar.new( val[0], RBTiger::Symbol.create( val[2].value ) ) }
 
   SubscriptLValue   : ID LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new RBTiger::Symbol.create( val[0].value ), val[2] }
