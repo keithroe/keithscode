@@ -25,14 +25,14 @@ class AbstractSyntax
   end
   
   def name
-    "#{self.class}_#{self.object_id}"
+    "#{self.class.to_s.gsub( 'RBTiger::', '' )}_#{self.object_id}"
   end
 
   def printNode( member_name )
     pred =  @@node_stack.empty?() ? "" : @@node_stack.last.name + " -> " 
     @@stream.puts "  #{pred}#{self.name}"
 
-    nstr  = "    #{self.name} [ shape=#{self.shape}, label=\"#{member_name}:#{self.class}\\n"
+    nstr = "    #{self.name} [ shape=#{self.shape}, label=\"#{member_name}:#{self.class.to_s.gsub('RBTiger::', '')}\\n"
 
     @@node_stack.push self
     self.ordered_vars.each do |varname|
@@ -50,6 +50,7 @@ class AbstractSyntax
     @@node_stack.pop 
 
     nstr += "\" ]"
+
     @@stream.puts nstr 
     
   end
@@ -340,30 +341,80 @@ class Type < AbstractSyntax
   def shape
     "hexagon"
   end
+    
+  def matches t2
+    return self.is_a? t2.class
+  end
+end
+
+
+class IntType < Type
+end
+
+class StringType < Type
+end
+
+class RecordType < Type
+
+  attr_accessor :fields
+
+  def initialize( fields )
+    # Array of ( symbol, type ) doubles
+    @fields = fields
+    @ordered_vars = %w(@fields) 
+  end
+
+  def matches t2
+    # see comment under ArrayType.matches for explanation
+    return self.equal? t2
+  end
+
+end
+
+class ArrayType < Type
+
+  attr_accessor :elem_type
+
+  def initialize( elem_type)
+    @elem_type = elem_type
+    @ordered_vars = %w(@elem_type) 
+  end
+
+  def matches t2
+    # ArrayType.new should only be called from a record type creation expression
+    # (ie, 'array of string').  This ensures that each Array type is unique:
+    # type arrtype1 = array of int                # creates unique array type
+    # type arrtype2 = array of int                # creates unique array type
+    # type arrtype3 = arrtype1                    # does NOT create a new type 
+    # var arr1: arrtype1 := arrtype2 [10] of 0    # error, type mismatch
+    # var arr2: arrtype1 := arrtype3 [10] of 0    # valid; arrtype1 same as arrtype3 
+    #
+    # This behavior extends to Records as well
+
+    return self.equal? t2
+  end
+
+end
+
+class NilType < Type
+
+  def matches t2
+    # nil is a valid record type
+    return ( (t2.is_a? RecordType) || (self.equal? t2) )
+  end
+end
+
+class UnitType < Type
 end
 
 class NameType < Type
-  attr_accessor :type_name
+
+  attr_accessor :symbol
+  attr_accessor :type
 
   def initialize( type_name )
     @type_name = type_name
     @ordered_vars = %w(@type_name) 
-  end
-end
-
-class RecordType < Type
-  attr_accessor :fields
-  def initialize( fields )
-    @fields = fields
-    @ordered_vars = %w(@fields) 
-  end
-end
-
-class ArrayType < Type
-  attr_accessor :elem_type
-  def initialize( elem_type)
-    @elem_type = elem_type
-    @ordered_vars = %w(@elem_type) 
   end
 end
 
