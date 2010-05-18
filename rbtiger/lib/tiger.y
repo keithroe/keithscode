@@ -135,7 +135,7 @@ rule
                     | SubscriptLValue
 
   FieldLValue       : LValue DOT ID
-                    { result = RBTiger::RecordVar.new( val[0], RBTiger::Symbol.create( val[2].value ) ) }
+                    { puts "fv: #{@lexlineno}"; result = RBTiger::RecordVar.new( val[0], RBTiger::Symbol.create( val[2].value ) ) }
 
   SubscriptLValue   : ID LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new RBTiger::Symbol.create( val[0].value ), val[2] }
@@ -183,6 +183,8 @@ rule
 require File.dirname( __FILE__ ) + '/tiger_lex.rb'
 
 ---- inner ----
+
+end
 
 def on_error( t, v, values )
   raise Racc::ParseError, "<<#{@lexfilename}:#{@lexlineno}: syntax error #{v}>>"

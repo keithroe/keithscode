@@ -1,4 +1,8 @@
 
+dir = File.dirname( __FILE__ )
+require dir + '/SymbolTable'
+
+
 module RBTiger
 
 ################################################################################
@@ -10,6 +14,9 @@ module RBTiger
 class AbstractSyntax
   attr_accessor :pos
   attr_reader   :ordered_vars
+
+  @@type_env = SymbolTable.new
+  @@var_env  = SymbolTable.new
 
   def initialize
     @ordered_vars = []
@@ -103,6 +110,9 @@ class Exp < AbstractSyntax
 end
 
 class NilExp < Exp
+  def translate
+    return [ nil, NilType.new ]
+  end
 end
 
 class IntExp < Exp
@@ -120,19 +130,30 @@ end
 
 class StringExp < Exp
   attr_accessor :value
+
   def initialize( value )
     @value = value
     @ordered_vars = %w(@value)
   end
+  
+  def translate
+    return [ nil, StringType.new ]
+  end
 end
 
 class CallExp < Exp
-  attr_accessor :func
+  attr_accessor :func_name
   attr_accessor :args
-  def initialize( func, args )
-    @func = func
-    @args = args
-    @ordered_vars = %w(@func @args) 
+
+  def initialize( func_name, args )
+    @func_name = func_name
+    @args      = args
+    @ordered_vars = %w(@func_name @args) 
+  end
+  
+  def translate
+    attributes = @@venv.locate @func_name
+    return [ nil, @@venv.locate( @func_name ).type ]
   end
 end
 
@@ -146,6 +167,13 @@ class OpExp < Exp
     @op        = op
     @right_exp = right_exp
     @ordered_vars = %w(@left_exp @op @right_exp) 
+  end
+  
+  def translate
+    ltype = left_exp.translate()[1]
+    rtype = right_exp.translate()[1]
+    #raise TypeMismatch( if( !ltype.matches( rtype ) ) 
+    return [ nil, @@venv.locate( @func_name ).type ]
   end
 end
 
