@@ -5,18 +5,18 @@ require $dir + '/test_helper'
 class TestSymbol < Test::Unit::TestCase
 
   def test_types
-    int_type     = RBTiger::IntType.new 0
-    string_type1 = RBTiger::StringType.new 0
-    string_type2 = RBTiger::StringType.new 0
+    int_type     = RBTiger::IntType.new
+    string_type1 = RBTiger::StringType.new
+    string_type2 = RBTiger::StringType.new
     nil_type     = RBTiger::NilType.new
-    array_type1  = RBTiger::ArrayType.new( 0, RBTiger::IntType.new(0) )
-    array_type2  = RBTiger::ArrayType.new( 0, RBTiger::IntType.new(0) )
+    array_type1  = RBTiger::ArrayType.new( 0, RBTiger::IntType.new )
+    array_type2  = RBTiger::ArrayType.new( 0, RBTiger::IntType.new )
     array_type3  = array_type1 
-    record_type1 = RBTiger::RecordType.new( 0, [ [RBTiger::Symbol::create( "author" ), RBTiger::StringType.new(0) ] ,
-                                                 [RBTiger::Symbol::create( "isbn" ),   RBTiger::IntType.new(0)] ] )
-    record_type2 = RBTiger::RecordType.new( 0, [ [RBTiger::Symbol::create( "author" ), RBTiger::StringType.new(0) ] ,
-                                                 [RBTiger::Symbol::create( "isbn" ),   RBTiger::IntType.new(0)] ] )
-    record_type3 = RBTiger::RecordType.new( 0, [ [RBTiger::Symbol::create( "foo" ), RBTiger::StringType.new(0) ] ] )
+    record_type1 = RBTiger::RecordType.new( 0, [ [RBTiger::Symbol::create( "author" ), RBTiger::StringType.new ] ,
+                                                 [RBTiger::Symbol::create( "isbn" ),   RBTiger::IntType.new] ] )
+    record_type2 = RBTiger::RecordType.new( 0, [ [RBTiger::Symbol::create( "author" ), RBTiger::StringType.new ] ,
+                                                 [RBTiger::Symbol::create( "isbn" ),   RBTiger::IntType.new] ] )
+    record_type3 = RBTiger::RecordType.new( 0, [ [RBTiger::Symbol::create( "foo" ), RBTiger::StringType.new ] ] )
     record_type4 = record_type2 
 
     assert( !int_type.matches( string_type1 ) )

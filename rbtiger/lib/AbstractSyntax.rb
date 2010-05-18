@@ -397,9 +397,13 @@ end
 
 
 class IntType < Type
+  def initialize
+  end
 end
 
 class StringType < Type
+  def initialize
+  end
 end
 
 class RecordType < Type
