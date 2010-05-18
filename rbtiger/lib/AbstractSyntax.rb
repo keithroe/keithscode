@@ -308,8 +308,7 @@ end
 class FuncDecs < Dec
   attr_accessor :funcs
 
-  def initialize( lineno, funcs )
-    super lineno
+  def initialize( funcs )
     @funcs = funcs
     @ordered_vars = %w(@funcs)
   end

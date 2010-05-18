@@ -22,7 +22,9 @@ rule
   Exp               : LET Decs IN ExpSeq END
                     { result = RBTiger::LetExp.new val[0].lineno, val[1] , val[3] }
                     | FOR ID ASSIGN Exp TO Exp DO Exp 
-                    { result = RBTiger::ForExp.new val[0].lineno, RBTiger::Symbol.create(val[1].value), true, val[3], val[5], val[7] }
+                    { result = RBTiger::ForExp.new( val[0].lineno, RBTiger::Symbol.create(val[1].value),
+                                                    true, val[3], val[5], val[7] )
+                    }
                     | IF Exp THEN Exp 
                     { result = RBTiger::IfExp.new val[0].lineno, val[1], val[3], nil }
                     | IF Exp THEN Exp ELSE Exp
@@ -48,7 +50,8 @@ rule
                     | STRING
                     { result = RBTiger::StringExp.new val[0].lineno, val[0].value }
                     | ID LBRACK Exp RBRACK OF PrimaryExp 
-                    { result = RBTiger::ArrayExp.new val[0].lineno, RBTiger::Symbol.create( val[0].value ), val[2], val[5] }
+                    { result = RBTiger::ArrayExp.new( val[0].lineno, RBTiger::Symbol.create( val[0].value ),
+                                                      val[2], val[5] ) }
                     | ID LBRACE FieldInits RBRACE
                     { result = RBTiger::RecordExp.new val[0].lineno, RBTiger::Symbol.create( val[0].value ), val[2] }
                     | ID LPAREN ParamList  RPAREN
@@ -60,10 +63,11 @@ rule
                     | Decs Dec
                     { result.push val[1] }
 
-  Dec               : TypeDecs
+  Dec               : VarDec
+                    | TypeDecs
                     { result = RBTiger::TypeDecs.new val[0] }
-                    | VarDec
-                    | FuncDec
+                    | FuncDecs
+                    { result = RBTiger::FuncDecs.new val[0] } 
 
   TypeDecs          : TypeDec
                     { result = [ val[0] ] }
@@ -102,18 +106,24 @@ rule
                     { result = [ RBTiger::Symbol.create( val[0].value ), val[2] ] }
 
 
+  FuncDecs          : FuncDec
+                    { result = [ val[0] ] }
+                    | FuncDecs FuncDec
+                    { result.push [ val[0] ] }
+
   FuncDec           : FUNCTION ID LPAREN TypeFields RPAREN EQ Exp 
-                    { result = RBTiger::FuncDecs.new val[0].lineno, [ RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
-                                                       val[3], nil, val[6] ) ] }
+                    { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
+                                                      val[3], nil, val[6] ) }
                     | FUNCTION ID LPAREN TypeFields RPAREN COLON ID EQ Exp 
-                    { result = RBTiger::FuncDecs.new val[0].lineno, [ RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
-                                                       val[3], RBTiger::Symbol.create( val[6].value ), val[8] ) ] }
+                    { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
+                                                      val[3], RBTiger::Symbol.create( val[6].value ), val[8] ) }
 
   VarDec            : VAR ID ASSIGN Exp
-                    { result = RBTiger::VarDec.new val[0].lineno, RBTiger::Symbol.create( val[1].value ), nil, val[3], true }
+                    { result = RBTiger::VarDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ), nil, val[3],
+                                                    true ) }
                     | VAR ID COLON ID ASSIGN Exp
-                    { result = RBTiger::VarDec.new val[0].lineno, RBTiger::Symbol.create( val[1].value ),
-                                                   RBTiger::Symbol.create( val[3].value ), val[5], true }
+                    { result = RBTiger::VarDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
+                                                    RBTiger::Symbol.create( val[3].value ), val[5], true ) }
 
   ExpSeq            : 
                     { result = [] }
@@ -155,9 +165,11 @@ rule
                     { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::DivideOp.new, val[2] }
 
   LogicalExp        : Exp AND PrimaryExp 
-                    { result = RBTiger::IfExp.new( val[1].lineno, val[0], val[2], RBTiger::IntExp.new( val[0].lineno, 0 ) ) }
+                    { result = RBTiger::IfExp.new( val[1].lineno, val[0], val[2],
+                                                   RBTiger::IntExp.new( val[1].lineno, 0 ) ) }
                     | Exp OR  PrimaryExp 
-                    { result = RBTiger::IfExp.new( val[1].lineno, val[0], RBTiger::IntExp.new( val[0].lineno, 1 ), val[2] ) }
+                    { result = RBTiger::IfExp.new( val[1].lineno, val[0],
+                                                   RBTiger::IntExp.new( val[1].lineno, 1 ), val[2] ) }
 
   RelationalExp     : Exp EQ PrimaryExp
                     { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::EqOp.new, val[2] }
@@ -173,7 +185,8 @@ rule
                     { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LeOp.new, val[2] }
 
   UnaryExp          : MINUS PrimaryExp 
-                    { result = RBTiger::OpExp.new( val[0].lineno, RBTiger::IntExp.new( val[0].lineno, 0 ), RBTiger::MinusOp.new, val[2] ) }
+                    { result = RBTiger::OpExp.new( val[0].lineno, RBTiger::IntExp.new( val[0].lineno, 0 ),
+                                                   RBTiger::MinusOp.new, val[2] ) }
 
 
                       
