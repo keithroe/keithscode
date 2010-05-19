@@ -10,19 +10,23 @@ class TigerCompiler
 
   def run
     parse
-    typeCheck
+    translate
   end
 
   def parse
     @ast = RBTiger::Parser.new.scan_file @filename
   end
   
-  def typeCheck 
-    RBTiger::AbstractSyntax.printGraph( @ast )
+  def translate 
+    RBTiger::AbstractSyntax.printGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ) )
+    @ast.translate
   end
 end
 
 exit if ARGV.empty?
+
+
+#TODO: write optparser that takes verbose, print-ast, and other flags
 
 filename = ARGV.shift
 TigerCompiler.new( filename ).run

@@ -22,16 +22,29 @@ class Type
   def matches t2
     return self.is_a?( t2.class )
   end
+
+
+  def actual
+    return self
+  end
 end
 
 
 class INT < Type
   def initialize
   end
+  
+  def to_s
+    "INT"
+  end
 end
 
 class STRING < Type
   def initialize
+  end
+  
+  def to_s
+    "STRING"
   end
 end
 
@@ -48,6 +61,10 @@ class RECORD < Type
   def matches t2
     # see comment under ArrayType.matches for explanation
     return self.equal?( t2 )
+  end
+  
+  def to_s
+    "RECORD of #{fields}"
   end
 end
 
@@ -74,6 +91,10 @@ class ARRAY < Type
     return self.equal?( t2 )
   end
 
+  def to_s
+    "ARRAY of #{@elem_type}"
+  end
+
 end
 
 
@@ -86,11 +107,19 @@ class NIL < Type
     # nil is a valid record type
     return ( (t2.is_a? RECORD ) || (self.equal? t2) )
   end
+
+  def to_s
+    "NIL"
+  end
 end
 
 
 class UNIT < Type
   def initialize
+  end
+  
+  def to_s
+    "UNIT"
   end
 end
 
@@ -102,8 +131,20 @@ class NAME < Type
 
   def initialize( type_name, type_ref )
     @type_name = type_name
-    @type_name = type_ref
+    @type_ref  = type_ref
     @ordered_vars = %w(@type_name) 
+  end
+
+  def bind( type_ref )
+    @type_ref  = type_ref
+  end
+
+  def actual
+    return @type_ref
+  end
+  
+  def to_s
+    "NAME: '#{type_name}' -> '#{type_ref}'"
   end
 end
 
