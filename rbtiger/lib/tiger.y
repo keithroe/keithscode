@@ -113,7 +113,7 @@ rule
 
   FuncDec           : FUNCTION ID LPAREN TypeFields RPAREN EQ Exp 
                     { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
-                                                      val[3], nil, val[6] ) }
+                                                      val[3], UnitType.new, val[6] ) }
                     | FUNCTION ID LPAREN TypeFields RPAREN COLON ID EQ Exp 
                     { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
                                                       val[3], RBTiger::Symbol.create( val[6].value ), val[8] ) }
