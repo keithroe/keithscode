@@ -25,7 +25,7 @@ class SymbolTable
   end
 
   #
-  # TypeEntry is represented by the AbstractSyntax Type class hierarchy
+  # TypeEntry is represented by the Type class hierarchy
   #
 
 
@@ -48,7 +48,6 @@ class SymbolTable
     "%-20s :%s %i" % [ @symbol.string,  @entry.to_s, @scope_id ]
     end
   end
-
 
   def initialize
     @lookup_table  = Hash.new       # Symbol -> Binder

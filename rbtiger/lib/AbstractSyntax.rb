@@ -116,7 +116,7 @@ class NilExp < Exp
   end
 
   def translate
-    return [ nil, NilType.new ]
+    return [ nil, Nil.new ]
   end
 end
 
@@ -130,7 +130,7 @@ class IntExp < Exp
   end
 
   def translate
-    return [ nil, IntType.new ]
+    return [ nil, INT.new ]
   end
 end
 
@@ -143,7 +143,7 @@ class StringExp < Exp
   end
   
   def translate
-    return [ nil, StringType.new ]
+    return [ nil, STRING.new ]
   end
 end
 
@@ -159,8 +159,8 @@ class CallExp < Exp
   end
   
   def translate
-    attributes = @@venv.locate @func_name
-    return [ nil, @@venv.locate( @func_name ).type ]
+   attributes = @@venv.locate( @func_name )
+   return [ nil, attributes.type ]
   end
 end
 
@@ -184,7 +184,7 @@ class OpExp < Exp
     Type::assert_int( ltype lineno )
     Type::assert_int( rtype lineno )
 
-    return [ nil, IntType.new ]
+    return [ nil, INT.new ]
   end
 end
 
@@ -221,7 +221,7 @@ class SeqExp < Exp
   end
 
   def translate
-    seq_type = NilType.new
+    seq_type = Unit.new
     @exps.each do |exp|
       translated = exp.translate
       seq_type = translated[1] 
@@ -247,7 +247,7 @@ class AssignExp < Exp
 
     Type::assert_matches( lvalue[1], rvalue[1], lineno )
 
-    return [ nil, UnitType.new ]
+    return [ nil, Unit.new ]
   end
 end
 
@@ -275,7 +275,7 @@ class IfExp < Exp
       return [ nil, then_translate[1] ]
     else
       Type::assert_unit( then_translate[1], then_exp.lineno )
-      return [ nil, UnitType.new ]
+      return [ nil, Unit.new ]
     end
   end
 end
@@ -298,7 +298,7 @@ class WhileExp < Exp
     body_translate = @body_exp.translate
     Type::assert_unit( body_translate[1], body_exp.lineno )
 
-    return [ nil, UnitType.new ]
+    return [ nil, Unit.new ]
   end
 end
 
@@ -329,13 +329,13 @@ class ForExp < Exp
     body_translate = @body_exp.translate
     Type::assert_unit( body_translate[1], body_exp.lineno )
 
-    return [ nil, UnitType.new ]
+    return [ nil, Unit.new ]
   end
 end
 
 class BreakExp < Exp
   def translate
-    return [ nil, UnitType.new ]
+    return [ nil, Unit.new ]
   end
 end
 
@@ -358,7 +358,7 @@ class LetExp < Exp
       dec.translate
     end
 
-    let_type = NilType.new
+    let_type = Unit.new
     @exp_seq.each do |exp|
       seq_translate = seq.translate
       let_type = seq_translate[1]
@@ -410,6 +410,7 @@ class Dec < AbstractSyntax
   end
 end
 
+
 class FuncDecs < Dec
   attr_accessor :funcs
 
@@ -428,7 +429,8 @@ class FuncDecs < Dec
     end
   end
 end
-  
+
+
 class FuncDec < Dec
   attr_accessor :func_name
   attr_accessor :params
@@ -445,18 +447,27 @@ class FuncDec < Dec
   end
   
   def translateHeader
-    @@var_env.insert( @func_name, SymbolTable::FuncEntry( @ret_type  )
+    formals = Array.new
+    @params.each do |param|
+      formals.push @type_env.locate param[1] #TODO: do these need to be Name type enclosed?
+    end
 
+    # if ret_type is nil, we need to create Unit type for return type
+    ret_type = @ret_type ?  @type_env.locate( @ret_type ) : Unit.new
+
+    @@var_env.insert( @func_name, SymbolTable::FuncEntry( ret_type, formals ) )
   end
 
   def translateBody
+
   end
 
   def shape
     "doubleoctagon"
   end
 end
-  
+
+
 class VarDec < Dec
   attr_accessor :var_name
   attr_accessor :type
@@ -472,6 +483,7 @@ class VarDec < Dec
     @ordered_vars = %w(@var_name @type @init_exp @escape) 
   end
 end
+
 
 class TypeDecs < Dec
 
@@ -492,6 +504,7 @@ class TypeDecs < Dec
   end
 end
 
+
 class TypeDec < Dec
 
   attr_accessor :type_name
@@ -505,10 +518,15 @@ class TypeDec < Dec
   end
 
   def translateHeader
-    @@type_env.insert( @type_name, NameType.new( lineno, @type_name ) )
+    @@type_env.insert( @type_name, Name.new( @lineno, @type_name, nil ) )
   end
   
   def translateBody
+    # translate the body
+    translate_body = @type.translate
+
+    # bind the name ref to this type now
+    @@type_env.locate( @type_name ).bind( translate_body[1]  )
   end
   
   def shape
@@ -523,40 +541,14 @@ end
 #
 ################################################################################
 
-class Type < AbstractSyntax
+class TypeSpec < AbstractSyntax
   def shape
     "hexagon"
   end
-
-  def Type.assert_matches expected, received, lineno
-    raise TypeMismatch( expected, received, lineno ) if( !received.matches( expected ) ) 
-  end
-  
-  def Type.assert_int received, lineno
-    Type.assert_matches IntType.new, received, lineno
-  end
-    
-  def Type.assert_unit received, lineno
-    Type.assert_matches UnitType.new, received, lineno
-  end
-    
-  def matches t2
-    return self.is_a?( t2.class )
-  end
 end
 
 
-class IntType < Type
-  def initialize
-  end
-end
-
-class StringType < Type
-  def initialize
-  end
-end
-
-class RecordType < Type
+class RecordSpec < TypeSpec
 
   attr_accessor :fields
 
@@ -567,14 +559,17 @@ class RecordType < Type
     @ordered_vars = %w(@fields) 
   end
 
-  def matches t2
-    # see comment under ArrayType.matches for explanation
-    return self.equal?( t2 )
+  def translate
+    fields = Hash.new
+    @fields.each do |field|
+      fields[ field[0] ] = @@var_env.locate( field[1] )
+    end
+    [ nil, RECORD.new( fields ) ]
   end
-
 end
 
-class ArrayType < Type
+
+class ArraySpec < TypeSpec
 
   attr_accessor :elem_type
 
@@ -584,56 +579,27 @@ class ArrayType < Type
     @ordered_vars = %w(@elem_type) 
   end
 
-  def matches t2
-    # ArrayType.new should only be called from a record type creation expression
-    # (ie, 'array of string').  This ensures that each Array type is unique:
-    # type arrtype1 = array of int                # creates unique array type
-    # type arrtype2 = array of int                # creates unique array type
-    # type arrtype3 = arrtype1                    # does NOT create a new type 
-    # var arr1: arrtype1 := arrtype2 [10] of 0    # error, type mismatch
-    # var arr2: arrtype1 := arrtype3 [10] of 0    # valid; arrtype1 same as arrtype3 
-    #
-    # This behavior extends to Records as well
-
-    return self.equal?( t2 )
-  end
-
-end
-
-class NilType < Type
-  
-  def initialize
-  end
-
-  def matches t2
-    # nil is a valid record type
-    return ( (t2.is_a? RecordType) || (self.equal? t2) )
+  def translate
+    [ nil, ARRAY.new( @type_env.locate( @elem_type ) ) ]
   end
 end
 
-class UnitType < Type
-  def initialize
-  end
-end
 
-class NameType < Type
+class NameSpec < TypeSpec
 
   attr_accessor :type_name
-  attr_accessor :type_ref  # Will be nil for partially resolved types
 
-  def initialize( lineno, type_name, type_ref )
+  def initialize( lineno, type_name )
     super lineno
     @type_name = type_name
-    @type_name = type_ref
     @ordered_vars = %w(@type_name) 
   end
+  
+  def translate
+    [ nil, @type_env.locate( @type_name ) ]
+  end
 end
-#####################
-crap, should i break types out into separate class hierarchy again?  modern comp
-impl java class structure has AS types and separate Type hierarchy.  I think
-so.  The other Type hierarchy should have all of this matching functionality.  The
-AbstractSyntax < Type hier should just create the types when doing translation.
-####################
+
 
 ################################################################################
 #
@@ -655,6 +621,10 @@ class SimpleVar < Var
     @var_name = var_name
     @ordered_vars = %w(@var_name) 
   end
+
+  def translate
+    [ nil, @@var_env.locate( @var_name ).type ]
+  end
 end
 
 class RecordVar < Var
@@ -667,6 +637,11 @@ class RecordVar < Var
     @field_name = field_name
     @ordered_vars = %w(@var_name @field_name) 
   end
+  
+  def translate
+    # TODO: is using hash reasonable?
+    [ nil, @@var_env.locate( @var_name ).fields[ @field_name ] ]
+  end
 end
 
 class SubscriptVar < Var
@@ -678,6 +653,12 @@ class SubscriptVar < Var
     @var_name      = var_name
     @subscript_exp = subscript_exp
     @ordered_vars = %w(@var_name @subscript_exp) 
+  end
+      
+  def translate
+    variable_type = @@var_env.locate( @var_name )
+    Type::assert_is_a( variable_type, ARRAY, @lineno )
+    [ nil, variable_type.elem_type ]
   end
 end
 
@@ -699,10 +680,11 @@ class PlusOp < Op
   end
 end
 
-class MinusOp < Op 
+class MinusOp < Op
   def initialize
   end
 end
+
 
 class TimesOp < Op 
   def initialize

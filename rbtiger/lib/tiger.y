@@ -78,11 +78,11 @@ rule
                     { result = RBTiger::TypeDec.new val[0].lineno, RBTiger::Symbol.create( val[1].value ), val[3]  }
 
   Type              : ID
-                    { result = RBTiger::NameType.new val[0].lineno, RBTiger::Symbol.create( val[0].value ) }
+                    { result = RBTiger::NameSpec.new val[0].lineno, RBTiger::Symbol.create( val[0].value ) }
                     | ARRAY OF ID
-                    { result = RBTiger::ArrayType.new val[0].lineno, RBTiger::Symbol.create( val[2].value ) }
+                    { result = RBTiger::ArraySpec.new val[0].lineno, RBTiger::Symbol.create( val[2].value ) }
                     | LBRACE TypeFields RBRACE
-                    { result = RBTiger::RecordType.new val[0].lineno, val[1] }
+                    { result = RBTiger::RecordSpec.new val[0].lineno, val[1] }
 
   TypeFields        : 
                     { result = [] }
@@ -113,7 +113,7 @@ rule
 
   FuncDec           : FUNCTION ID LPAREN TypeFields RPAREN EQ Exp 
                     { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
-                                                      val[3], UnitType.new, val[6] ) }
+                                                      val[3], nil, val[6] ) }
                     | FUNCTION ID LPAREN TypeFields RPAREN COLON ID EQ Exp 
                     { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
                                                       val[3], RBTiger::Symbol.create( val[6].value ), val[8] ) }
