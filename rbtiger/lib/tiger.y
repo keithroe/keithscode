@@ -140,18 +140,18 @@ rule
                     { result.push val[2] }
 
   LValue            : ID
-                    { result = RBTiger::SimpleVar.new val[0].lineno, RBTiger::Symbol.create( val[0].value ) }
+                    { result = RBTiger::SimpleVar.new( val[0].lineno, RBTiger::Symbol.create( val[0].value ) ) }
                     | FieldLValue
                     | SubscriptLValue
 
   FieldLValue       : LValue DOT ID
-                    { result = RBTiger::RecordVar.new val[0].lineno, val[0], RBTiger::Symbol.create( val[2].value ) }
+                    { result = RBTiger::RecordVar.new( val[0].lineno, val[0], RBTiger::Symbol.create( val[2].value ) ) }
 
   SubscriptLValue   : ID LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new val[0].lineno, RBTiger::Symbol.create( val[0].value ), val[2] }
                     | FieldLValue LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new val[0].lineno, val[0], val[2] }
-                    | SubscriptVar LBRACK Exp RBRACK
+                    | SubscriptLValue LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new val[0].lineno, val[0], val[2] }
 
   AdditiveExp       : Exp PLUS  PrimaryExp

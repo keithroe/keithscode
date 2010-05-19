@@ -1,6 +1,7 @@
 
 dir = File.dirname( __FILE__ )
 require dir + '/SymbolTable'
+require dir + '/Type'
 
 
 module RBTiger
@@ -12,17 +13,16 @@ module RBTiger
 ################################################################################
   
 class AbstractSyntax
-  attr_reader   :ordered_vars
-  attr_reader   :lineno
 
   @@type_env = SymbolTable.new
   @@var_env  = SymbolTable.new
 
-  def initialize( lineno )
-    @lineno       = lineno
-    @ordered_vars = []
+  #TODO: this should live outside of AbsSyn.  environments probably shoud live elsewhere altogether
+  def AbstractSyntax.initEnv
+    @@type_env.insert( Symbol.create( 'int' ), INT.new )
+    @@type_env.insert( Symbol.create( 'string' ), STRING.new )
   end
-
+  
   def AbstractSyntax.printGraph( node, stream = $stdout )
     @@stream     = stream 
     @@node_stack = []
@@ -31,6 +31,16 @@ class AbstractSyntax
     node.printNode( "Root" )
     @@stream.puts "}"
   end
+
+
+  attr_reader   :ordered_vars
+  attr_reader   :lineno
+
+  def initialize( lineno )
+    @lineno       = lineno
+    @ordered_vars = []
+  end
+
   
   def name
     "#{self.class.to_s.gsub( 'RBTiger::', '' )}_#{self.object_id}"
@@ -95,6 +105,10 @@ class Symbol < AbstractSyntax
 
   def shape
     "box"
+  end
+
+  def to_s
+    "Symbol: '#{@string}'"
   end
 end
 
@@ -200,7 +214,7 @@ class RecordExp < Exp
   end
 
   def translate
-    record_type = @@type_env.locate @type
+    record_type = @@type_env.locate( @type ).actualType
     fields.each do |field|
       translated_expr = field[1].translate
       field_type      = record_type.field_type( field[0] )
@@ -221,7 +235,7 @@ class SeqExp < Exp
   end
 
   def translate
-    seq_type = Unit.new
+    seq_type = UNIT.new
     @exps.each do |exp|
       translated = exp.translate
       seq_type = translated[1] 
@@ -247,7 +261,7 @@ class AssignExp < Exp
 
     Type::assert_matches( lvalue[1], rvalue[1], lineno )
 
-    return [ nil, Unit.new ]
+    return [ nil, UNIT.new ]
   end
 end
 
@@ -275,7 +289,7 @@ class IfExp < Exp
       return [ nil, then_translate[1] ]
     else
       Type::assert_unit( then_translate[1], then_exp.lineno )
-      return [ nil, Unit.new ]
+      return [ nil, UNIT.new ]
     end
   end
 end
@@ -298,7 +312,7 @@ class WhileExp < Exp
     body_translate = @body_exp.translate
     Type::assert_unit( body_translate[1], body_exp.lineno )
 
-    return [ nil, Unit.new ]
+    return [ nil, UNIT.new ]
   end
 end
 
@@ -329,13 +343,13 @@ class ForExp < Exp
     body_translate = @body_exp.translate
     Type::assert_unit( body_translate[1], body_exp.lineno )
 
-    return [ nil, Unit.new ]
+    return [ nil, UNIT.new ]
   end
 end
 
 class BreakExp < Exp
   def translate
-    return [ nil, Unit.new ]
+    return [ nil, UNIT.new ]
   end
 end
 
@@ -358,10 +372,10 @@ class LetExp < Exp
       dec.translate
     end
 
-    let_type = Unit.new
+    let_type = UNIT.new
     @exp_seq.each do |exp|
-      seq_translate = seq.translate
-      let_type = seq_translate[1]
+      exp_translate = exp.translate
+      let_type = exp_translate[1]
     end
 
     @@var_env.popScope
@@ -385,7 +399,7 @@ class ArrayExp < Exp
   end
 
   def translate
-    array_type = type_env.locate( @type )
+    array_type = @@type_env.locate( @type ).actualType
 
     size_translate = @size_exp.translate
     Type::assert_int size_translate[1], @size_exp.lineno
@@ -449,11 +463,11 @@ class FuncDec < Dec
   def translateHeader
     formals = Array.new
     @params.each do |param|
-      formals.push @type_env.locate param[1] #TODO: do these need to be Name type enclosed?
+      formals.push @@type_env.locate( param[1] ) #TODO: do these need to be Name type enclosed?
     end
 
     # if ret_type is nil, we need to create Unit type for return type
-    ret_type = @ret_type ?  @type_env.locate( @ret_type ) : Unit.new
+    ret_type = @ret_type ? @@type_env.locate( @ret_type ).actual : UNIT.new
 
     @@var_env.insert( @func_name, SymbolTable::FuncEntry( ret_type, formals ) )
   end
@@ -482,6 +496,10 @@ class VarDec < Dec
     @escape   = escape
     @ordered_vars = %w(@var_name @type @init_exp @escape) 
   end
+
+  def translate
+    @@var_env.insert( @var_name, @@type_env.locate( @type ).actual )
+  end
 end
 
 
@@ -496,10 +514,10 @@ class TypeDecs < Dec
 
   def translate
     @type_decs.each do |type_dec|
-      type_dec.headerTranslate
+      type_dec.translateHeader
     end
     @type_decs.each do |type_dec|
-      type_dec.bodyTranslate
+      type_dec.translateBody
     end
   end
 end
@@ -518,7 +536,7 @@ class TypeDec < Dec
   end
 
   def translateHeader
-    @@type_env.insert( @type_name, Name.new( @lineno, @type_name, nil ) )
+    @@type_env.insert( @type_name, NAME.new( @type_name, nil ) )
   end
   
   def translateBody
@@ -526,7 +544,7 @@ class TypeDec < Dec
     translate_body = @type.translate
 
     # bind the name ref to this type now
-    @@type_env.locate( @type_name ).bind( translate_body[1]  )
+    @@type_env.locate( @type_name ).bind( translate_body[1] )
   end
   
   def shape
@@ -580,7 +598,7 @@ class ArraySpec < TypeSpec
   end
 
   def translate
-    [ nil, ARRAY.new( @type_env.locate( @elem_type ) ) ]
+    [ nil, ARRAY.new( @@type_env.locate( @elem_type ) ).actual ]
   end
 end
 
@@ -596,7 +614,7 @@ class NameSpec < TypeSpec
   end
   
   def translate
-    [ nil, @type_env.locate( @type_name ) ]
+    [ nil, @@type_env.locate( @type_name ).actual ]
   end
 end
 
@@ -623,7 +641,7 @@ class SimpleVar < Var
   end
 
   def translate
-    [ nil, @@var_env.locate( @var_name ).type ]
+    [ nil, @@var_env.locate( @var_name ) ]
   end
 end
 
@@ -631,16 +649,20 @@ class RecordVar < Var
   attr_accessor :var_name
   attr_accessor :field_name
 
-  def initialize( lineno, var_name, field_name )
+  def initialize( lineno, var, field_name )
     super lineno
-    @var_name   = var_name
+    @var        = var
     @field_name = field_name
-    @ordered_vars = %w(@var_name @field_name) 
+    @ordered_vars = %w(@var @field_name) 
   end
   
   def translate
     # TODO: is using hash reasonable?
-    [ nil, @@var_env.locate( @var_name ).fields[ @field_name ] ]
+    puts "translating RecordVar: <#{@var_name}>, <#{@field_name}>"
+    puts "   varenv entry: <#{ @@var_env.locate( @var_name ).inspect}>"
+
+    translate_var = @var.translate
+    [ nil, translate_var[1].fields[ @field_name ] ]
   end
 end
 
@@ -648,17 +670,17 @@ class SubscriptVar < Var
   attr_accessor :var_name
   attr_accessor :subscript_exp
 
-  def initialize( lineno, var_name, subscript_exp )
+  def initialize( lineno, var, subscript_exp )
     super lineno
-    @var_name      = var_name
+    @var           = var
     @subscript_exp = subscript_exp
-    @ordered_vars = %w(@var_name @subscript_exp) 
+    @ordered_vars  = %w(@var @subscript_exp) 
   end
       
   def translate
-    variable_type = @@var_env.locate( @var_name )
-    Type::assert_is_a( variable_type, ARRAY, @lineno )
-    [ nil, variable_type.elem_type ]
+    translate_var = @var.translate
+    Type::assert_is_a( translate_var[1], ARRAY, @lineno )
+    [ nil, translate_var.elem_type ]
   end
 end
 
@@ -725,5 +747,9 @@ class GeOp < Op
   def initialize
   end
 end
+
+
+#TODO: This should go somewhere else
+AbstractSyntax.initEnv()
 
 end # module RBTiger

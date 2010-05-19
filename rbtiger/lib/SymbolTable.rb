@@ -17,10 +17,10 @@ class SymbolTable
   end
 
   class VarEntry < Entry
-    attr_accessor :type
+    attr_accessor :vtype
 
-    def initialize( type )
-      @type = type
+    def initialize( vtype )
+      @vtype = vtype
     end
   end
 
@@ -45,7 +45,7 @@ class SymbolTable
 
 
     def to_s
-    "%-20s :%s %i" % [ @symbol.string,  @entry.to_s, @scope_id ]
+    "%-20s => %s" % [ @symbol.string,  @entry.to_s ]
     end
   end
 
@@ -100,6 +100,9 @@ class SymbolTable
     @binder_stack.push binder
     @lookup_table[ symbol.object_id ] = binder 
 
+    puts "insertion completed:"
+    puts self
+    puts "\n\n"
     return true
   end
 
