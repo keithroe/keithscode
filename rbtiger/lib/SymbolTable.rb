@@ -3,23 +3,49 @@ module RBTiger
 
 class SymbolTable
 
+  class Entry
+  end
+
+  class FuncEntry < Entry
+    attr_accessor :ret_type
+    attr_accessor :formals
+
+    def initialize( ret_type, formals )
+      @ret_type = ret_type
+      @formals  = formals
+    end
+  end
+
+  class VarEntry < Entry
+    attr_accessor :type
+
+    def initialize( type )
+      @type = type
+    end
+  end
+
+  #
+  # TypeEntry is represented by the AbstractSyntax Type class hierarchy
+  #
+
+
   class Binder
     attr_accessor :symbol
-    attr_accessor :attributes
+    attr_accessor :entry
     attr_accessor :scope_id
     attr_accessor :tail
 
 
-    def initialize( symbol, attributes, scope_id, tail )
-      @symbol       = symbol
-      @attributes   = attributes
-      @scope_id     = scope_id
-      @tail         = tail
+    def initialize( symbol, entry, scope_id, tail )
+      @symbol   = symbol
+      @entry    = entry
+      @scope_id = scope_id
+      @tail     = tail
     end
 
 
     def to_s
-    "%-20s :%s %i" % [ @symbol.string,  @attributes.to_s, @scope_id ]
+    "%-20s :%s %i" % [ @symbol.string,  @entry.to_s, @scope_id ]
     end
   end
 
@@ -62,14 +88,16 @@ class SymbolTable
 
 
   # Returns false if symbol is already present in scope, else true
-  def insert( symbol, attributes )
+  def insert( symbol, entry )
     tail_binder = @lookup_table[ symbol.object_id ]
 
     # check that symbol being added is not already present in this scope
-    return false if tail_binder && tail_binder.scope_id == @current_scope
+    if tail_binder && tail_binder.scope_id == @current_scope
+      raise MultiplyDefined( symbol.name, entry.lineno, tail_binder.entry.lineno )
+    end
 
     # create new binder and add it to hash and binder stack
-    binder = Binder.new( symbol, attributes, @current_scope, tail_binder )
+    binder = Binder.new( symbol, entry, @current_scope, tail_binder )
     @binder_stack.push binder
     @lookup_table[ symbol.object_id ] = binder 
 
@@ -77,10 +105,10 @@ class SymbolTable
   end
 
 
-  # Returns nil if symbol not present in SymbolTable, else returns attributes
+  # Returns nil if symbol not present in SymbolTable, else returns entry
   def locate( symbol )
     binder = @lookup_table[ symbol.object_id ]
-    return binder ? binder.attributes : nil
+    return binder ? binder.entry : nil
   end
 
 

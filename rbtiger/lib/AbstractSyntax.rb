@@ -180,8 +180,11 @@ class OpExp < Exp
   def translate
     ltype = left_exp.translate()[1]
     rtype = right_exp.translate()[1]
-    #raise TypeMismatch( if( !ltype.matches( rtype ) ) 
-    return [ nil, @@venv.locate( @func_name ).type ]
+    
+    Type::assert_int( ltype lineno )
+    Type::assert_int( rtype lineno )
+
+    return [ nil, IntType.new ]
   end
 end
 
@@ -191,9 +194,20 @@ class RecordExp < Exp
 
   def initialize( lineno, type, fields )
     super lineno
-    @type = type
+    @type   = type
     @fields = fields
     @ordered_vars = %w(@type @fields) 
+  end
+
+  def translate
+    record_type = @@type_env.locate @type
+    fields.each do |field|
+      translated_expr = field[1].translate
+      field_type      = record_type.field_type( field[0] )
+      expr_type       = translated_expr[ 1 ]
+      Type::assert_matches( field_type, expr_type, lineno )
+    end
+    return [ nil, record_type ]
   end
 end
 
@@ -204,6 +218,15 @@ class SeqExp < Exp
     super lineno
     @exps = exps
     @ordered_vars = %w(@exps) 
+  end
+
+  def translate
+    seq_type = NilType.new
+    @exps.each do |exp|
+      translated = exp.translate
+      seq_type = translated[1] 
+    end
+    return [ nil, seq_type ]
   end
 end
 
@@ -216,6 +239,15 @@ class AssignExp < Exp
     @var = var
     @exp = exp
     @ordered_vars = %w(@var @exp) 
+  end
+
+  def translate
+    lvalue = @var.translate
+    rvalue = @exp.translate
+
+    Type::assert_matches( lvalue[1], rvalue[1], lineno )
+
+    return [ nil, UnitType.new ]
   end
 end
 
@@ -231,6 +263,21 @@ class IfExp < Exp
     @else_exp = else_exp
     @ordered_vars = %w(@test_exp @then_exp @else_exp) 
   end
+
+  def translate
+    test_translate = @test_exp.translate
+    Type::assert_int( test_translate[1], @test_exp.line_no )
+
+    then_translate = @then_exp.translate
+    if @else_exp 
+      else_translate = @else_exp.translate
+      Type::assert_matches then_translate[1], else_translate[1], @else_exp.lineno
+      return [ nil, then_translate[1] ]
+    else
+      Type::assert_unit( then_translate[1], then_exp.lineno )
+      return [ nil, UnitType.new ]
+    end
+  end
 end
 
 class WhileExp < Exp
@@ -242,6 +289,16 @@ class WhileExp < Exp
     @test_exp = test_exp
     @body_exp = body_exp
     @ordered_vars = %w(@test_exp @body_exp) 
+  end
+
+  def translate
+    test_translate = @test_exp.translate
+    Type::assert_int( test_translate[1], @test_exp.line_no )
+
+    body_translate = @body_exp.translate
+    Type::assert_unit( body_translate[1], body_exp.lineno )
+
+    return [ nil, UnitType.new ]
   end
 end
 
@@ -261,20 +318,56 @@ class ForExp < Exp
     @body_exp = body_exp
     @ordered_vars = %w(@var @escape @lo_exp @hi_exp @body_exp) 
   end
+
+  def translate
+    lo_translate = @lo_exp.translate
+    Type::assert_int( lo_translate[1], @lo_exp.line_no )
+    
+    hi_translate = @hi_exp.translate
+    Type::assert_int( hi_translate[1], @hi_exp.line_no )
+
+    body_translate = @body_exp.translate
+    Type::assert_unit( body_translate[1], body_exp.lineno )
+
+    return [ nil, UnitType.new ]
+  end
 end
 
 class BreakExp < Exp
+  def translate
+    return [ nil, UnitType.new ]
+  end
 end
 
 class LetExp < Exp
   attr_accessor :dec_list
   attr_accessor :body_exp
 
-  def initialize( lineno, dec_list, body_exp )
+  def initialize( lineno, dec_list, exp_seq )
     super lineno
     @dec_list = dec_list
-    @body_exp = body_exp
-    @ordered_vars = %w(@dec_list @body_exp) 
+    @exp_seq  = exp_seq 
+    @ordered_vars = %w(@dec_list @exp_seq) 
+  end
+
+  def translate
+    @@var_env.pushScope
+    @@type_env.pushScope
+
+    @dec_list.each do |dec|
+      dec.translate
+    end
+
+    let_type = NilType.new
+    @exp_seq.each do |exp|
+      seq_translate = seq.translate
+      let_type = seq_translate[1]
+    end
+
+    @@var_env.popScope
+    @@type_env.popScope
+    
+    return let_type
   end
 end
 
@@ -289,6 +382,18 @@ class ArrayExp < Exp
     @size_exp = size
     @init_exp = init
     @ordered_vars = %w(@type @size_exp @init_exp) 
+  end
+
+  def translate
+    array_type = type_env.locate( @type )
+
+    size_translate = @size_exp.translate
+    Type::assert_int size_translate[1], @size_exp.lineno
+    
+    init_translate = @init_exp.translate
+    Type::assert_matches( array_type.elem_type, init_translate[1], lineno )
+
+    return [ nil, array_type ]
   end
 end
 
@@ -312,6 +417,16 @@ class FuncDecs < Dec
     @funcs = funcs
     @ordered_vars = %w(@funcs)
   end
+
+  def translate
+    @funcs.each do |func|
+      func.translateHeader
+    end
+
+    @funcs.each do |func|
+      func.translateBody
+    end
+  end
 end
   
 class FuncDec < Dec
@@ -320,15 +435,23 @@ class FuncDec < Dec
   attr_accessor :result
   attr_accessor :body_exp
 
-  def initialize( lineno, func_name, params, result, body_exp )
+  def initialize( lineno, func_name, params, ret_type, body_exp )
     super lineno
     @func_name = func_name
     @params    = params
-    @result    = result
+    @ret_type  = ret_type
     @body_exp  = body_exp
-    @ordered_vars = %w(@func_name @params @result @body_exp)
+    @ordered_vars = %w(@func_name @params @ret_type @body_exp)
   end
   
+  def translateHeader
+    @@var_env.insert( @func_name, SymbolTable::FuncEntry( @ret_type  )
+
+  end
+
+  def translateBody
+  end
+
   def shape
     "doubleoctagon"
   end
@@ -358,6 +481,15 @@ class TypeDecs < Dec
     @type_decs = type_decs
     @ordered_vars = %w(@type_decs) 
   end
+
+  def translate
+    @type_decs.each do |type_dec|
+      type_dec.headerTranslate
+    end
+    @type_decs.each do |type_dec|
+      type_dec.bodyTranslate
+    end
+  end
 end
 
 class TypeDec < Dec
@@ -370,6 +502,13 @@ class TypeDec < Dec
     @type_name = type_name
     @type      = type
     @ordered_vars = %w(@type_name @type) 
+  end
+
+  def translateHeader
+    @@type_env.insert( @type_name, NameType.new( lineno, @type_name ) )
+  end
+  
+  def translateBody
   end
   
   def shape
@@ -387,6 +526,18 @@ end
 class Type < AbstractSyntax
   def shape
     "hexagon"
+  end
+
+  def Type.assert_matches expected, received, lineno
+    raise TypeMismatch( expected, received, lineno ) if( !received.matches( expected ) ) 
+  end
+  
+  def Type.assert_int received, lineno
+    Type.assert_matches IntType.new, received, lineno
+  end
+    
+  def Type.assert_unit received, lineno
+    Type.assert_matches UnitType.new, received, lineno
   end
     
   def matches t2
@@ -467,16 +618,22 @@ end
 
 class NameType < Type
 
-  attr_accessor :symbol
-  attr_accessor :type
+  attr_accessor :type_name
+  attr_accessor :type_ref  # Will be nil for partially resolved types
 
-  def initialize( lineno, type_name )
+  def initialize( lineno, type_name, type_ref )
     super lineno
     @type_name = type_name
+    @type_name = type_ref
     @ordered_vars = %w(@type_name) 
   end
 end
-
+#####################
+crap, should i break types out into separate class hierarchy again?  modern comp
+impl java class structure has AS types and separate Type hierarchy.  I think
+so.  The other Type hierarchy should have all of this matching functionality.  The
+AbstractSyntax < Type hier should just create the types when doing translation.
+####################
 
 ################################################################################
 #
