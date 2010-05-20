@@ -1,10 +1,13 @@
 
+dir = File.dirname( __FILE__ )
+require dir + '/Exception'
+
 module RBTiger
 
 class Type
 
   def Type.assert_matches expected, received, lineno
-    raise TypeMismatch( expected, received, lineno ) if( !received.matches( expected ) ) 
+    raise TypeMismatch.new( expected, received, lineno ) if( !received.matches( expected ) ) 
   end
   
   def Type.assert_int received, lineno
@@ -16,7 +19,7 @@ class Type
   end
   
   def Type.assert_is_a received, expected_class, lineno
-    raise TypeMismatch( received, expected_class, lineno ) if( !received.is_a?( expected_class ) )
+    raise TypeMismatch.new( received, expected_class, lineno ) if( !received.is_a?( expected_class ) )
   end
     
   def matches t2

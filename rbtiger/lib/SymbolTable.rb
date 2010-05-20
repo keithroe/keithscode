@@ -100,10 +100,10 @@ class SymbolTable
     @binder_stack.push binder
     @lookup_table[ symbol.object_id ] = binder 
 
-    puts "insertion completed:"
-    puts self
-    puts "\n\n"
-    return true
+#    puts "insertion of '#{symbol}' completed:"
+#    puts self
+#    puts "\n\n"
+#    return true
   end
 
 

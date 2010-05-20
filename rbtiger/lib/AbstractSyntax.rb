@@ -32,6 +32,18 @@ class AbstractSyntax
     @@stream.puts "}"
   end
 
+  def locateType( type_name )
+    type = @@type_env.locate( type_name )
+    return type if type
+    raise UndefinedSymbol.new( type_name, @lineno )
+  end
+
+  def locateVar( var_name )
+    var = @@var_env.locate( var_name )
+    return var if var 
+    raise UndefinedSymbol.new( var_name, @lineno )
+  end
+
 
   attr_reader   :ordered_vars
   attr_reader   :lineno
@@ -126,9 +138,6 @@ class Exp < AbstractSyntax
 end
 
 class NilExp < Exp
-  def initialize
-  end
-
   def translate
     return [ nil, Nil.new ]
   end
@@ -580,7 +589,7 @@ class RecordSpec < TypeSpec
   def translate
     fields = Hash.new
     @fields.each do |field|
-      fields[ field[0] ] = @@var_env.locate( field[1] )
+      fields[ field[0] ] = locateType( field[1] )
     end
     [ nil, RECORD.new( fields ) ]
   end
@@ -658,10 +667,11 @@ class RecordVar < Var
   
   def translate
     # TODO: is using hash reasonable?
-    puts "translating RecordVar: <#{@var_name}>, <#{@field_name}>"
-    puts "   varenv entry: <#{ @@var_env.locate( @var_name ).inspect}>"
-
     translate_var = @var.translate
+
+    if( !( translate_var[1].fields.include?( @field_name ) ) )
+      raise "crap"
+    end
     [ nil, translate_var[1].fields[ @field_name ] ]
   end
 end
@@ -698,54 +708,33 @@ class Op < AbstractSyntax
 end
 
 class PlusOp < Op 
-  def initialize
-  end
 end
 
 class MinusOp < Op
-  def initialize
-  end
 end
 
-
 class TimesOp < Op 
-  def initialize
-  end
 end
 
 class DivideOp < Op 
-  def initialize
-  end
 end
 
 class EqOp < Op 
-  def initialize
-  end
 end
 
 class NeqOp < Op 
-  def initialize
-  end
 end
 
 class LtOp < Op 
-  def initialize
-  end
 end
 
 class LeOp < Op 
-  def initialize
-  end
 end
 
 class GtOp < Op 
-  def initialize
-  end
 end
 
 class GeOp < Op 
-  def initialize
-  end
 end
 
 
