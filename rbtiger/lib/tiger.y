@@ -44,7 +44,7 @@ rule
                     | UnaryExp =UMINUS
 
   RealPrimaryExp    : NIL
-                    { result = RBTiger::NilExp.new  }
+                    { result = RBTiger::NilExp.new( val[0].lineno )  }
                     | INT 
                     { result = RBTiger::IntExp.new val[0].lineno, val[0].value }
                     | STRING
@@ -155,14 +155,14 @@ rule
                     { result = RBTiger::SubscriptVar.new val[0].lineno, val[0], val[2] }
 
   AdditiveExp       : Exp PLUS  PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::PlusOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::PlusOp.new( val[1].lineno ), val[2] }
                     | Exp MINUS PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::MinusOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::MinusOp.new( val[1].lineno ), val[2] }
 
   MultiplicativeExp : Exp TIMES  PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::TimesOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::TimesOp.new( val[1].lineno ), val[2] }
                     | Exp DIVIDE PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::DivideOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::DivideOp.new(val[1].lineno), val[2] }
 
   LogicalExp        : Exp AND PrimaryExp 
                     { result = RBTiger::IfExp.new( val[1].lineno, val[0], val[2],
@@ -172,17 +172,17 @@ rule
                                                    RBTiger::IntExp.new( val[1].lineno, 1 ), val[2] ) }
 
   RelationalExp     : Exp EQ PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::EqOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::EqOp.new( val[1].lineno ), val[2] }
                     | Exp NEQ PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::NeqOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::NeqOp.new( val[1].lineno ), val[2] }
                     | Exp GT PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::GtOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::GtOp.new( val[1].lineno ), val[2] }
                     | Exp GE PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::GeOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::GeOp.new( val[1].lineno ), val[2] }
                     | Exp LT PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LtOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LtOp.new( val[1].lineno ), val[2] }
                     | Exp LE PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LeOp.new, val[2] }
+                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LeOp.new( val[1].lineno ), val[2] }
 
   UnaryExp          : MINUS PrimaryExp 
                     { result = RBTiger::OpExp.new( val[0].lineno, RBTiger::IntExp.new( val[0].lineno, 0 ),
