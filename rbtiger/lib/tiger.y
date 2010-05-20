@@ -41,6 +41,7 @@ rule
 
   PrimaryExp        : RealPrimaryExp
                     | LPAREN ExpSeq RPAREN
+                    { result = RBTiger::SeqExp.new( val[0].lineno, val[1] ) }
                     | UnaryExp =UMINUS
 
   RealPrimaryExp    : NIL
@@ -71,8 +72,8 @@ rule
 
   TypeDecs          : TypeDec
                     { result = [ val[0] ] }
-                    | TypeDecs Typedec
-                    { result.push [ val[0] ] }
+                    | TypeDecs TypeDec
+                    { result.push val[1] }
 
   TypeDec           : TYPE ID EQ Type
                     { result = RBTiger::TypeDec.new val[0].lineno, RBTiger::Symbol.create( val[1].value ), val[3]  }
@@ -109,7 +110,7 @@ rule
   FuncDecs          : FuncDec
                     { result = [ val[0] ] }
                     | FuncDecs FuncDec
-                    { result.push [ val[0] ] }
+                    { result.push val[1] }
 
   FuncDec           : FUNCTION ID LPAREN TypeFields RPAREN EQ Exp 
                     { result =  RBTiger::FuncDec.new( val[0].lineno, RBTiger::Symbol.create( val[1].value ),
@@ -172,21 +173,21 @@ rule
                                                    RBTiger::IntExp.new( val[1].lineno, 1 ), val[2] ) }
 
   RelationalExp     : Exp EQ PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::EqOp.new( val[1].lineno ), val[2] }
+                    { result = RBTiger::OpExp.new( val[1].lineno, val[0], RBTiger::EqOp.new( val[1].lineno ), val[2] ) }
                     | Exp NEQ PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::NeqOp.new( val[1].lineno ), val[2] }
+                    { result = RBTiger::OpExp.new( val[1].lineno, val[0], RBTiger::NeqOp.new( val[1].lineno ), val[2]) }
                     | Exp GT PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::GtOp.new( val[1].lineno ), val[2] }
+                    { result = RBTiger::OpExp.new( val[1].lineno, val[0], RBTiger::GtOp.new( val[1].lineno ), val[2] ) }
                     | Exp GE PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::GeOp.new( val[1].lineno ), val[2] }
+                    { result = RBTiger::OpExp.new( val[1].lineno, val[0], RBTiger::GeOp.new( val[1].lineno ), val[2] ) }
                     | Exp LT PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LtOp.new( val[1].lineno ), val[2] }
+                    { result = RBTiger::OpExp.new( val[1].lineno, val[0], RBTiger::LtOp.new( val[1].lineno ), val[2] ) }
                     | Exp LE PrimaryExp
-                    { result = RBTiger::OpExp.new val[1].lineno, val[0], RBTiger::LeOp.new( val[1].lineno ), val[2] }
+                    { result = RBTiger::OpExp.new( val[1].lineno, val[0], RBTiger::LeOp.new( val[1].lineno ), val[2] ) }
 
   UnaryExp          : MINUS PrimaryExp 
                     { result = RBTiger::OpExp.new( val[0].lineno, RBTiger::IntExp.new( val[0].lineno, 0 ),
-                                                   RBTiger::MinusOp.new, val[2] ) }
+                                                   RBTiger::MinusOp.new( val[0].lineno ), val[2] ) }
 
 
                       
@@ -198,7 +199,7 @@ require File.dirname( __FILE__ ) + '/tiger_lex.rb'
 ---- inner ----
 
 def on_error( t, v, values )
-  raise Racc::ParseError, "<<#{@lexfilename}:#{@lexlineno}: syntax error #{v}>>"
+  raise Racc::ParseError, "<<#{@filename}:#{@lineno}: syntax error #{v}>>"
 end
 
 ---- footer ----

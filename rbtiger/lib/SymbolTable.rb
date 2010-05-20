@@ -19,8 +19,8 @@ class SymbolTable
   class VarEntry < Entry
     attr_accessor :vtype
 
-    def initialize( vtype )
-      @vtype = vtype
+    def initialize( var_type )
+      @vtype = var_type
     end
   end
 
@@ -100,17 +100,21 @@ class SymbolTable
     @binder_stack.push binder
     @lookup_table[ symbol.object_id ] = binder 
 
-#    puts "insertion of '#{symbol}' completed:"
-#    puts self
-#    puts "\n\n"
-#    return true
+    #puts "insertion of '#{symbol}' completed:"
+    #puts self
+    #puts "\n\n"
+    return true
   end
 
 
   # Returns nil if symbol not present in SymbolTable, else returns entry
   def locate( symbol )
     binder = @lookup_table[ symbol.object_id ]
-    return binder ? binder.entry : nil
+    return binder.entry if binder
+
+#    puts "Failed to locate symbol <#{symbol}:#{symbol.class}>:"
+#    puts to_s
+    return nil
   end
 
 

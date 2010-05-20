@@ -19,7 +19,7 @@ class Type
   end
   
   def Type.assert_is_a received, expected_class, lineno
-    raise TypeMismatch.new( received, expected_class, lineno ) if( !received.is_a?( expected_class ) )
+    raise TypeMismatch.new( expected_class, received, lineno ) if( !received.is_a?( expected_class ) )
   end
     
   def matches t2
@@ -65,9 +65,13 @@ class RECORD < Type
     # see comment under ArrayType.matches for explanation
     return self.equal?( t2 )
   end
+
+  def fieldType( field_name )
+    return fields[ field_name ]
+  end
   
   def to_s
-    "RECORD of #{fields}"
+    "RECORD { #{@fields.to_a.join( ", " ) } }"
   end
 end
 
@@ -145,6 +149,19 @@ class NAME < Type
   def actual
     return @type_ref
   end
+
+  def detectCycle
+    return true if @type_ref.nil?
+    return false if !@type_ref.is_a?( NAME )
+    return @type_ref.detectCycleInternal( self )
+  end
+
+  def detectCycleInternal( start_type )
+    return true if @type_ref.eql?( start_type )
+    return false if !@type_ref.is_a?( NAME )
+    return @type_ref.detectCycleInternal( start_type )
+  end
+
   
   def to_s
     "NAME: '#{type_name}' -> '#{type_ref}'"
