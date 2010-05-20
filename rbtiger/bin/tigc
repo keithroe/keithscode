@@ -18,8 +18,13 @@ class TigerCompiler
   end
   
   def translate 
-    RBTiger::AbstractSyntax.printGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ) )
-    @ast.translate
+    begin
+      RBTiger::AbstractSyntax.printGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ) )
+      @ast.translate
+    rescue RBTiger::RBException => e
+      puts e.message
+      puts e.backtrace
+    end
   end
 end
 

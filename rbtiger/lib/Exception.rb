@@ -2,6 +2,14 @@
 module RBTiger
 
   class RBException <  Exception
+    def initialize message, lineno
+      @message = message
+      @lineno = lineno
+    end
+
+    def to_s
+      "Error: '#{@message}' at line #{@lineno}"
+    end
   end
 
   class TypeMismatch < RBException
@@ -13,7 +21,7 @@ module RBTiger
     end
 
     def to_s
-      "Type mismatch: '#{@received}' does not match expected '#{@expected}' at line #{@lineno}."
+      "Type mismatch: <<#{@received}>> does not match expected <<#{@expected}>> at line #{@lineno}."
     end
   end
   
@@ -24,7 +32,7 @@ module RBTiger
     end
     
     def to_s
-      "Undefined sumbol '#{@symbol_name}' at line #{@current_lineno}."
+      "Undefined symbol <<#{@symbol_name}>> at line #{@lineno}."
     end
   end
 
@@ -37,7 +45,7 @@ module RBTiger
     end
 
     def to_s
-      "Multiply defined symbol '#{@symbol_name}' at '#{@current_lineno}' previously defined at line #{@previous_lineno}."
+      "Multiply defined symbol <<#{@symbol_name}>> at '#{@current_lineno}' previously defined at line #{@previous_lineno}."
     end
   end
 end

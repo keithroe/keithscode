@@ -32,25 +32,34 @@ class AbstractSyntax
     @@stream.puts "}"
   end
 
+
+  attr_reader   :ordered_vars
+  attr_reader   :lineno
+
+
+  def initialize( lineno )
+    @lineno       = lineno
+    @ordered_vars = []
+  end
+
+
   def locateType( type_name )
+    type = @@type_env.locate( type_name )
+    return type.actual if type
+    raise UndefinedSymbol.new( type_name, @lineno )
+  end
+
+  def locateTypeShallow( type_name )
     type = @@type_env.locate( type_name )
     return type if type
     raise UndefinedSymbol.new( type_name, @lineno )
   end
 
+
   def locateVar( var_name )
     var = @@var_env.locate( var_name )
     return var if var 
     raise UndefinedSymbol.new( var_name, @lineno )
-  end
-
-
-  attr_reader   :ordered_vars
-  attr_reader   :lineno
-
-  def initialize( lineno )
-    @lineno       = lineno
-    @ordered_vars = []
   end
 
   
@@ -139,7 +148,7 @@ end
 
 class NilExp < Exp
   def translate
-    return [ nil, Nil.new ]
+    return [ nil, NIL.new ]
   end
 end
 
@@ -182,8 +191,8 @@ class CallExp < Exp
   end
   
   def translate
-   attributes = @@venv.locate( @func_name )
-   return [ nil, attributes.type ]
+   entry = locateVar( @func_name )
+   return [ nil, entry.ret_type.actual ]
   end
 end
 
@@ -201,11 +210,18 @@ class OpExp < Exp
   end
   
   def translate
-    ltype = left_exp.translate()[1]
-    rtype = right_exp.translate()[1]
+      ltype = left_exp.translate()[1]
+      rtype = right_exp.translate()[1]
     
-    Type::assert_int( ltype lineno )
-    Type::assert_int( rtype lineno )
+    if @op.integer_operation?
+      Type::assert_int( ltype, @lineno )
+      Type::assert_int( rtype, @lineno )
+    else
+      Type::assert_matches( ltype, rtype, @lineno )
+      if( !( ltype.is_a?( INT ) || ltype.is_a?( ARRAY ) || ltype.is_a?( RECORD ) ) )
+        raise RBException( "Operands must be of type INT, ARRAY, or RECORD", @lineno )
+      end
+    end 
 
     return [ nil, INT.new ]
   end
@@ -223,10 +239,12 @@ class RecordExp < Exp
   end
 
   def translate
-    record_type = @@type_env.locate( @type ).actualType
+    record_type = locateType( @type )
     fields.each do |field|
       translated_expr = field[1].translate
-      field_type      = record_type.field_type( field[0] )
+      field_type      = record_type.fieldType( field[0] )
+      raise RBException( "Requested record field '#{field[0].name}' not found", @lineno ) if( !field_type )
+      field_type      = field_type.actual
       expr_type       = translated_expr[ 1 ]
       Type::assert_matches( field_type, expr_type, lineno )
     end
@@ -289,7 +307,7 @@ class IfExp < Exp
 
   def translate
     test_translate = @test_exp.translate
-    Type::assert_int( test_translate[1], @test_exp.line_no )
+    Type::assert_int( test_translate[1], @test_exp.lineno )
 
     then_translate = @then_exp.translate
     if @else_exp 
@@ -316,7 +334,7 @@ class WhileExp < Exp
 
   def translate
     test_translate = @test_exp.translate
-    Type::assert_int( test_translate[1], @test_exp.line_no )
+    Type::assert_int( test_translate[1], @test_exp.lineno )
 
     body_translate = @body_exp.translate
     Type::assert_unit( body_translate[1], body_exp.lineno )
@@ -344,10 +362,10 @@ class ForExp < Exp
 
   def translate
     lo_translate = @lo_exp.translate
-    Type::assert_int( lo_translate[1], @lo_exp.line_no )
+    Type::assert_int( lo_translate[1], @lo_exp.lineno )
     
     hi_translate = @hi_exp.translate
-    Type::assert_int( hi_translate[1], @hi_exp.line_no )
+    Type::assert_int( hi_translate[1], @hi_exp.lineno )
 
     body_translate = @body_exp.translate
     Type::assert_unit( body_translate[1], body_exp.lineno )
@@ -408,13 +426,13 @@ class ArrayExp < Exp
   end
 
   def translate
-    array_type = @@type_env.locate( @type ).actualType
+    array_type = locateType( @type )
 
     size_translate = @size_exp.translate
     Type::assert_int size_translate[1], @size_exp.lineno
     
     init_translate = @init_exp.translate
-    Type::assert_matches( array_type.elem_type, init_translate[1], lineno )
+    Type::assert_matches( array_type.elem_type.actual, init_translate[1], lineno )
 
     return [ nil, array_type ]
   end
@@ -438,18 +456,13 @@ class FuncDecs < Dec
   attr_accessor :funcs
 
   def initialize( funcs )
-    @funcs = funcs
+    @funcs        = funcs
     @ordered_vars = %w(@funcs)
   end
 
   def translate
-    @funcs.each do |func|
-      func.translateHeader
-    end
-
-    @funcs.each do |func|
-      func.translateBody
-    end
+    @funcs.each { |func| func.translateHeader }
+    @funcs.each { |func| func.translateBody }
   end
 end
 
@@ -472,17 +485,29 @@ class FuncDec < Dec
   def translateHeader
     formals = Array.new
     @params.each do |param|
-      formals.push @@type_env.locate( param[1] ) #TODO: do these need to be Name type enclosed?
+      formals.push locateType( param[1] ) #TODO: do these need to be Name type enclosed?
     end
 
     # if ret_type is nil, we need to create Unit type for return type
-    ret_type = @ret_type ? @@type_env.locate( @ret_type ).actual : UNIT.new
+    ret_type = @ret_type ? locateType( @ret_type ) : UNIT.new
 
-    @@var_env.insert( @func_name, SymbolTable::FuncEntry( ret_type, formals ) )
+    @@var_env.insert( @func_name, SymbolTable::FuncEntry.new( ret_type, formals ) )
   end
 
   def translateBody
 
+    # Place formal params into the local function namespace
+    @@var_env.pushScope
+    @params.each do |param|
+      @@var_env.insert( param[0], locateType( param[1] ) )
+    end
+ 
+    body_translate = @body_exp.translate
+
+    ret_type = @ret_type ? locateType( @ret_type ) : UNIT.new
+    Type::assert_matches( ret_type, body_translate[1], @lineno )
+
+    @@var_env.popScope
   end
 
   def shape
@@ -497,17 +522,24 @@ class VarDec < Dec
   attr_accessor :init_exp
   attr_accessor :escape
 
-  def initialize( lineno, var_name, type, init_exp, escape )
+  def initialize( lineno, var_name, var_type, init_exp, escape )
     super lineno
     @var_name = var_name
-    @type     = type
+    @var_type = var_type
     @init_exp = init_exp
     @escape   = escape
-    @ordered_vars = %w(@var_name @type @init_exp @escape) 
+    @ordered_vars = %w(@var_name @var_type @init_exp @escape) 
   end
 
   def translate
-    @@var_env.insert( @var_name, @@type_env.locate( @type ).actual )
+    translate_init = @init_exp.translate
+    if @var_type 
+      var_type = locateType( @var_type )
+      Type::assert_matches( var_type, translate_init[1], @lineno )
+      @@var_env.insert( @var_name, var_type )
+    else
+      @@var_env.insert( @var_name, translate_init[1] )
+    end
   end
 end
 
@@ -522,12 +554,9 @@ class TypeDecs < Dec
   end
 
   def translate
-    @type_decs.each do |type_dec|
-      type_dec.translateHeader
-    end
-    @type_decs.each do |type_dec|
-      type_dec.translateBody
-    end
+    @type_decs.each { |type_dec| type_dec.translateHeader }
+    @type_decs.each { |type_dec| type_dec.translateBody }
+    @type_decs.each { |type_dec| type_dec.detectCycle}
   end
 end
 
@@ -553,7 +582,13 @@ class TypeDec < Dec
     translate_body = @type.translate
 
     # bind the name ref to this type now
-    @@type_env.locate( @type_name ).bind( translate_body[1] )
+    locateTypeShallow( @type_name ).bind( translate_body[1] )
+  end
+  
+  def detectCycle 
+    if locateTypeShallow( @type_name ).detectCycle
+      raise RBException.new( "type cycle detected for type '#{@type_name.string}'", @lineno )
+    end
   end
   
   def shape
@@ -589,7 +624,7 @@ class RecordSpec < TypeSpec
   def translate
     fields = Hash.new
     @fields.each do |field|
-      fields[ field[0] ] = locateType( field[1] )
+      fields[ field[0] ] = locateTypeShallow( field[1] )
     end
     [ nil, RECORD.new( fields ) ]
   end
@@ -607,7 +642,7 @@ class ArraySpec < TypeSpec
   end
 
   def translate
-    [ nil, ARRAY.new( @@type_env.locate( @elem_type ) ).actual ]
+    [ nil, ARRAY.new( locateType( @elem_type ) ) ]
   end
 end
 
@@ -623,7 +658,7 @@ class NameSpec < TypeSpec
   end
   
   def translate
-    [ nil, @@type_env.locate( @type_name ).actual ]
+    [ nil, locateType( @type_name ) ]
   end
 end
 
@@ -650,7 +685,7 @@ class SimpleVar < Var
   end
 
   def translate
-    [ nil, @@var_env.locate( @var_name ) ]
+    [ nil, locateVar( @var_name ).actual ]
   end
 end
 
@@ -672,7 +707,7 @@ class RecordVar < Var
     if( !( translate_var[1].fields.include?( @field_name ) ) )
       raise "crap"
     end
-    [ nil, translate_var[1].fields[ @field_name ] ]
+    [ nil, translate_var[1].fields[ @field_name ].actual ]
   end
 end
 
@@ -690,7 +725,7 @@ class SubscriptVar < Var
   def translate
     translate_var = @var.translate
     Type::assert_is_a( translate_var[1], ARRAY, @lineno )
-    [ nil, translate_var.elem_type ]
+    [ nil, translate_var.elem_type.actual ]
   end
 end
 
@@ -704,6 +739,10 @@ end
 class Op < AbstractSyntax
   def shape
     "triangle"
+  end
+
+  def integer_operation?
+    return true
   end
 end
 
@@ -720,9 +759,15 @@ class DivideOp < Op
 end
 
 class EqOp < Op 
+  def integer_operation?
+    return false
+  end
 end
 
 class NeqOp < Op 
+  def integer_operation?
+    return false
+  end
 end
 
 class LtOp < Op 
