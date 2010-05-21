@@ -6,4 +6,4 @@ find_header( "optix.h", "/home/kmorley/Code/rtsdk/rtmain/include/" )
 find_library( "optix", "rtContextCreate", optix_library_dir )
 dir_config( "optix" )
 
-create_makefile("optix", "./libc/" )
+create_makefile("./lib/roptix" )
