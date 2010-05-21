@@ -14,8 +14,6 @@ class TestTypeChecker < Test::Unit::TestCase
                        test7.tig
                        test8.tig
                        test12.tig
-                       test17.tig
-                       test18.tig
                        test19.tig
                        test20.tig
                        test21.tig
@@ -60,6 +58,8 @@ class TestTypeChecker < Test::Unit::TestCase
                        test14.tig
                        test15.tig
                        test16.tig
+                       test17.tig
+                       test18.tig
                        db.tig
                        merge.tig    
                       ).collect { |t| $dir + '/progs/' + t } 
@@ -69,7 +69,9 @@ class TestTypeChecker < Test::Unit::TestCase
     parser = RBTiger::Parser.new
     @@working_progs.each do |filename|
       print "type-checking #{filename} ... "
-      assert_nothing_raised() {  parser.scan_file( filename ).translate }
+      assert_nothing_raised() do 
+        RBTiger::AbstractSyntax.translateProgram(  parser.scan_file( filename ) )
+      end
       puts "succeeded"
     end
   end
@@ -78,8 +80,10 @@ class TestTypeChecker < Test::Unit::TestCase
     parser = RBTiger::Parser.new
     @@failure_progs.each do |filename|
       print "type-checking #{filename} ... "
-      assert_raises( RBTiger::TypeMismatch, RBTiger::UndefinedSymbol ) {  parser.scan_file( filename ).translate }
-      puts "succeeded"
+      assert_raises( RBTiger::TypeMismatch, RBTiger::UndefinedSymbol, RBTiger::RBException ) do
+        RBTiger::AbstractSyntax.translateProgram(  parser.scan_file( filename ) )
+      end
+      puts "failed as expected"
     end
   end
 end
