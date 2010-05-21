@@ -149,7 +149,9 @@ rule
                     { result = RBTiger::RecordVar.new( val[0].lineno, val[0], RBTiger::Symbol.create( val[2].value ) ) }
 
   SubscriptLValue   : ID LBRACK Exp RBRACK
-                    { result = RBTiger::SubscriptVar.new val[0].lineno, RBTiger::Symbol.create( val[0].value ), val[2] }
+                    { result = RBTiger::SubscriptVar.new( val[0].lineno, RBTiger::SimpleVar.new( val[0].lineno,
+                                                                              RBTiger::Symbol.create( val[0].value ) ),
+                                                                              val[2] ) }
                     | FieldLValue LBRACK Exp RBRACK
                     { result = RBTiger::SubscriptVar.new val[0].lineno, val[0], val[2] }
                     | SubscriptLValue LBRACK Exp RBRACK

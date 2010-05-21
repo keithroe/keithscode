@@ -90,6 +90,20 @@ class SymbolTable
   def insert( symbol, entry )
     tail_binder = @lookup_table[ symbol.object_id ]
 
+    # create new binder and add it to hash and binder stack
+    binder = Binder.new( symbol, entry, @current_scope, tail_binder )
+    @binder_stack.push binder
+    @lookup_table[ symbol.object_id ] = binder 
+
+    #puts "insertion of '#{symbol}' completed:"
+    #puts self
+    #puts "\n\n"
+    return true
+  end
+  
+  def insertUnique( symbol, entry )
+    tail_binder = @lookup_table[ symbol.object_id ]
+
     # check that symbol being added is not already present in this scope
     if tail_binder && tail_binder.scope_id == @current_scope
       raise MultiplyDefined( symbol.name, entry.lineno, tail_binder.entry.lineno )
@@ -112,8 +126,8 @@ class SymbolTable
     binder = @lookup_table[ symbol.object_id ]
     return binder.entry if binder
 
-#    puts "Failed to locate symbol <#{symbol}:#{symbol.class}>:"
-#    puts to_s
+    #puts "Failed to locate symbol <#{symbol}:#{symbol.class}>:"
+    #puts to_s
     return nil
   end
 

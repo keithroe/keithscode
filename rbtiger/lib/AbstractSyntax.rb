@@ -11,6 +11,8 @@ require dir + '/Type'
 #TODO: categorize test cases by exactly the type of failure they should produce (file with hash)
 #TODO: move each iteration of unit test loops (each file parse or typecheck) into its own function
 #      can add these test functions programmatically
+#TODO: reworkd Exceptions to allow more specific error descriptions (eg, name of variable associated
+#      with a type mismatch, "undefined type" or "undefined record field" instead of undefined type
 
 module RBTiger
 
@@ -22,23 +24,25 @@ module RBTiger
   
 class AbstractSyntax
 
-  @@type_env = SymbolTable.new
-  @@var_env  = SymbolTable.new
+  @@type_env = nil
+  @@var_env  = nil 
+
 
   #TODO: this should live outside of AbsSyn.  environments probably shoud live elsewhere altogether
   def AbstractSyntax.initEnv
+    @@type_env = SymbolTable.new 
+    @@var_env  = SymbolTable.new
     @@type_env.insert( Symbol.create( 'int' ), INT.new )
     @@type_env.insert( Symbol.create( 'string' ), STRING.new )
+    @@type_env.pushScope
+    @@var_env.pushScope
   end
 
   def AbstractSyntax.translateProgram( ast_node )
-    @@type_env.pushScope
-    @@var_env.pushScope
+    
+    AbstractSyntax.initEnv
 
     ast_node.translate
-    
-    @@type_env.popScope
-    @@var_env.popScope
   end
   
   def AbstractSyntax.printGraph( node, stream = $stdout )
@@ -212,13 +216,11 @@ class CallExp < Exp
    entry = locateVar( @func_name )
    formals = entry.formals
    if formals.size != @args.size
-     raise RBExceptions( "Call to func '#{func_name.string}' expected (#{@formals.size}) params, not (#{@args.size})",
+     raise RBException.new( "Call to func '#{func_name.string}' expected (#{formals.size}) params, not (#{@args.size})",
                          @lineno ) 
    end
    @args.each_with_index do |arg, i|
-     puts "translating arg: #{arg}"
      translate_arg = arg.translate
-     puts "  result: #{translate_arg.inspect}"
      Type::assert_matches( formals[i], translate_arg[1], @lineno )
    end
 
@@ -270,6 +272,7 @@ class RecordExp < Exp
 
   def translate
     record_type = locateType( @type )
+
     fields.each do |field|
       translated_expr = field[1].translate
       field_type      = record_type.fieldType( field[0] )
@@ -438,7 +441,7 @@ class LetExp < Exp
     @@var_env.popScope
     @@type_env.popScope
     
-    return let_type
+    return [ nil, let_type ]
   end
 end
 
@@ -491,6 +494,14 @@ class FuncDecs < Dec
   end
 
   def translate
+    # check for duplicate func decls in this sequence
+    seen = Array.new
+    @funcs.each do |func_dec|
+      if seen.include?( func_dec.func_name )
+        raise RBException.new("'#{func_dec.func_name.string}' multiply defined in func decl sequence", func_dec.lineno)
+      end
+      seen.push func_dec.func_name
+    end
     @funcs.each { |func| func.translateHeader }
     @funcs.each { |func| func.translateBody }
   end
@@ -564,11 +575,15 @@ class VarDec < Dec
 
   def translate
     translate_init = @init_exp.translate
+      
     if @var_type 
       var_type = locateType( @var_type )
       Type::assert_matches( var_type, translate_init[1], @lineno )
       @@var_env.insert( @var_name, var_type )
     else
+      if( translate_init[1].is_a?( NIL ) )
+        raise RBException.new( "'nil' value assigned to non-record variable", @lineno )
+      end
       @@var_env.insert( @var_name, translate_init[1] )
     end
   end
@@ -585,6 +600,15 @@ class TypeDecs < Dec
   end
 
   def translate
+    # check for duplicate type decls in this sequence
+    seen = Array.new
+    @type_decs.each do |type_dec|
+      if seen.include?( type_dec.type_name )
+        raise RBException.new("'#{type_dec.type_name.string}' multiply defined in type decl sequence", type_dec.lineno)
+      end
+      seen.push type_dec.type_name
+    end
+
     @type_decs.each { |type_dec| type_dec.translateHeader }
     @type_decs.each { |type_dec| type_dec.translateBody }
     @type_decs.each { |type_dec| type_dec.detectCycle}
@@ -734,9 +758,10 @@ class RecordVar < Var
   def translate
     # TODO: is using hash reasonable?
     translate_var = @var.translate
+    Type::assert_is_a( translate_var[1], RECORD, @linena )
 
     if( !( translate_var[1].fields.include?( @field_name ) ) )
-      raise "crap"
+      raise UndefinedSymbol.new "#{@var.var_name.string}.#{@field_name.string}", @lineno 
     end
     [ nil, translate_var[1].fields[ @field_name ].actual ]
   end
@@ -756,7 +781,7 @@ class SubscriptVar < Var
   def translate
     translate_var = @var.translate
     Type::assert_is_a( translate_var[1], ARRAY, @lineno )
-    [ nil, translate_var.elem_type.actual ]
+    [ nil, translate_var[1].elem_type.actual ]
   end
 end
 
