@@ -71,7 +71,30 @@ class RECORD < Type
   end
   
   def to_s
+      return to_s_shallow  #for now
+
+    @fields.each_value do |value|
+      # This check only works if the recusion is 1 level deep
+      return to_s_shallow if value.eql?( self )
+    end
     "RECORD { #{@fields.to_a.join( ", " ) } }"
+  end
+
+  def to_s_shallow
+    s = "RECORD { "
+    @fields.each do |key,value|
+      s += "#{key} => " 
+      if( value.actual.is_a?( RECORD ) )
+        s += "RECORD {...}," 
+      elsif( value.actual.is_a?( ARRAY ) )
+        s += "ARRAY [...]," 
+      else
+        s += "#{value}," 
+      end
+    end
+    s[-1] = "" if( !fields.empty?() ) # clear last comma
+    s += " }"
+    s
   end
 end
 
