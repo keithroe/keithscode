@@ -4,6 +4,11 @@ require dir + '/SymbolTable'
 require dir + '/Type'
 
 
+#TODO: make all symbol vars be something like elem_type_sym rather than elem_type.
+#TODO: look into encapsulating types for field_list elements, translate return type, formal params, etc
+#TODO: document expected types for non-obvious params (FuncEntry.formals, Binder.tail, CallExp.args, etc ) 
+#TODO: look into moving translation functionality into separate file 
+
 module RBTiger
 
 ################################################################################
@@ -21,6 +26,16 @@ class AbstractSyntax
   def AbstractSyntax.initEnv
     @@type_env.insert( Symbol.create( 'int' ), INT.new )
     @@type_env.insert( Symbol.create( 'string' ), STRING.new )
+  end
+
+  def AbstractSyntax.translateProgram( ast_node )
+    @@type_env.pushScope
+    @@var_env.pushScope
+
+    ast_node.translate
+    
+    @@type_env.popScope
+    @@var_env.popScope
   end
   
   def AbstractSyntax.printGraph( node, stream = $stdout )
@@ -192,6 +207,18 @@ class CallExp < Exp
   
   def translate
    entry = locateVar( @func_name )
+   formals = entry.formals
+   if formals.size != @args.size
+     raise RBExceptions( "Call to func '#{func_name.string}' expected (#{@formals.size}) params, not (#{@args.size})",
+                         @lineno ) 
+   end
+   @args.each_with_index do |arg, i|
+     puts "translating arg: #{arg}"
+     translate_arg = arg.translate
+     puts "  result: #{translate_arg.inspect}"
+     Type::assert_matches( formals[i], translate_arg[1], @lineno )
+   end
+
    return [ nil, entry.ret_type.actual ]
   end
 end
@@ -498,6 +525,7 @@ class FuncDec < Dec
 
     # Place formal params into the local function namespace
     @@var_env.pushScope
+
     @params.each do |param|
       @@var_env.insert( param[0], locateType( param[1] ) )
     end
