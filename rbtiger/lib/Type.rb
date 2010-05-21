@@ -147,23 +147,21 @@ class NAME < Type
   end
 
   def actual
-    return @type_ref
+    return @type_ref.actual
   end
 
-  def detectCycle
-    return true if @type_ref.nil?
-    return false if !@type_ref.is_a?( NAME )
-    return @type_ref.detectCycleInternal( self )
-  end
 
-  def detectCycleInternal( start_type )
-    return true if @type_ref.eql?( start_type )
+  def detectCycle( already_seen = [] )
+    return true  if @type_ref.nil? || already_seen.detect { |seen|  @type_ref.eql?( seen ) }
     return false if !@type_ref.is_a?( NAME )
-    return @type_ref.detectCycleInternal( start_type )
+    return @type_ref.detectCycle( already_seen.push self )
   end
 
   
   def to_s
+    if( detectCycle )
+      return "NAME: '#{type_name}' -> CYCLE DETECTED"
+    end
     "NAME: '#{type_name}' -> '#{type_ref}'"
   end
 end

@@ -658,7 +658,7 @@ class NameSpec < TypeSpec
   end
   
   def translate
-    [ nil, locateType( @type_name ) ]
+    [ nil, locateTypeShallow( @type_name ) ]
   end
 end
 

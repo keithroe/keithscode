@@ -14,7 +14,6 @@ class TestTypeChecker < Test::Unit::TestCase
                        test7.tig
                        test8.tig
                        test12.tig
-                       test16.tig
                        test17.tig
                        test18.tig
                        test19.tig
@@ -60,6 +59,7 @@ class TestTypeChecker < Test::Unit::TestCase
                        test13.tig
                        test14.tig
                        test15.tig
+                       test16.tig
                        db.tig
                        merge.tig    
                       ).collect { |t| $dir + '/progs/' + t } 
