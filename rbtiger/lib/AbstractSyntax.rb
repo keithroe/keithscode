@@ -8,6 +8,9 @@ require dir + '/Type'
 #TODO: look into encapsulating types for field_list elements, translate return type, formal params, etc
 #TODO: document expected types for non-obvious params (FuncEntry.formals, Binder.tail, CallExp.args, etc ) 
 #TODO: look into moving translation functionality into separate file 
+#TODO: categorize test cases by exactly the type of failure they should produce (file with hash)
+#TODO: move each iteration of unit test loops (each file parse or typecheck) into its own function
+#      can add these test functions programmatically
 
 module RBTiger
 
