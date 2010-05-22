@@ -177,7 +177,7 @@ class NAME < Type
   def detectCycle( already_seen = [] )
     return true  if @type_ref.nil? || already_seen.detect { |seen|  @type_ref.eql?( seen ) }
     return false if !@type_ref.is_a?( NAME )
-    return @type_ref.detectCycle( already_seen.push self )
+    return @type_ref.detectCycle( already_seen.push( self ) )
   end
 
   
