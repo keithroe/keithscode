@@ -3656,7 +3656,7 @@ static VALUE textureSamplerGetBuffer( VALUE self, VALUE texture_array_idx, VALUE
  *
 \******************************************************************************/
 
-void Init_optix()
+void Init_roptix()
 {
   /* Module to act as namespace */
   module_optix  = rb_define_module( "Optix" );
