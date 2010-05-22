@@ -19,8 +19,8 @@ class TigerCompiler
   
   def translate 
     begin
-      RBTiger::AbstractSyntax.printGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ) )
-      RBTiger::AbstractSyntax.translateProgram @ast
+      RBTiger::ASTNode.printGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ) )
+      RBTiger::ASTNode.translateProgram @ast
     rescue RBTiger::RBException => e
       puts e.message
       puts e.backtrace
