@@ -1,9 +1,9 @@
 
 lib = File.dirname(__FILE__)
 
-require lib + '/AbstractSyntax'
-require lib + '/Exception.rb'
-require lib + '/Parser'
-require lib + '/SymbolTable'
-require lib + '/Type.rb'
+require lib + '/ast'
+require lib + '/exception'
+require lib + '/parser'
+require lib + '/symboltable'
+require lib + '/type.rb'
 require lib + '/translate'

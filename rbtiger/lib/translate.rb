@@ -1,7 +1,7 @@
 
 dir = File.dirname( __FILE__ )
-require dir + '/AbstractSyntax'
-require dir + '/SymbolTable'
+require dir + '/ast'
+require dir + '/symboltable'
 
 module RBTiger
 
