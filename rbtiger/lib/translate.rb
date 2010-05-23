@@ -1,6 +1,7 @@
 
 dir = File.dirname( __FILE__ )
 require dir + '/AbstractSyntax'
+require dir + '/SymbolTable'
 
 module RBTiger
 
@@ -10,12 +11,66 @@ module RBTiger
 #
 ################################################################################
 
-class ASTTranslate
+class Translate
 
-  def finitialize( ast )
-    @ast = ast
+  def initialize( ast )
+    @type_env = SymbolTable.new
+    @var_env  = SymbolTable.new
+
+    initTypeEnv()
+    initVarEnv()
+    pushScopes()
+
+    ast.setState self
     ast.translate
   end
+
+
+  def initTypeEnv()
+    @type_env.insert( Symbol.create( 'int' ), INT.new )
+    @type_env.insert( Symbol.create( 'string' ), STRING.new )
+  end
+  
+  def initVarEnv()
+  end
+  
+  def pushScopes()
+    @type_env.pushScope
+    @var_env.pushScope
+  end
+  
+  def popScopes()
+    @type_env.popScope
+    @var_env.popScope
+  end
+  
+  def insertType( type_name, type )
+    @type_env.insert( type_name, type )
+  end
+
+  def insertVar( var_name, var )
+    @var_env.insert( var_name, var )
+  end
+
+  def locateType( type_name )
+    type = @type_env.locate( type_name )
+    return type.actual if type
+    raise UndefinedSymbol.new( type_name, @lineno )
+  end
+
+  def locateTypeShallow( type_name )
+    type = @type_env.locate( type_name )
+    return type if type
+    raise UndefinedSymbol.new( type_name, @lineno )
+  end
+
+
+  def locateVar( var_name )
+    var = @var_env.locate( var_name )
+    return var if var 
+    raise UndefinedSymbol.new( var_name, @lineno )
+  end
+
 end
 
 
@@ -48,7 +103,7 @@ end
 
 class CallExp < Exp
   def translate
-   entry = locateVar( @func_name )
+   entry = @@state.locateVar( @func_name )
    formals = entry.formals
    if formals.size != @args.size
      raise RBException.new( "Call to func '#{func_name.string}' expected (#{formals.size}) params, not (#{@args.size})",
@@ -86,7 +141,7 @@ end
 
 class RecordExp < Exp
   def translate
-    record_type = locateType( @type )
+    record_type = @@state.locateType( @type )
 
     fields.each do |field|
       translated_expr = field[1].translate
@@ -181,8 +236,7 @@ end
 
 class LetExp < Exp
   def translate
-    @@var_env.pushScope
-    @@type_env.pushScope
+    @@state.pushScopes
 
     @dec_list.each do |dec|
       dec.translate
@@ -194,8 +248,7 @@ class LetExp < Exp
       let_type = exp_translate[1]
     end
 
-    @@var_env.popScope
-    @@type_env.popScope
+    @@state.popScopes
     
     return [ nil, let_type ]
   end
@@ -204,7 +257,7 @@ end
 
 class ArrayExp < Exp
   def translate
-    array_type = locateType( @type )
+    array_type = @@state.locateType( @type )
 
     size_translate = @size_exp.translate
     Type::assert_int size_translate[1], @size_exp.lineno
@@ -243,30 +296,30 @@ class FuncDec < Dec
   def translateHeader
     formals = Array.new
     @params.each do |param|
-      formals.push locateType( param[1] ) #TODO: do these need to be Name type enclosed?
+      formals.push @@state.locateType( param[1] )
     end
 
     # if ret_type is nil, we need to create Unit type for return type
-    ret_type = @ret_type ? locateType( @ret_type ) : UNIT.new
+    ret_type = @ret_type ? @@state.locateType( @ret_type ) : UNIT.new
 
-    @@var_env.insert( @func_name, SymbolTable::FuncEntry.new( ret_type, formals ) )
+    @@state.insertVar( @func_name, SymbolTable::FuncEntry.new( ret_type, formals ) )
   end
 
   def translateBody
 
     # Place formal params into the local function namespace
-    @@var_env.pushScope
+    @@state.pushScopes
 
     @params.each do |param|
-      @@var_env.insert( param[0], locateType( param[1] ) )
+      @@state.insertVar( param[0], @@state.locateType( param[1] ) )
     end
  
     body_translate = @body_exp.translate
 
-    ret_type = @ret_type ? locateType( @ret_type ) : UNIT.new
+    ret_type = @ret_type ? @@state.locateType( @ret_type ) : UNIT.new
     Type::assert_matches( ret_type, body_translate[1], @lineno )
 
-    @@var_env.popScope
+    @@state.popScopes
   end
 end
 
@@ -276,14 +329,14 @@ class VarDec < Dec
     translate_init = @init_exp.translate
       
     if @var_type 
-      var_type = locateType( @var_type )
+      var_type = @@state.locateType( @var_type )
       Type::assert_matches( var_type, translate_init[1], @lineno )
-      @@var_env.insert( @var_name, var_type )
+      @@state.insertVar( @var_name, var_type )
     else
       if( translate_init[1].is_a?( NIL ) )
         raise RBException.new( "'nil' value assigned to non-record variable", @lineno )
       end
-      @@var_env.insert( @var_name, translate_init[1] )
+      @@state.insertVar( @var_name, translate_init[1] )
     end
   end
 end
@@ -309,7 +362,7 @@ end
 
 class TypeDec < Dec
   def translateHeader
-    @@type_env.insert( @type_name, NAME.new( @type_name, nil ) )
+    @@state.insertType( @type_name, NAME.new( @type_name, nil ) )
   end
   
   def translateBody
@@ -317,11 +370,11 @@ class TypeDec < Dec
     translate_body = @type.translate
 
     # bind the name ref to this type now
-    locateTypeShallow( @type_name ).bind( translate_body[1] )
+    @@state.locateTypeShallow( @type_name ).bind( translate_body[1] )
   end
   
   def detectCycle 
-    if locateTypeShallow( @type_name ).detectCycle
+    if @@state.locateTypeShallow( @type_name ).detectCycle
       raise RBException.new( "type cycle detected for type '#{@type_name.string}'", @lineno )
     end
   end
@@ -338,7 +391,7 @@ class RecordSpec < TypeSpec
   def translate
     fields = Hash.new
     @fields.each do |field|
-      fields[ field[0] ] = locateTypeShallow( field[1] )
+      fields[ field[0] ] = @@state.locateTypeShallow( field[1] )
     end
     [ nil, RECORD.new( fields ) ]
   end
@@ -347,14 +400,14 @@ end
 
 class ArraySpec < TypeSpec
   def translate
-    [ nil, ARRAY.new( locateType( @elem_type ) ) ]
+    [ nil, ARRAY.new( @@state.locateType( @elem_type ) ) ]
   end
 end
 
 
 class NameSpec < TypeSpec
   def translate
-    [ nil, locateTypeShallow( @type_name ) ]
+    [ nil, @@state.locateTypeShallow( @type_name ) ]
   end
 end
 
@@ -367,9 +420,10 @@ end
 
 class SimpleVar < Var
   def translate
-    [ nil, locateVar( @var_name ).actual ]
+    [ nil, @@state.locateVar( @var_name ).actual ]
   end
 end
+
 
 class RecordVar < Var
   def translate
