@@ -1,8 +1,4 @@
 
-dir = File.dirname( __FILE__ )
-require dir + '/SymbolTable'
-require dir + '/Type'
-
 
 #TODO: make all symbol vars be something like elem_type_sym rather than elem_type.
 #TODO: look into encapsulating types for field_list elements, translate return type, formal params, etc
@@ -13,6 +9,7 @@ require dir + '/Type'
 #      can add these test functions programmatically
 #TODO: reworkd Exceptions to allow more specific error descriptions (eg, name of variable associated
 #      with a type mismatch, "undefined type" or "undefined record field" instead of undefined type
+#      perhaps blocks could be used as a callback mechanism for providing specific exceptions
 
 module RBTiger
 
@@ -24,27 +21,8 @@ module RBTiger
   
 class ASTNode
 
-  @@type_env = nil
-  @@var_env  = nil 
+  @@state = nil  # Handle for pass specific data
 
-
-  #TODO: this should live outside of AbsSyn.  environments probably shoud live elsewhere altogether
-  def ASTNode.initEnv
-    @@type_env = SymbolTable.new 
-    @@var_env  = SymbolTable.new
-    @@type_env.insert( Symbol.create( 'int' ), INT.new )
-    @@type_env.insert( Symbol.create( 'string' ), STRING.new )
-    @@type_env.pushScope
-    @@var_env.pushScope
-  end
-
-  def ASTNode.translateProgram( ast_node )
-    
-    ASTNode.initEnv
-
-    ast_node.translate
-  end
-  
   def ASTNode.printGraph( node, stream = $stdout )
     @@stream     = stream 
     @@node_stack = []
@@ -65,26 +43,19 @@ class ASTNode
   end
 
 
-  def locateType( type_name )
-    type = @@type_env.locate( type_name )
-    return type.actual if type
-    raise UndefinedSymbol.new( type_name, @lineno )
+  def setState state
+    @@state = state
   end
 
-  def locateTypeShallow( type_name )
-    type = @@type_env.locate( type_name )
-    return type if type
-    raise UndefinedSymbol.new( type_name, @lineno )
-  end
+ 
 
 
-  def locateVar( var_name )
-    var = @@var_env.locate( var_name )
-    return var if var 
-    raise UndefinedSymbol.new( var_name, @lineno )
-  end
 
-  
+
+
+
+
+
   def name
     "#{self.class.to_s.gsub( 'RBTiger::', '' )}_#{self.object_id}"
   end
