@@ -69,7 +69,7 @@ class TestTypeChecker < Test::Unit::TestCase
     parser = RBTiger::Parser.new
     @@working_progs.each do |filename|
       assert_nothing_raised() do 
-        RBTiger::Translate.new(  parser.scan_file( filename ) )
+        RBTiger::AST.translateTree(  parser.scan_file( filename ) )
       end
     end
   end
@@ -78,7 +78,7 @@ class TestTypeChecker < Test::Unit::TestCase
     parser = RBTiger::Parser.new
     @@failure_progs.each do |filename|
       assert_raises( RBTiger::TypeMismatch, RBTiger::UndefinedSymbol, RBTiger::RBException ) do
-        RBTiger::Translate.new(  parser.scan_file( filename ) )
+        RBTiger::AST.translateTree(  parser.scan_file( filename ) )
       end
     end
   end

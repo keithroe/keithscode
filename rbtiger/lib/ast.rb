@@ -18,7 +18,7 @@ module RBTiger
 #
 ################################################################################
   
-class ASTNode
+class AST
 
   @@state = nil  # Handle for pass specific data
 
@@ -45,7 +45,7 @@ end
 #
 ################################################################################
 
-class Symbol < ASTNode
+class Symbol < AST
 
   private_class_method :new
   attr_accessor :string
@@ -79,7 +79,7 @@ end
 #
 ################################################################################
 
-class Exp < ASTNode
+class Exp < AST
 end
 
 
@@ -258,7 +258,7 @@ end
 #
 ################################################################################
 
-class Dec < ASTNode
+class Dec < AST
 end
 
 
@@ -337,7 +337,7 @@ end
 #
 ################################################################################
 
-class TypeSpec < ASTNode
+class TypeSpec < AST
 end
 
 
@@ -384,7 +384,7 @@ end
 #
 ################################################################################
 
-class Var < ASTNode
+class Var < AST
 end
 
 
@@ -433,7 +433,7 @@ end
 #
 ################################################################################
 
-class Op < ASTNode
+class Op < AST
   def integer_operation?
     return true
   end
