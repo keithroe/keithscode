@@ -6,6 +6,7 @@ class TigerCompiler
 
   def initialize filename
     @filename = filename
+    @ast      = nil
   end
 
   def run
@@ -20,10 +21,10 @@ class TigerCompiler
   def translate 
     begin
       # Print the AST to graphviz dot format
-      RBTiger::DotGraph.new( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ));
+      RBTiger::AST.printDotGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ));
 
       # Type-checking and translation phase
-      RBTiger::Translate.new( @ast );
+      RBTiger::AST.translateTree( @ast )
 
     rescue RBTiger::RBException => e
       puts e.message
