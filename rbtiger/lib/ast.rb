@@ -92,7 +92,7 @@ class IntExp < Exp
 
   def initialize( lineno, value )
     super lineno
-    @value = value
+    @value = value               # integer: value of the literal expression
     @ordered_vars = %w(@value) 
   end
 end
@@ -102,7 +102,7 @@ class StringExp < Exp
   attr_accessor :value
 
   def initialize( lineno, value )
-    @value = value
+    @value = value              # string: value of the string literal expression
     @ordered_vars = %w(@value)
   end
 end
@@ -114,17 +114,17 @@ class CallExp < Exp
 
   def initialize( lineno, func_name, args )
     super lineno
-    @func_name = func_name
-    @args      = args
+    @func_name = func_name        # Symbol: function name
+    @args      = args             # Exp   : function argument expressions 
     @ordered_vars = %w(@func_name @args) 
   end
 end
 
 
 class OpExp < Exp
-  attr_accessor :left_exp
-  attr_accessor :op
-  attr_accessor :right_exp
+  attr_accessor :left_exp         # Exp   : left operand expression
+  attr_accessor :op               # Op    : operator ( +, -, etc )
+  attr_accessor :right_exp        # Exp   : right operand expression 
 
   def initialize( lineno, left_exp, op, right_exp )
     super lineno
@@ -137,8 +137,8 @@ end
 
 
 class RecordExp < Exp
-  attr_accessor :type
-  attr_accessor :fields
+  attr_accessor :type              # Symbol: record type name
+  attr_accessor :fields            # Array of [ Symbol, Exp ] : field name, initializer pairs
 
   def initialize( lineno, type, fields )
     super lineno
@@ -150,7 +150,7 @@ end
 
 
 class SeqExp < Exp
-  attr_accessor :exps
+  attr_accessor :exps             # Array of Exp : sequence of expressions 
 
   def initialize( lineno, exps )
     super lineno
@@ -161,8 +161,8 @@ end
 
 
 class AssignExp < Exp
-  attr_accessor :var
-  attr_accessor :exp
+  attr_accessor :var              # Symbol: lvalue identifier 
+  attr_accessor :exp              # Exp   : rvalue expression
 
   def initialize( lineno, var, exp )
     super lineno
@@ -174,9 +174,9 @@ end
 
 
 class IfExp < Exp
-  attr_accessor :test_exp
-  attr_accessor :then_exp
-  attr_accessor :else_exp
+  attr_accessor :test_exp         # Exp  : if test expression
+  attr_accessor :then_exp         # Exp  : then clause 
+  attr_accessor :else_exp         # Exp  : else clause, may be nil 
 
   def initialize( lineno, test_exp, then_exp, else_exp )
     super lineno
@@ -189,8 +189,8 @@ end
 
 
 class WhileExp < Exp
-  attr_accessor :test_exp
-  attr_accessor :body_exp
+  attr_accessor :test_exp         # Exp  : while test expression
+  attr_accessor :body_exp         # Exp  : body of while loop
 
   def initialize( lineno, test_exp, body_exp )
     super lineno
@@ -202,11 +202,11 @@ end
 
 
 class ForExp < Exp
-  attr_accessor :var
-  attr_accessor :escape
-  attr_accessor :lo_exp
-  attr_accessor :hi_exp
-  attr_accessor :body_exp
+  attr_accessor :var              # Symbol  : loop iteration variable
+  attr_accessor :escape           # boolean : default to true ... use later
+  attr_accessor :lo_exp           # Exp     : int valued expr for loop var range begin 
+  attr_accessor :hi_exp           # Exp     : int valued expr for loop var range end
+  attr_accessor :body_exp         # Exp     : loop body
 
   def initialize( lineno, var, escape, lo_exp, hi_exp, body_exp )
     super lineno

@@ -17,12 +17,6 @@ class AST
     "#{node.class.to_s.gsub( 'RBTiger::', '' )}_#{node.object_id}"
   end
 
-end
-
-
-class AST
-
-
   def printDot( stream, member_name, node_stack )
     pred =  node_stack.empty?() ? "" : AST.dotName( node_stack.last ) + " -> " 
     stream.puts "  #{pred}#{ AST.dotName(self)}"
