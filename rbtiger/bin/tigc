@@ -19,9 +19,12 @@ class TigerCompiler
   
   def translate 
     begin
-      RBTiger::ASTNode.printGraph( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ) )
-      #RBTiger::ASTPrintDOT.new( @ast );
+      # Print the AST to graphviz dot format
+      RBTiger::DotGraph.new( @ast, File.open( File.basename( @filename, ".tig" ) + ".dot", "w" ));
+
+      # Type-checking and translation phase
       RBTiger::Translate.new( @ast );
+
     rescue RBTiger::RBException => e
       puts e.message
       puts e.backtrace

@@ -3,7 +3,6 @@
 #TODO: make all symbol vars be something like elem_type_sym rather than elem_type.
 #TODO: look into encapsulating types for field_list elements, translate return type, formal params, etc
 #TODO: document expected types for non-obvious params (FuncEntry.formals, Binder.tail, CallExp.args, etc ) 
-#TODO: look into moving translation functionality into separate file 
 #TODO: categorize test cases by exactly the type of failure they should produce (file with hash)
 #TODO: move each iteration of unit test loops (each file parse or typecheck) into its own function
 #      can add these test functions programmatically
@@ -23,16 +22,6 @@ class ASTNode
 
   @@state = nil  # Handle for pass specific data
 
-  def ASTNode.printGraph( node, stream = $stdout )
-    @@stream     = stream 
-    @@node_stack = []
-
-    @@stream.puts "digraph g {"
-    node.printNode( "Root" )
-    @@stream.puts "}"
-  end
-
-
   attr_reader   :ordered_vars
   attr_reader   :lineno
 
@@ -47,45 +36,6 @@ class ASTNode
     @@state = state
   end
 
- 
-
-
-
-
-
-
-
-
-  def name
-    "#{self.class.to_s.gsub( 'RBTiger::', '' )}_#{self.object_id}"
-  end
-
-  def printNode( member_name )
-    pred =  @@node_stack.empty?() ? "" : @@node_stack.last.name + " -> " 
-    @@stream.puts "  #{pred}#{self.name}"
-
-    nstr = "    #{self.name} [ shape=#{self.shape}, label=\"#{member_name}:#{self.class.to_s.gsub('RBTiger::', '')}\\n"
-
-    @@node_stack.push self
-    self.ordered_vars.each do |varname|
-      obj = self.instance_variable_get varname
-      if obj.is_a? ASTNode
-        obj.printNode varname
-      elsif( obj.is_a? Enumerable and not obj.is_a? String )
-        obj.each_with_index do |element, i|
-          element.printNode( "#{varname}[#{i}]" )if element.is_a? ASTNode
-        end
-      else
-        nstr += "#{varname} = #{obj}\\n"
-      end
-    end
-    @@node_stack.pop 
-
-    nstr += "\" ]"
-
-    @@stream.puts nstr 
-    
-  end
 end
 
 
@@ -114,11 +64,7 @@ class Symbol < ASTNode
   def initialize( string )
     super lineno
     @string = string 
-    @ordered_vars = %w(@string ) 
-  end
-
-  def shape
-    "box"
+    @ordered_vars = %w(@string) 
   end
 
   def to_s
@@ -134,9 +80,6 @@ end
 ################################################################################
 
 class Exp < ASTNode
-  def shape
-    "ellipse"
-  end
 end
 
 
@@ -316,9 +259,6 @@ end
 ################################################################################
 
 class Dec < ASTNode
-  def shape
-    "octagon"
-  end
 end
 
 
@@ -345,10 +285,6 @@ class FuncDec < Dec
     @ret_type  = ret_type
     @body_exp  = body_exp
     @ordered_vars = %w(@func_name @params @ret_type @body_exp)
-  end
-  
-  def shape
-    "doubleoctagon"
   end
 end
 
@@ -392,9 +328,6 @@ class TypeDec < Dec
     @type      = type
     @ordered_vars = %w(@type_name @type) 
   end
-  def shape
-    "doubleoctagon"
-  end
 end
 
 
@@ -405,9 +338,6 @@ end
 ################################################################################
 
 class TypeSpec < ASTNode
-  def shape
-    "hexagon"
-  end
 end
 
 
@@ -455,9 +385,6 @@ end
 ################################################################################
 
 class Var < ASTNode
-  def shape
-    "trapezium"
-  end
 end
 
 
@@ -507,10 +434,6 @@ end
 ################################################################################
 
 class Op < ASTNode
-  def shape
-    "triangle"
-  end
-
   def integer_operation?
     return true
   end

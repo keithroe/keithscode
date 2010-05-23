@@ -64,7 +64,6 @@ class Translate
     raise UndefinedSymbol.new( type_name, @lineno )
   end
 
-
   def locateVar( var_name )
     var = @var_env.locate( var_name )
     return var if var 
