@@ -1,6 +1,6 @@
 
 dir = File.dirname( __FILE__ )
-require dir + '/Exception'
+require dir + '/exception'
 
 module RBTiger
 
