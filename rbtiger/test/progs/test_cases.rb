@@ -21,19 +21,14 @@ test_cases =  {
     "test48.tig"
   ],
    
+  TypeMismatch => [
     "test9.tig",
     "test10.tig",
     "test11.tig",
     "test13.tig",
     "test14.tig",
     "test15.tig",
-    "test16.tig",
-    "test17.tig",
-    "test18.tig",
-    "test19.tig",
-    "test20.tig",
     "test21.tig",
-    "test22.tig",
     "test23.tig",
     "test24.tig",
     "test25.tig",
@@ -42,13 +37,30 @@ test_cases =  {
     "test29.tig",
     "test31.tig",
     "test32.tig",
-    "test33.tig",
     "test34.tig",
+    "test40.tig",
+    "test43.tig",
+  ],
+  UndefinedSymbol => [
+    "test17.tig",
+    "test18.tig",
+    "test19.tig",
+    "test20.tig",
+    "test22.tig",
+    "test33.tig",
+  ]
+  RBException => [
+    "test16.tig",
     "test35.tig",
     "test36.tig",
     "test38.tig",
     "test39.tig",
-    "test40.tig",
-    "test43.tig",
     "test45.tig"
+  ]
+}
 
+    
+    
+    
+    
+    
