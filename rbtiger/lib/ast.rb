@@ -1,8 +1,6 @@
 
 
-#TODO: make all symbol vars be something like elem_type_sym rather than elem_type.
 #TODO: look into encapsulating types for field_list elements, translate return type, formal params, etc
-#TODO: document expected types for non-obvious params (FuncEntry.formals, Binder.tail, CallExp.args, etc ) 
 #TODO: categorize test cases by exactly the type of failure they should produce (file with hash)
 #TODO: move each iteration of unit test loops (each file parse or typecheck) into its own function
 #      can add these test functions programmatically
@@ -137,84 +135,84 @@ end
 
 
 class RecordExp < Exp
-  attr_accessor :type              # Symbol: record type name
-  attr_accessor :fields            # Array of [ Symbol, Exp ] : field name, initializer pairs
+  attr_accessor :type
+  attr_accessor :fields
 
   def initialize( lineno, type, fields )
     super lineno
-    @type   = type
-    @fields = fields
+    @type   = type                # Symbol: record type name
+    @fields = fields              # [ [ Symbol, Exp ] ] : field name, initializer pairs
     @ordered_vars = %w(@type @fields) 
   end
 end
 
 
 class SeqExp < Exp
-  attr_accessor :exps             # Array of Exp : sequence of expressions 
+  attr_accessor :exps
 
   def initialize( lineno, exps )
     super lineno
-    @exps = exps
+    @exps = exps                  # [ Exp ] : sequence of expressions 
     @ordered_vars = %w(@exps) 
   end
 end
 
 
 class AssignExp < Exp
-  attr_accessor :var              # Symbol: lvalue identifier 
-  attr_accessor :exp              # Exp   : rvalue expression
+  attr_accessor :var
+  attr_accessor :exp
 
   def initialize( lineno, var, exp )
     super lineno
-    @var = var
-    @exp = exp
+    @var = var                    # Symbol: lvalue identifier 
+    @exp = exp                    # Exp   : rvalue expression
     @ordered_vars = %w(@var @exp) 
   end
 end
 
 
 class IfExp < Exp
-  attr_accessor :test_exp         # Exp  : if test expression
-  attr_accessor :then_exp         # Exp  : then clause 
-  attr_accessor :else_exp         # Exp  : else clause, may be nil 
+  attr_accessor :test_exp
+  attr_accessor :then_exp
+  attr_accessor :else_exp
 
   def initialize( lineno, test_exp, then_exp, else_exp )
     super lineno
-    @test_exp = test_exp
-    @then_exp = then_exp
-    @else_exp = else_exp
+    @test_exp = test_exp          # Exp  : if test expression
+    @then_exp = then_exp          # Exp  : then clause 
+    @else_exp = else_exp          # Exp  : else clause, may be nil 
     @ordered_vars = %w(@test_exp @then_exp @else_exp) 
   end
 end
 
 
 class WhileExp < Exp
-  attr_accessor :test_exp         # Exp  : while test expression
-  attr_accessor :body_exp         # Exp  : body of while loop
+  attr_accessor :test_exp
+  attr_accessor :body_exp
 
   def initialize( lineno, test_exp, body_exp )
     super lineno
-    @test_exp = test_exp
-    @body_exp = body_exp
+    @test_exp = test_exp          # Exp  : while test expression
+    @body_exp = body_exp          # Exp  : body of while loop
     @ordered_vars = %w(@test_exp @body_exp) 
   end
 end
 
 
 class ForExp < Exp
-  attr_accessor :var              # Symbol  : loop iteration variable
-  attr_accessor :escape           # boolean : default to true ... use later
-  attr_accessor :lo_exp           # Exp     : int valued expr for loop var range begin 
-  attr_accessor :hi_exp           # Exp     : int valued expr for loop var range end
-  attr_accessor :body_exp         # Exp     : loop body
+  attr_accessor :var
+  attr_accessor :escape
+  attr_accessor :lo_exp
+  attr_accessor :hi_exp
+  attr_accessor :body_exp
 
   def initialize( lineno, var, escape, lo_exp, hi_exp, body_exp )
     super lineno
-    @var = var
-    @escape = escape
-    @lo_exp = lo_exp
-    @hi_exp = hi_exp
-    @body_exp = body_exp
+    @var = var                   # Symbol  : loop iteration variable
+    @escape = escape             # boolean : default to true ... use later
+    @lo_exp = lo_exp             # Exp     : int valued expr for loop var range begin 
+    @hi_exp = hi_exp             # Exp     : int valued expr for loop var range end
+    @body_exp = body_exp         # Exp     : loop body
     @ordered_vars = %w(@var @escape @lo_exp @hi_exp @body_exp) 
   end
 end
@@ -230,8 +228,8 @@ class LetExp < Exp
 
   def initialize( lineno, dec_list, exp_seq )
     super lineno
-    @dec_list = dec_list
-    @exp_seq  = exp_seq 
+    @dec_list = dec_list         # [ Dec ] : List of type and var declarations
+    @exp_seq  = exp_seq          # [ Exp ] : List of expressions
     @ordered_vars = %w(@dec_list @exp_seq) 
   end
 end
@@ -244,9 +242,9 @@ class ArrayExp < Exp
 
   def initialize( lineno, type, size, init )
     super lineno
-    @type = type
-    @size_exp = size
-    @init_exp = init
+    @type = type                 # Symbol : array typename from type dec
+    @size_exp = size             # Exp    : integer valued expression for array size
+    @init_exp = init             # Exp    : element initialization expression
     @ordered_vars = %w(@type @size_exp @init_exp) 
   end
 end
@@ -266,7 +264,7 @@ class FuncDecs < Dec
   attr_accessor :funcs
 
   def initialize( funcs )
-    @funcs        = funcs
+    @funcs        = funcs        # [ FuncDec ] : List of possibly mutually recursive decs 
     @ordered_vars = %w(@funcs)
   end
 end
@@ -280,10 +278,10 @@ class FuncDec < Dec
 
   def initialize( lineno, func_name, params, ret_type, body_exp )
     super lineno
-    @func_name = func_name
-    @params    = params
-    @ret_type  = ret_type
-    @body_exp  = body_exp
+    @func_name = func_name       # Symbol : function name
+    @params    = params          # [ [ Symbol, Symbol ] ] : list of formal name, type pairs      
+    @ret_type  = ret_type        # Symbol : return type, nil for subroutine
+    @body_exp  = body_exp        # Exp    : function body
     @ordered_vars = %w(@func_name @params @ret_type @body_exp)
   end
 end
@@ -297,10 +295,10 @@ class VarDec < Dec
 
   def initialize( lineno, var_name, var_type, init_exp, escape )
     super lineno
-    @var_name = var_name
-    @var_type = var_type
-    @init_exp = init_exp
-    @escape   = escape
+    @var_name = var_name         # Symbol : name of variable 
+    @var_type = var_type         # Symbol : variable type
+    @init_exp = init_exp         # Exp    : initial var value, nil if not initialized 
+    @escape   = escape           # boolean: default to true ... will use later
     @ordered_vars = %w(@var_name @var_type @init_exp @escape) 
   end
 end
@@ -311,7 +309,7 @@ class TypeDecs < Dec
   attr_accessor :type_decs
 
   def initialize( type_decs )
-    @type_decs = type_decs
+    @type_decs = type_decs       # [ TypeDec ] : List of possibly mutually recursive decs
     @ordered_vars = %w(@type_decs) 
   end
 end
@@ -324,8 +322,8 @@ class TypeDec < Dec
 
   def initialize( lineno, type_name, type )
     super lineno
-    @type_name = type_name
-    @type      = type
+    @type_name = type_name       # Symbol   : new typename being declared
+    @type      = type            # TypeSpec : Type specification 
     @ordered_vars = %w(@type_name @type) 
   end
 end
@@ -347,8 +345,7 @@ class RecordSpec < TypeSpec
 
   def initialize( lineno, fields )
     super lineno
-    # Array of ( symbol, type ) doubles
-    @fields = fields
+    @fields = fields             # [ [ Symbol, Symbol ] ] : Field spec (name, type) pairs
     @ordered_vars = %w(@fields) 
   end
 end
@@ -360,7 +357,7 @@ class ArraySpec < TypeSpec
 
   def initialize( lineno, elem_type)
     super lineno
-    @elem_type = elem_type
+    @elem_type = elem_type       # Symbol : element typename
     @ordered_vars = %w(@elem_type) 
   end
 end
@@ -372,7 +369,7 @@ class NameSpec < TypeSpec
 
   def initialize( lineno, type_name )
     super lineno
-    @type_name = type_name
+    @type_name = type_name       # Symbol : typename
     @ordered_vars = %w(@type_name) 
   end
 end
@@ -380,7 +377,7 @@ end
 
 ################################################################################
 #
-# Variable accesors 
+# Variable accessors 
 #
 ################################################################################
 
@@ -394,7 +391,7 @@ class SimpleVar < Var
 
   def initialize( lineno, var_name )
     super lineno
-    @var_name = var_name
+    @var_name = var_name         # Symbol : variable name  
     @ordered_vars = %w(@var_name) 
   end
 end
@@ -407,8 +404,8 @@ class RecordVar < Var
 
   def initialize( lineno, var, field_name )
     super lineno
-    @var        = var
-    @field_name = field_name
+    @var        = var            # Var    : record lvalue
+    @field_name = field_name     # Symbol : name of record field
     @ordered_vars = %w(@var @field_name) 
   end
 end
@@ -420,8 +417,8 @@ class SubscriptVar < Var
 
   def initialize( lineno, var, subscript_exp )
     super lineno
-    @var           = var
-    @subscript_exp = subscript_exp
+    @var           = var           # Var : record lvalue
+    @subscript_exp = subscript_exp # Exp : integer valued subscript expession
     @ordered_vars  = %w(@var @subscript_exp) 
   end
 end

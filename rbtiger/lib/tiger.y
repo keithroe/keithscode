@@ -83,7 +83,7 @@ rule
                     | ARRAY OF ID
                     { result = RBTiger::ArraySpec.new val[0].lineno, RBTiger::Symbol.create( val[2].value ) }
                     | LBRACE TypeFields RBRACE
-                    { result = RBTiger::RecordSpec.new val[0].lineno, val[1] }
+                    { result = RBTiger::RecordSpec.new( val[0].lineno, val[1] ) }
 
   TypeFields        : 
                     { result = [] }
