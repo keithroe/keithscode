@@ -48,4 +48,18 @@ module RBTiger
       "Multiply defined symbol <<#{@symbol_name}>> at '#{@current_lineno}' previously defined at line #{@previous_lineno}."
     end
   end
+  
+  class SyntaxError < RBException
+
+    def initialize filename, lineno, message 
+      @filename = filename
+      @lineno   = lineno 
+      @message  = message
+    end
+
+    def to_s
+      "Syntax error at '#{@symbol_name}':#{@current_lineno}.  #{@message}" 
+    end
+  end
+
 end
