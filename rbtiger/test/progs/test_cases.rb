@@ -41,6 +41,7 @@ test_cases =  {
     "test40.tig",
     "test43.tig",
   ],
+
   UndefinedSymbol => [
     "test17.tig",
     "test18.tig",
@@ -48,7 +49,8 @@ test_cases =  {
     "test20.tig",
     "test22.tig",
     "test33.tig",
-  ]
+  ],
+
   RBException => [
     "test16.tig",
     "test35.tig",
@@ -56,6 +58,8 @@ test_cases =  {
     "test38.tig",
     "test39.tig",
     "test45.tig"
+  ],
+  RBException => [
   ]
 }
 

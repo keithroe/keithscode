@@ -197,11 +197,12 @@ rule
 ---- header ----
 
 require File.dirname( __FILE__ ) + '/tiger_lex.rb'
+require File.dirname( __FILE__ ) + '/exception.rb'
 
 ---- inner ----
 
 def on_error( t, v, values )
-  raise Racc::ParseError, "<<#{@filename}:#{@lineno}: syntax error #{v}>>"
+  raise RBTiger::SyntaxError.new( @filename, @lineno, v )
 end
 
 ---- footer ----
