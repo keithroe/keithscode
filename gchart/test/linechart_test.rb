@@ -19,6 +19,12 @@ chart.addData [ 0.9, 0.6, 0.4, 0.3, 0.4, 0.6, 0.9, nil ] do |data|
   data.name = 'zoo'
 end
 
+chart.addAxis( 'y' ) do |axis|
+  axis.setRange( 0.0, 1.2, 0.1 )
+end
+chart.addAxis( 'x' ) do |axis|
+  axis.setLabels( "test1", "test2", "test3" )
+end
 
 puts chart.url
 chart.png( $dir + "/pngs/test1.png" )
