@@ -1,7 +1,32 @@
 
+# Copyright (c) <2010> <r. keith morley>
+
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+
+# The above copyright notice and this permission notice shall be included in
+# all copies or substantial portions of the Software.
+
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+# THE SOFTWARE.
+ 
 require 'net/http'
 
 module GChart
+
+  def yAxis(); 'y' end
+  def rAxis(); 'r' end
+  def tAxis(); 't' end
+
 
   #############################################################################
   #
@@ -36,9 +61,16 @@ module GChart
   #
   #############################################################################
   class Axis
+    attr_accessor :position
+    attr_accessor :range
+    attr_accessor :labels
+    attr_accessor :label_positions
+    attr_accessor :label_style
+    attr_accessor :title_style
+
     def initialize( which_axis )
-      @position        = which_axis  # chxt
-      @range           = nil         # chxr
+      @position        = which_axis  # chxt 'x', 'y', 'r', or 't' 
+      @range           = nil         # chxr [ min, max, step ]
       @labels          = nil         # chxl
       @label_positions = nil         # chxp
       @label_style     = nil         # chxs
@@ -46,18 +78,22 @@ module GChart
 
     end
 
-    def setRange( range )       # chxr
-      @range  = range
+    def setRange( *range )   # chxr
+      puts range.inspect
+      if range.size != 2 && range.size != 3
+        raise ArgumentError.new( "setRange must take either [min, max] or [min, max, step]" )
+      end
+      @range  = range 
       @labels = nil
     end
 
-    def setLabels( labels )     # chxl
+    def setLabels( *labels )     # chxl
       @labels = labels
       @range  = nil
     end
 
     def setLabelPositions( label_positions )
-      if labels
+      if label_positions.size != @labels.size
         raise ArgumentError( "Number of label positions(%i) must match number of labels( %i )" % 
                              [ label_positions.size, @labels.size ] )
         @label_positions = label_positions
@@ -81,10 +117,6 @@ module GChart
   class Chart
 
 
-    def Chart.xAxis();  0 end
-    def Chart.yAxis();  1 end
-    def Chart.rAxis();  2 end
-    def Chart.tAxis();  3 end
 
     @@url_header = 'http://chart.apis.google.com/'
 
@@ -145,20 +177,20 @@ module GChart
     end
 
 
-    def axisOn( which )
-      raise ArgumentError.new( "invalid axis parameter" ) if !(0...3).include?( which )
-      @axes_on[ which ] = true 
-    end
-    def axisOff( which )
-      raise ArgumentError.new( "invalid axis parameter" ) if !(0...3).include?( which )
-      @axes_on[ which ] = false 
-    end
-
     def addData( data )
       @data.push Data.new( data )
       yield @data.last if block_given? 
       @data.last
     end
+
+
+    def addAxis( which )
+      raise ArgumentError.new( "invalid axis parameter" ) if ![ 'x', 'y', 'r', 't' ].include?( which )
+      @axes.push Axis.new( which )
+      yield @axes.last if block_given? 
+      @axes.last
+    end
+
 
     def url
       s = "#{@@url_header}/chart?cht=#{@type}&chs=#{@size.join('x')}"
@@ -179,7 +211,6 @@ module GChart
 
       # process data values
       @data.each do |data|
-        puts data 
         data_vals = data.data
         min_max = data_vals.inject( min_max )  do |mm,val| 
           if( val )
@@ -223,6 +254,20 @@ module GChart
         s += "&chdlp=#{@legend_position}#{legend_order}"
 
       end
+
+      
+      chxt = Array.new
+      chxr = Array.new
+      chxl = Array.new
+      @axes.each_with_index do |axis, i|
+        chxt.push axis.position
+        chxr.push ( ( [i] + axis.range ).join(',') ) if ( axis.range )
+        chxl.push ( [i.to_s+":"] + axis.labels)      if ( axis.labels)
+        puts chxr.last.inspect
+      end
+      s+= "&chxt=#{chxt.join(',')}"
+      s+= "&chxr=#{chxr.join('|')}"
+      s+= "&chxl=#{chxl.join('|')}"
 
     end
 
