@@ -1,6 +1,7 @@
 #!/usr/bin/ruby -w
 
-require 'test_helper'
+$dir = File.dirname( __FILE__ )
+require  $dir + '/test_helper'
 
 include Optix   # using namespace
 
@@ -33,7 +34,7 @@ class Sample5
 
     # ray gen prog 
     # TODO: make context.createProgramFromPTXFile( string1, string2)
-    ray_gen_program = context.createProgramFromPTXFile( "./ptx/pinhole_camera.cu.ptx", "pinhole_camera" )
+    ray_gen_program = context.createProgramFromPTXFile( "#{$dir}/ptx/pinhole_camera.ptx", "pinhole_camera" )
     context.setRayGenerationProgram( 0, ray_gen_program )
 
     variable = context.declareVariable( "eye" )
@@ -46,13 +47,13 @@ class Sample5
     variable.set3f( 0, 0, -5 )
 
     # exception program
-    exception_program = context.createProgramFromPTXFile( "./ptx/pinhole_camera.cu.ptx", "exception" )
+    exception_program = context.createProgramFromPTXFile( "#{$dir}/ptx/pinhole_camera.ptx", "exception" )
     context.setExceptionProgram( 0, exception_program )
     variable = context.declareVariable( "bad_color" )
     variable.set3f( 1.0, 1.0, 0.0 )
                                                           
     # miss prog
-    miss_program = context.createProgramFromPTXFile( "./ptx/constantbg.cu.ptx", "miss" )
+    miss_program = context.createProgramFromPTXFile( "#{$dir}/ptx/constantbg.ptx", "miss" )
     context.setMissProgram( 0, miss_program)
     variable = context.declareVariable( "bg_color" )
     variable.set3f( 0.3, 0.1, 0.2 )
@@ -63,7 +64,7 @@ class Sample5
   def createGeometry
     sphere = @context.createGeometry()
     sphere.setPrimitiveCount( 1 )
-    ptx_path = "./ptx/sphere.cu.ptx"
+    ptx_path = "#{$dir}/ptx/sphere.ptx"
     sphere.setBoundingBoxProgram( @context.createProgramFromPTXFile( ptx_path, "bounds" ) )
     sphere.setIntersectionProgram( @context.createProgramFromPTXFile( ptx_path, "intersect" ) )
     variable = sphere.declareVariable( "sphere" )
@@ -73,7 +74,7 @@ class Sample5
 
   def createMaterial
 
-    chp = @context.createProgramFromPTXFile( "./ptx/normal_shader.cu.ptx", "closest_hit_radiance" )
+    chp = @context.createProgramFromPTXFile( "#{$dir}/ptx/normal_shader.ptx", "closest_hit_radiance" )
     matl = @context.createMaterial()
     matl.setClosestHitProgram( 0, chp )
     return matl
