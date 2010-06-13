@@ -4,8 +4,10 @@
 require 'rubygems'
 require 'mkrf/rakehelper'
 
-task :default do
-  setup_extension( 'roptix', 'roptix_internal' ) 
+setup_extension( 'roptix', 'roptix_internal' ) 
+
+task :default => [ :roptix_internal, :test ]
+
+task :test do
   rake( 'test' )
 end
-
