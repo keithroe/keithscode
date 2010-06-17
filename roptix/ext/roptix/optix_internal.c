@@ -16,6 +16,7 @@ static VALUE class_geometry;
 static VALUE class_material;
 static VALUE class_buffer;
 static VALUE class_texturesampler;
+static VALUE class_mappedbuffer;
 
 
 typedef struct { RTvariable variable;                 } VariablePtr;
@@ -32,6 +33,7 @@ typedef struct { RTmaterial material;                 } MaterialPtr;
 typedef struct { RTbuffer buffer;                     } BufferPtr;
 typedef struct { RTtexturesampler texturesampler;     } TextureSamplerPtr;
 typedef struct { RTobject object;                     } ObjectPtr;
+typedef struct { void* map;                           } MappedBuffer;
 
 
 static RTcontext current_context; // TODO: Make this a list later
@@ -3360,16 +3362,14 @@ static VALUE bufferGetDimensionality( VALUE self )
 
 static VALUE bufferMap( VALUE self )
 {
-/* TODO: FIX THIs
   RTresult result;
   BufferPtr* buffer_ptr;
   Data_Get_Struct( self, BufferPtr, buffer_ptr );
 
   void* user_pointer;
   RT_CHECK_ERROR( rtBufferMap( buffer_ptr->buffer, &user_pointer ) );
-  return user_pointer;
-*/
-  return Qnil;
+
+  return Data_Wrap_Struct( class_mappedbuffer, 0, 0, user_pointer );
 }
 
 static VALUE bufferUnmap( VALUE self )
