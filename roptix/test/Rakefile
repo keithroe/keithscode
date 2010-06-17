@@ -8,15 +8,15 @@ avail = Mkrf::Availability.new()
 avail.include_library( 'optix', 'rtContextCreate',
                        "#{ENV['OPTIX_LOCATION']}/lib64",
                        "#{ENV['OPTIX_LOCATION']}/lib",
-                       '/usr/local/OptiX/lib',
-                       '/usr/local/OptiX/lib64',
+                       '/usr/local/optix/lib',
+                       '/usr/local/optix/lib64',
                        '/Developer/OptiX/lib',
                        '/Developer/OptiX/lib64' )
 
 avail.include_header( 'optix.h',
                       "#{ENV['OPTIX_LOCATION']}/include",
-                      '/usr/local/OptiX/include',
-                      '/Developer/OptiX/include' )
+                      '/usr/local/optix/include',
+                      '/Developer/optix/include' )
 
 ptx_dir  = Pathname.new( File.dirname( __FILE__ ) ) + 'ptx'
 cuda_dir = Pathname.new( File.dirname( __FILE__ ) ) + 'cuda'
