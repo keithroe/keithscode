@@ -5,13 +5,16 @@ require  'matrix'
 
 include Optix
 
-class MantaScene
-  @@WIDTH  = 512
-  @@HEIGHT = 512
+class MantaScene < OptixViewer
 
-  def initialize()
+  def initialize
+    super
     @context = nil
     @output_buffer = nil
+  end
+
+  def getOutputBuffer
+    @output_buffer
   end
 
   def initScene()
@@ -30,7 +33,7 @@ class MantaScene
     variable.set1f( 1e-4 )
 
     variable = @context.declareVariable( "output_buffer" )
-    @output_buffer = @context.createBuffer( BUFFER_OUTPUT, FORMAT_UNSIGNED_BYTE4, @@WIDTH, @@HEIGHT )
+    @output_buffer = @context.createBuffer( BUFFER_OUTPUT, FORMAT_UNSIGNED_BYTE4, @width, @height )
     variable.setObject( @output_buffer )
 
     # ray gen prog 
@@ -38,7 +41,7 @@ class MantaScene
     @context.setRayGenerationProgram( 0, ray_gen_program )
     
     eye = [3, 2, -3]
-    u,v,w = cameraParams( eye, [ 0, 0.3, 0 ], [0,1,0], 60.0, @@WIDTH.to_f / @@HEIGHT.to_f )
+    u,v,w = cameraParams( eye, [ 0, 0.3, 0 ], [0,1,0], 60.0, @width.to_f / @height.to_f )
     variable = @context.declareVariable( "eye" )
     variable.set3f( *eye )
     variable = @context.declareVariable( "U" )
@@ -202,10 +205,8 @@ class MantaScene
 
   end
 
-  def run
-    initScene
-    @context.launch( 0, @@WIDTH, @@HEIGHT )
-    @output_buffer.writeToPPM "mantascene.ppm"
+  def launch 
+    @context.launch( 0, @width, @height )
   end
 end
 
