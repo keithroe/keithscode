@@ -23,6 +23,15 @@
 
 #include <optix_math.h>
 
+#include <vector_types.h>
+
+typedef struct struct_BasicLight
+{
+  float3 pos;
+  float3 color;
+  int    casts_shadow;
+} BasicLight;
+
 // Convert a float3 in [0,1)^3 to a uchar4 in [0,255]^4 -- 4th channel is set to 255
 #ifdef __CUDACC__
 __device__ __inline__ uchar4 make_color(const float3& c)
