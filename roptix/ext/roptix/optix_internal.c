@@ -33,7 +33,7 @@ typedef struct { RTmaterial material;                 } MaterialPtr;
 typedef struct { RTbuffer buffer;                     } BufferPtr;
 typedef struct { RTtexturesampler texturesampler;     } TextureSamplerPtr;
 typedef struct { RTobject object;                     } ObjectPtr;
-typedef struct { void* map;                           } MappedBuffer;
+typedef struct { void* data; unsigned size;           } MappedBufferPtr;
 
 
 static RTcontext current_context; // TODO: Make this a list later
@@ -3175,6 +3175,68 @@ static VALUE materialGetVariable( VALUE self, VALUE index )
   return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
 }
 
+/******************************************************************************\
+ *
+ * MappedBuffer 
+ *
+\******************************************************************************/
+static VALUE mappedBufferAlloc( VALUE klass )
+{
+  MappedBufferPtr* mapped_buffer_ptr;
+
+  mapped_buffer_ptr = malloc( sizeof( MappedBufferPtr ) );
+  mapped_buffer_ptr->data = 0;
+  mapped_buffer_ptr->size = 0u;
+
+  return Data_Wrap_Struct( klass, 0, 0, mapped_buffer_ptr );
+}
+
+
+static VALUE mappedBufferInitialize( VALUE self, VALUE buffer )
+{
+  RTresult result;
+  RTsize dims[3]; 
+  RTsize elem_size;
+
+  MappedBufferPtr* mapped_buffer_ptr;
+  BufferPtr*       buffer_ptr;
+
+  Data_Get_Struct( self, MappedBufferPtr, mapped_buffer_ptr );
+  Data_Get_Struct( buffer, BufferPtr, buffer_ptr );
+
+  RT_CHECK_ERROR( rtBufferMap( buffer_ptr->buffer, &( mapped_buffer_ptr->data ) ) );
+  RT_CHECK_ERROR( rtBufferGetSizev( buffer_ptr->buffer, 3, dims ) );
+  RT_CHECK_ERROR( rtBufferGetElementSize( buffer_ptr->buffer, &elem_size ) );
+  mapped_buffer_ptr->size = elem_size *  dims[0] * ( dims[1] ? dims[1] * ( dims[2] ? dims[2] : 1 ) : 1 );
+
+  return self;
+}
+
+static VALUE mappedBufferGet( VALUE self )
+{
+  MappedBufferPtr* mapped_buffer_ptr;
+
+  Data_Get_Struct( self, MappedBufferPtr, mapped_buffer_ptr );
+
+  return rb_str_new( (const char*)(mapped_buffer_ptr->data), mapped_buffer_ptr->size );
+}
+
+static VALUE mappedBufferSet( VALUE self, VALUE data )
+{
+  unsigned int len;
+  MappedBufferPtr* mapped_buffer_ptr;
+
+  Data_Get_Struct( self, MappedBufferPtr, mapped_buffer_ptr );
+  if( RSTRING_LEN( data ) != mapped_buffer_ptr->size ) {
+    rb_raise(rb_eException, "MappedBuffer.set: mismatch -- buffer len = %i, data len = %i",
+        mapped_buffer_ptr->size, RSTRING_LEN( data ) );
+  }
+  memcpy( mapped_buffer_ptr->data, RSTRING_PTR( data ), mapped_buffer_ptr->size );
+
+  return Qnil;
+}
+
+
 
 /******************************************************************************\
  *
@@ -3365,11 +3427,10 @@ static VALUE bufferMap( VALUE self )
   RTresult result;
   BufferPtr* buffer_ptr;
   Data_Get_Struct( self, BufferPtr, buffer_ptr );
+  VALUE args[1];
 
-  void* user_pointer;
-  RT_CHECK_ERROR( rtBufferMap( buffer_ptr->buffer, &user_pointer ) );
-
-  return Data_Wrap_Struct( class_mappedbuffer, 0, 0, user_pointer );
+  args[0] = self;
+  return rb_class_new_instance( 1, args, class_mappedbuffer );
 }
 
 static VALUE bufferUnmap( VALUE self )
@@ -4026,6 +4087,13 @@ void Init_roptix_internal()
   rb_define_method( class_buffer, "map", bufferMap, 0 );
   rb_define_method( class_buffer, "unmap", bufferUnmap, 0 );
   rb_define_method( class_buffer, "writeToPPM", bufferWriteToPPM, 1 );
+
+  /* MappedBuffer */
+  class_mappedbuffer = rb_define_class_under( module_optix, "MappedBuffer", rb_cObject );
+  rb_define_alloc_func( class_mappedbuffer, mappedBufferAlloc );
+  rb_define_method( class_mappedbuffer, "initialize", mappedBufferInitialize, 1 );
+  rb_define_method( class_mappedbuffer, "get", mappedBufferGet, 0 );
+  rb_define_method( class_mappedbuffer, "set", mappedBufferSet, 1 );
 
   /* Texture Sampler */
   class_texturesampler = rb_define_class_under( module_optix, "TextureSampler", rb_cObject );
