@@ -1,0 +1,17 @@
+
+
+
+defult:
+	$(MAKE) -C src/math
+	$(MAKE) -C src/mesh
+	$(MAKE) -C src/viewer
+	$(MAKE) -C src/readply
+
+.PHONY: clean
+clean:
+	$(MAKE) -C src/math clean
+	$(MAKE) -C src/mesh clean
+	$(MAKE) -C src/viewer clean
+	$(MAKE) -C src/readply clean
+
+

@@ -1,0 +1,26 @@
+CXX = g++
+
+ifdef DEBUG
+	CXXFLAGS = -march=i686 -g -Wall -Wno-reorder -Wno-sign-compare -Wno-sign-promo
+else
+	CXXFLAGS = -march=i686 -O9 -ffast-math -funroll-loops
+endif
+
+
+CXXFLAGS += -I$(TRIMESH_DIR)/include
+LDFLAGS = -L$(TRIMESH_DIR)/lib.$(UNAME) -L/usr/X11R6/lib
+LIBS = -ltrimesh -lm
+GLLIBS = -lglut -lGL -lGLU -lX11
+
+
+$(OBJDIR)/%.o: %.cc
+	@ echo "$(CXX) $(CXXFLAGS) -c $< -o $@"
+	@ rm -f "$(@:.o=.d)" && env DEPENDENCIES_OUTPUT="$(@:.o=.d) $@" $(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR):
+	mkdir $@
+
+-include $(OBJDIR)/*.d
+
+
+AR = ar -rcs

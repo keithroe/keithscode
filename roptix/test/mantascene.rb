@@ -1,7 +1,6 @@
 
 $dir = File.dirname( __FILE__ )
 require  $dir + '/test_helper'
-require  'matrix' 
 
 include Optix
 
@@ -40,8 +39,9 @@ class MantaScene < OptixViewer
     ray_gen_program = @context.createProgramFromPTXFile( "#{$dir}/ptx/pinhole_camera.ptx", "pinhole_camera" )
     @context.setRayGenerationProgram( 0, ray_gen_program )
     
-    eye = [3, 2, -3]
-    u,v,w = cameraParams( eye, [ 0, 0.3, 0 ], [0,1,0], 60.0, @width.to_f / @height.to_f )
+    
+    eye = Vector[3, 2, -3]
+    u,v,w = cameraParams( eye, Vector[ 0.0, 0.3, 0.0 ], Vector[ 0.0, 1.0, 0.0 ], 60.0, @width.to_f / @height.to_f )
     variable = @context.declareVariable( "eye" )
     variable.set3f( *eye )
     variable = @context.declareVariable( "U" )
@@ -104,17 +104,15 @@ class MantaScene < OptixViewer
     parallelogram.setPrimitiveCount( 1 )
     parallelogram.setBoundingBoxProgram( @context.createProgramFromPTXFile( "#{ptx}/parallelogram.ptx", "bounds" ) )
     parallelogram.setIntersectionProgram( @context.createProgramFromPTXFile( "#{ptx}/parallelogram.ptx","intersect" ) )
-    anchor = [ -20.0, 0.01, 20.0 ]
-    v1     = [ 40.0, 0.0, 0.0 ]
-    v2     = [ 0.0, 0.0, -40.0 ]
-    normal = cross( v1, v2 )
-    normal = normalize( normal )
-    d      = dot( normal, anchor )
-    l2_inv = 1.0 / dot( v1,v1 )
-    v1     = v1.map { |x| x * l2_inv }
-    l2_inv = 1.0 / dot( v2,v2 )
-    v2     = v2.map { |x| x * l2_inv }
-    plane  = normal + [d]
+    anchor = Vector[ -20.0, 0.01, 20.0 ]
+    v1     = Vector[ 40.0, 0.0, 0.0 ]
+    v2     = Vector[ 0.0, 0.0, -40.0 ]
+    normal = Vector.cross( v1, v2 )
+    normal = Vector.normalize( normal )
+    d      = Vector.dot( normal, anchor )
+    v1     = v1 * ( 1.0 / Vector.dot( v1,v1 ) )
+    v2     = v2 * ( 1.0 / Vector.dot( v2,v2 ) )
+    plane  = Vector[ normal[0], normal[1], normal[2], d ]
     var = parallelogram.declareVariable( "plane" )
     var.set4f( *plane )
     var = parallelogram.declareVariable( "v1" )
@@ -202,7 +200,6 @@ class MantaScene < OptixViewer
     var.setObject( geometrygroup )
     var = @context.declareVariable( "top_shadower" )
     var.setObject( geometrygroup )
-
   end
 
   def launch 

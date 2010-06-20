@@ -1,0 +1,45 @@
+#
+# Makerules for trimesh and clients of trimesh
+#
+# Pays attention to the following variables:
+#  DEBUG = y      - debugging compiler flags
+#  ABI = 64       - compile for -64 instead of -n32 (IRIX64 only)
+#  CROSS = Win32  - cross-compile for Windows
+#
+#
+# Defines the following variables:
+#  UNAME          - destination system type
+#  OBJDIR         - directory for object files
+#  CXX            - C++ compiler
+#  CXXFLAGS       - C++ compiler flags
+#  LDFLAGS        - Linker flags
+#  LIBS           - Libraries
+#  GLLIBS         - OpenGL libraries
+#  AR             - Create .a archive
+#  EXE            - Extension of executables (.exe under Win32)
+#  
+#
+# Client Makefiles need to define a "default:" rule
+# - SMR
+#
+
+
+MVIEW_DIR = ../..
+
+#
+#
+
+UNAME = $(shell uname)
+
+OBJDIR = OBJ.$(UNAME)
+
+all: $(OBJDIR) default
+
+
+include $(MVIEW_DIR)/Makedefs.$(UNAME)
+
+
+ifdef DEBUG
+    DEFINES += -DDEBUG
+endif
+
