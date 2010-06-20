@@ -1,0 +1,28 @@
+include ../../Makerules
+
+
+SOURCES = main.cc Viewer.cc
+
+
+OFILES  = $(addprefix $(OBJDIR)/,$(SOURCES:.cc=.o)) 
+DESTDIR = ../../bin.$(UNAME)
+PROGS   = $(addprefix $(DESTDIR)/, $(SOURCES:.cc=)) 
+
+default: $(DESTDIR) $(PROGS) 
+
+
+$(DESTDIR) :
+	-mkdir $@
+
+$(PROGS) : $(DESTDIR)/%$ : $(OBJDIR)/%.o
+	rm -f $@
+	$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) $(GLLIBS) $(LIBS) -o $@
+
+clean :
+	-rm -f $(OFILES) $(OBJDIR)/Makedepend $(OBJDIR)/*.d 
+	-rmdir $(OBJDIR)
+
+spotless : clean
+	-rm -f $(PROGS) 
+	-rmdir $(DESTDIR)
+
