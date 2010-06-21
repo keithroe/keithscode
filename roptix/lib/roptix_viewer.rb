@@ -23,6 +23,12 @@ class Arcball
   end
 
 
+  def reset( location, radius )
+    @location   = location
+    @radius     = radius
+  end
+
+
   def toSphere( v )
     sphere = Vector[ ( v[0] - @location[0] ) / @radius,
                      ( v[1] - @location[1] ) / @radius,
@@ -93,6 +99,12 @@ class Camera
 
     @scale   = 1.0 
     @arcball = Arcball.new(  Vector[ width / 2.0, height / 2.0, 0.0 ], width / 2.0 )
+  end
+
+  def windowResized( width, height )
+    @width  = width
+    @height = height
+    @arcball.reset( Vector[ width / 2.0, height / 2.0, 0.0 ], width / 2.0 )
   end
 
   def motion( x, y )
@@ -169,9 +181,8 @@ class Camera
 
   
   def params()
-
-    aspect = @width.to_f / @height.to_f
-    hfov   = r2d( 2.0*Math.atan( aspect*Math.tan( d2r(0.5*@vfov ) ) ) )
+    aspect  = @width.to_f / @height.to_f
+    hfov    = r2d( 2.0*Math.atan( aspect*Math.tan( d2r(0.5*@vfov ) ) ) )
 
     w    = @lookat - @eye
     flen = Math.sqrt( Vector.dot( w, w ) )
@@ -260,6 +271,7 @@ class OptixViewer
     glutPostRedisplay()
   end
 
+
   def display()
 
     eye, u, v, w = @camera.params
@@ -313,7 +325,10 @@ class OptixViewer
 
 
   def resize( width, height )
-
+    @width  = width
+    @height = height
+    @camera.windowResized( @width, @height )
+    @output_buffer.setSize2D( width, height )
   end
 
 end
