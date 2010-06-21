@@ -140,6 +140,9 @@ class Camera
     end
   end
 
+  def getCameraParams
+  end
+
 end
 
 
