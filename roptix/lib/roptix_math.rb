@@ -2,11 +2,17 @@
 
 ################################################################################
 #
-# Vector class of arbitrary length.  Move this into c exenstion with fixed size (eg, vec3f)
-# if necessary
+# Vector class of arbitrary length.  Move this into c exenstion with fixed size
+# (eg, vec3f) if necessary.
 #
 ################################################################################
+
 class Vector < Array
+
+  def x(); self[0] end
+  def y(); self[1] end
+  def z(); self[2] end
+  def w(); self[3] end
 
   def +@
     self
@@ -91,15 +97,67 @@ class Vector < Array
 end
 
 
+################################################################################ #
+# 4x4 Matrix
+#
+################################################################################
+class Matrix
+  attr_accessor :m
+  def initialize( m = nil )
+    if m 
+      @m = m
+    else
+      @m = [ 1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1 ]
+    end
+  end
+
+  def []( i )
+    @m[i]
+  end
+  
+  def []=( i, val )
+    @m[i] = val
+  end
+
+  def *( b )
+    if b.is_a? Matrix
+      # TODO
+    elsif b.is_a? Vector
+      return Vector[ m[ 0]*b.x + m[ 1]*b.y + m[ 2]*b.z + m[ 3]*b.w,
+                     m[ 4]*b.x + m[ 5]*b.y + m[ 6]*b.z + m[ 7]*b.w, 
+                     m[ 8]*b.x + m[ 9]*b.y + m[10]*b.z + m[11]*b.w, 
+                     m[12]*b.x + m[13]*b.y + m[14]*b.z + m[15]*b.w ]
+    else
+      return @m.map { |x| x*b.to_f }
+    end
+  end
+end
+
+
 ################################################################################
 #
 # Quaternion for representing rotations
 #
 ################################################################################
 def Quaternion
+
   def initialize( w, x, y, z )
     @q = [ w, x, y, z ]
   end
+
+  def []( i )
+    @q[i]
+  end
+  
+  def []=( i, val )
+    @q[i] = val
+  end
+
+
+  def w(); @q[0] end
+  def x(); @q[1] end
+  def y(); @q[2] end
+  def z(); @q[3] end
 
   def Quaternion.create( *args )
     if args.size == 2 && args[0].is_a? Vector && args[1].is_a? Vector
@@ -132,6 +190,21 @@ def Quaternion
       return Quaternion.new( f*@q[0], f*@q[1], f*@q[2], f*@q[3] )
     end
   end
+  
+
+  def *( b )
+    f = b.to_f
+    return Quaternion.new( @q[0]/f, @q[1]/f, @q[2]/f, @q[3]/f )
+  end
+
+  def +( b )
+    return Quaternion.new( @q[0]+b[0], @q[1]+b[1], @q[2]+b[2], @q[3]+b[3] )
+  end
+  
+  def -( b )
+    return Quaternion.new( @q[0]-b[0], @q[1]-b[1], @q[2]-b[2], @q[3]-b[3] )
+  end
+
 
   # l2 norm
   def norm
@@ -148,14 +221,44 @@ def Quaternion
     n
   end
 
-end
+  def getRotation()
+    v = Quaternion.new( *@q )
+    v.normalize
+    axis  = Vector[ @q[1], @q[2], @q[2] ]
+    angle = 180.0 / Math::PI  * 2.0 * Math.acos( @q[0] )
+    return [ axis, angle ]
+  end
+
+  def getMatrix
+    m = Array.new
+    m[0] = 1.0 - 2.0*y*y - 2.0*z*z
+    m[1] = 2.0*x*y + 2.0*z*w
+    m[2] = 2.0*x*z - 2.0*y*w
+    m[3] = 0.0
+
+    m[4] = 2.0*x*y - 2.0*z*w
+    m[5] = 1.0 - 2.0*x*x - 2.0*z*z
+    m[6] = 2.0*z*y + 2.0*x*w
+    m[7] = 0.0
+
+    m[8] = 2.0*x*z + 2.0*y*w
+    m[9] = 2.0*z*y - 2.0*x*w
+    m[10] = 1.0 - 2.0*x*x - 2.0*y*y
+    m[11] = 0.0
+
+    m[12] = 0.0
+    m[13] = 0.0
+    m[14] = 0.0
+    m[15] = 1.0
+
+    Matrix.new( m )
+  end
 
 
-################################################################################
-#
-# 4x4 Matrix
-#
-################################################################################
-class Matrix
+  def to_s
+    "[ #{@q[0]}, ( #{@q[1]}, #{@q[2]}, #{@q[3]} ) ]"
+  end
+
 end
+
 
