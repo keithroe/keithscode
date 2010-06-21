@@ -1,5 +1,6 @@
 
 require File.dirname( __FILE__ ) + '/roptix_math'
+require 'time'
 require 'rubygems'
 require 'opengl'
 include Gl, Glu, Glut
@@ -107,8 +108,8 @@ class Camera
     @arcball.reset( Vector[ width / 2.0, height / 2.0, 0.0 ], width / 2.0 )
   end
 
-  def motion( x, y )
 
+  def motion( x, y )
     dx = x - @mouse_x
     dy = y - @mouse_y
 
@@ -216,13 +217,17 @@ class OptixViewer
     @width  = 512
     @height = 512
 
+    @last_fps_time  = 0.0
+    @last_fps_frame = 0
+    @last_fps_text  = ''
+    @display_fps    = true
+
     @camera        = nil  #
     @context       = nil  # subclass needs to initialize these params
     @output_buffer = nil  #
   end
 
   def run
-
     initScene
 
     glutInit
@@ -254,6 +259,30 @@ class OptixViewer
     glutMainLoop
   end
 
+  def drawText( text, x, y, font )
+    # Save state
+    glPushAttrib( GL_CURRENT_BIT | GL_ENABLE_BIT )
+
+    glDisable( GL_TEXTURE_2D )
+    glDisable( GL_LIGHTING )
+    glDisable( GL_DEPTH_TEST)
+
+    shadow_color = Vector[ 0.05, 0.05, 0.05 ]
+    text_color   = Vector[ 0.95, 0.95, 0.95 ]
+
+    # Shift shadow one pixel to the lower right.
+    glColor3f( *shadow_color )
+    glWindowPos2f(x + 1.0, y - 1.0)
+    text.each_byte { |c| glutBitmapCharacter( font, c ) }
+
+    # main text
+    glColor3f( *text_color )
+    glWindowPos2f(x, y)
+    text.each_byte { |c| glutBitmapCharacter( font, c ) }
+
+    # Restore state
+    glPopAttrib()
+  end
 
   #-----------------------------------------------------------------------------
   # 'virtual' interface
@@ -295,6 +324,17 @@ class OptixViewer
 
     glDrawPixels( @width, @height, GL_BGRA, GL_UNSIGNED_BYTE, @output_buffer.map().get() )
     @output_buffer.unmap
+
+    if( @frame_count > 0 && @display_fps )
+      current_time = Time.now.to_f 
+      dt = current_time - @last_fps_time
+      if( dt > 0.25 ) 
+        @last_fps_text  = "fps: %7.2f" % [ (@frame_count - @last_fps_frame) / dt ]
+        @last_fps_time  = current_time 
+        @last_fps_frame = @frame_count 
+      end
+      drawText( @last_fps_text, 10.0, 10.0, GLUT_BITMAP_8_BY_13 )
+    end
 
     glutSwapBuffers
     
