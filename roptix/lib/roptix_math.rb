@@ -1,9 +1,11 @@
 
 
+################################################################################
 #
 # Vector class of arbitrary length.  Move this into c exenstion with fixed size (eg, vec3f)
 # if necessary
 #
+################################################################################
 class Vector < Array
 
   def +@
@@ -82,29 +84,78 @@ class Vector < Array
     temp 
   end
 
-end
-
-
-def Quaternion
-  def:
-end
-
-
-
-class ArcBall
-
-  def initialize( width, height )
-    @start = nil
-    @end   = nil
-    @adjust_width  = 1.0
-    @adjust_height = 1.0
-    @width  = width
-    @height = height
-  end
-
   def to_s
-
+    "( #{self.join( ',' )} )"
   end
+
 end
 
+
+################################################################################
+#
+# Quaternion for representing rotations
+#
+################################################################################
+def Quaternion
+  def initialize( w, x, y, z )
+    @q = [ w, x, y, z ]
+  end
+
+  def Quaternion.create( *args )
+    if args.size == 2 && args[0].is_a? Vector && args[1].is_a? Vector
+      # We have a to, from vector pair representing rotation
+      from, to = *args 
+      puts "creating quat from #{from} -> #{to}"
+      c = Vector.cross( from, to )
+      w = Vector.dot( from, to )
+      x = c[0]
+      y = c[1]
+      z = c[2]
+    
+      return Quaternion.new( w, x, y, z )
+    else
+      raise Exception.new "Quaternion.create called with bad params <<#{args.inspect}>>"
+    end
+  end
+
+
+  def *( b )
+    if( b.is_a? Quaternion )
+      w = @q[0]*b[0] - @q[1]*b[1] - @q[2]*b[2] - @q[3]*b[3]
+      x = @q[0]*b[1] + @q[1]*b[0] + @q[2]*b[3] - @q[3]*b[2]
+      y = @q[0]*b[2] + @q[2]*b[0] + @q[3]*b[1] - @q[1]*b[3]
+      z = @q[0]*b[3] + @q[3]*b[0] + @q[1]*b[2] - @q[2]*b[1]
+
+      return Quaternion.new( w, x, y, z )
+    else
+      f = b.to_f
+      return Quaternion.new( f*@q[0], f*@q[1], f*@q[2], f*@q[3] )
+    end
+  end
+
+  # l2 norm
+  def norm
+    Math.sqrt( @q[0]*@q[0] + @q[1]*@q[1] + @q[2]*@q[2] + @q[3]*@q[3] )
+  end
+
+  def normalize
+    n     = self.norm
+    n_inv = 1.0 / n
+    @q[0] = @q[0] * n_inv
+    @q[1] = @q[1] * n_inv
+    @q[2] = @q[2] * n_inv
+    @q[3] = @q[3] * n_inv
+    n
+  end
+
+end
+
+
+################################################################################
+#
+# 4x4 Matrix
+#
+################################################################################
+class Matrix
+end
 
