@@ -117,7 +117,11 @@ class Camera
       @arcball.motion( x, y )
       transform( @arcball.getMatrix )
     when GLUT_RIGHT_BUTTON
-      # zoom
+      scale = -dy.to_f / @height.to_f
+      scale = scale * 5.0 # dolly speed
+      d = (@lookat - @eye) * scale
+      @eye = @eye + d
+
     else # GLUT_MIDDLE_BUTTON
       # translate
     end
