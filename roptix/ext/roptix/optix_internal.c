@@ -60,7 +60,7 @@ void handleError( RTcontext context, RTresult code, const char* file, int line )
 {
   const char* message;
   rtContextGetErrorString(context, code, &message);
-  rb_raise(rb_eException, "%s\n(%s:%d)", message, file, line);
+  rb_raise(rb_eException, "RT_CHECK_ERROR: %s\n(%s:%d)", message, file, line);
 }
 
 void numArray2FltArray( int num_elem, VALUE m, float* mm )
@@ -1401,7 +1401,10 @@ static VALUE contextQueryVariable( VALUE self, VALUE name )
   variable_ptr = malloc( sizeof( VariablePtr ) );
 
   RT_CHECK_ERROR( rtContextQueryVariable( context_ptr->context, StringValueCStr( name ), &( variable_ptr->variable ) ) );
-  return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  if( variable_ptr->variable )
+    return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  else
+    return Qnil;
 }
 
 static VALUE contextRemoveVariable( VALUE self, VALUE v )
@@ -1634,7 +1637,10 @@ static VALUE programQueryVariable( VALUE self, VALUE name )
   variable_ptr = malloc( sizeof( VariablePtr ) );
 
   RT_CHECK_ERROR( rtProgramQueryVariable( program_ptr->program, StringValueCStr( name ), &( variable_ptr->variable ) ) );
-  return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  if( variable_ptr->variable )
+    return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  else
+    return Qnil;
 }
 
 static VALUE programRemoveVariable( VALUE self, VALUE v )
@@ -2005,7 +2011,11 @@ static VALUE selectorQueryVariable( VALUE self, VALUE name )
   variable_ptr = malloc( sizeof( VariablePtr ) );
 
   RT_CHECK_ERROR( rtSelectorQueryVariable( selector_ptr->selector, StringValueCStr( name ), &( variable_ptr->variable ) ) );
-  return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  
+  if( variable_ptr->variable )
+    return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  else
+    return Qnil;
 }
 
 static VALUE selectorRemoveVariable( VALUE self, VALUE v )
@@ -2263,19 +2273,11 @@ static VALUE geometryGroupSetAcceleration( VALUE self, VALUE acceleration )
   RTresult result;
   GeometryGroupPtr* geometrygroup_ptr;
   AccelerationPtr* acceleration_ptr;
-  fprintf( stderr, "xhere 0\n" );
-  fflush( stderr );
 
   Data_Get_Struct( self, GeometryGroupPtr, geometrygroup_ptr );
-  fprintf( stderr, "xhere 1\n" );
-  fflush( stderr );
   Data_Get_Struct( acceleration, AccelerationPtr, acceleration_ptr);
-  fprintf( stderr, "xhere 2\n" );
 
-  fflush( stderr );
   RT_CHECK_ERROR( rtGeometryGroupSetAcceleration( geometrygroup_ptr->geometrygroup, acceleration_ptr->acceleration ) );
-  fprintf( stderr, "xhere 3\n" );
-  fflush( stderr );
   return Qnil;
 }
 
@@ -2300,7 +2302,6 @@ static VALUE geometryGroupSetChildCount( VALUE self, VALUE count )
   GeometryGroupPtr* geometrygroup_ptr;
   Data_Get_Struct( self, GeometryGroupPtr, geometrygroup_ptr );
 
-  fprintf( stderr, "setting child count of %p to %li\n", geometrygroup_ptr->geometrygroup, NUM2INT( count ) );
   RT_CHECK_ERROR( rtGeometryGroupSetChildCount( geometrygroup_ptr->geometrygroup, NUM2INT( count ) ) );
   return Qnil;
 }
@@ -2716,7 +2717,11 @@ static VALUE geometryInstanceQueryVariable( VALUE self, VALUE name )
   RT_CHECK_ERROR( rtGeometryInstanceQueryVariable( geometryinstance_ptr->geometryinstance,
                                             StringValueCStr( name ),
                                             &( variable_ptr->variable ) ) );
-  return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  
+  if( variable_ptr->variable )
+    return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  else
+    return Qnil;
 }
 
 static VALUE geometryInstanceRemoveVariable( VALUE self, VALUE v )
@@ -2945,7 +2950,11 @@ static VALUE geometryQueryVariable( VALUE self, VALUE name )
   RT_CHECK_ERROR( rtGeometryQueryVariable( geometry_ptr->geometry,
                                            StringValueCStr( name ),
                                            &( variable_ptr->variable ) ) );
-  return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  
+  if( variable_ptr->variable )
+    return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  else
+    return Qnil;
 }
 
 static VALUE geometryRemoveVariable( VALUE self, VALUE v )
@@ -3135,7 +3144,11 @@ static VALUE materialQueryVariable( VALUE self, VALUE name )
   variable_ptr = malloc( sizeof( VariablePtr ) );
 
   RT_CHECK_ERROR( rtMaterialQueryVariable( material_ptr->material, StringValueCStr( name ), &( variable_ptr->variable ) ) );
-  return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  
+  if( variable_ptr->variable )
+    return Data_Wrap_Struct( class_variable, 0, 0, variable_ptr );
+  else
+    return Qnil;
 }
 
 static VALUE materialRemoveVariable( VALUE self, VALUE v )

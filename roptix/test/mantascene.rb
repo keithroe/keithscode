@@ -8,12 +8,6 @@ class MantaScene < OptixViewer
 
   def initialize
     super
-    @context = nil
-    @output_buffer = nil
-  end
-
-  def getOutputBuffer
-    @output_buffer
   end
 
   def initScene()
@@ -40,16 +34,20 @@ class MantaScene < OptixViewer
     @context.setRayGenerationProgram( 0, ray_gen_program )
     
     
-    eye = Vector[3, 2, -3]
-    u,v,w = cameraParams( eye, Vector[ 0.0, 0.3, 0.0 ], Vector[ 0.0, 1.0, 0.0 ], 60.0, @width.to_f / @height.to_f )
+    # Initialize camera control
+    eye    = Vector[3, 2, -3]
+    lookat = Vector[ 0.0, 0.3, 0.0 ]
+    up     = Vector[ 0.0, 1.0, 0.0 ]
+    @camera = Camera.new( eye, lookat, up, 60.0, @width, @height )
     variable = @context.declareVariable( "eye" )
-    variable.set3f( *eye )
+    variable.set3f( 0.0, 0.0, 0.0 )
     variable = @context.declareVariable( "U" )
-    variable.set3f( *u )
+    variable.set3f( 0.0, 0.0, 0.0 )
     variable = @context.declareVariable( "V" )
-    variable.set3f( *v )
+    variable.set3f( 0.0, 0.0, 0.0 )
     variable = @context.declareVariable( "W" )
-    variable.set3f( *w )
+    variable.set3f( 0.0, 0.0, 0.0 )
+
 
     # exception program
     exception_program = @context.createProgramFromPTXFile( "#{$dir}/ptx/pinhole_camera.ptx", "exception" )
@@ -57,12 +55,13 @@ class MantaScene < OptixViewer
     variable = @context.declareVariable( "bad_color" )
     variable.set3f( 1.0, 1.0, 0.0 )
 
-    # miss prog
+    # miss program
     miss_program = @context.createProgramFromPTXFile( "#{$dir}/ptx/constantbg.ptx", "miss" )
     @context.setMissProgram( 0, miss_program)
     variable = @context.declareVariable( "bg_color" )
     variable.set3f( 54.0/255.0, 83.0/255.0, 102.5/255.0 ) 
 
+    #lights
     variable = @context.declareVariable( "ambient_light_color" )
     variable.set3f(0,0,0)
    

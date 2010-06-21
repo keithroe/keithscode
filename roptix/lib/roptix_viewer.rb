@@ -1,5 +1,5 @@
 
-require 'roptix_math'
+require File.dirname( __FILE__ ) + '/roptix_math'
 require 'rubygems'
 require 'opengl'
 include Gl, Glu, Glut
@@ -37,11 +37,14 @@ class Arcball
     sphere
   end
 
+  def getMatrix
+    return @q_now.getMatrix
+  end
 
   def mouseDown( x, y )
     @mouse      = Vector[ x, y, 0.0 ]
     @dragging   = true
-    @mouse_down = mouse
+    @mouse_down = Vector.new( @mouse )
   end
   
 
@@ -49,20 +52,21 @@ class Arcball
     motion( x, y )
     
     @dragging = false
-    @q_down   = q_now
+    @q_down   = Quaternion.new( @q_now )
   end
 
 
   def motion( x, y )
     @mouse = Vector[ x, y, 0.0 ]
     if @dragging
-      from   = toSphere( mouse_down )
-      to     = toSphere( mouse )
+      from   = toSphere( @mouse_down )
+      to     = toSphere( @mouse )
       q_drag = Quaternion.create( from, to )
 
       @q_now = q_drag * @q_down
       @q_now.normalize
     end
+    @mouse_down = Vector.new( @mouse )
   end
 end
 
@@ -75,35 +79,35 @@ end
 
 class Camera
   
-  def initialize( eye, lookat, up, fov, width, width )
+  def initialize( eye, lookat, up, fov, width, height )
     @eye     = eye
     @lookat  = lookat
     @up      = up
-    @fov     = fov
+    @vfov    = fov
     @width   = width
     @height  = height
+
     @mouse_x = width / 2
     @mouse_y = height / 2
+    @button  = GLUT_LEFT_BUTTON
+
     @scale   = 1.0 
     @arcball = Arcball.new(  Vector[ width / 2.0, height / 2.0, 0.0 ], width / 2.0 )
   end
 
-  def 
-  def motion( button, x, y )
+  def motion( x, y )
 
     dx = x - @mouse_x
     dy = y - @mouse_y
 
-    case button
-    when LEFT
+    case @button
+    when GLUT_LEFT_BUTTON
       @arcball.motion( x, y )
-      
-    when RIGHT
+      transform( @arcball.getMatrix )
+    when GLUT_RIGHT_BUTTON
       # zoom
-      
-    else # MIDDLE
+    else # GLUT_MIDDLE_BUTTON
       # translate
-
     end
 
     @mouse_x = x
@@ -116,11 +120,12 @@ class Camera
     @mouse_y = y
     
     case button
-    when LEFT
+    when GLUT_LEFT_BUTTON
       @arcball.mouseUp( x, y )
-    when RIGHT
+      transform( @arcball.getMatrix )
+    when GLUT_RIGHT_BUTTON
       # zoom
-    else # MIDDLE
+    else # GLUT_MIDDLE_BUTTON
       # translate
     end
   end
@@ -129,18 +134,55 @@ class Camera
   def mouseDown( button, x, y )
     @mouse_x = x
     @mouse_y = y
+    @button  = button
     
     case button
-    when LEFT
+    when GLUT_LEFT_BUTTON
       @arcball.mouseDown( x, y )
-    when RIGHT
+      transform( @arcball.getMatrix )
+    when GLUT_RIGHT_BUTTON
       # zoom
-    else # MIDDLE
+    else # GLUT_MIDDLE_BUTTON
       # translate
     end
   end
 
-  def getCameraParams
+
+  def transform( xform )
+    eye, u, v, w = self.params 
+    frame  = Matrix.createFromBasis( Vector.normalize( u ),
+                                     Vector.normalize( v ),
+                                     Vector.normalize( -w ),
+                                     @lookat )
+
+    frame_inv = frame.inverse
+
+    final_trans  = frame * xform * frame_inv
+    up4          = Vector.create( @up,     0.0 ) 
+    eye4         = Vector.create( @eye,    1.0 )  
+    lookat4      = Vector.create( @lookat, 1.0 )
+
+    @up     = ( final_trans*up4 )[ 0..2 ]
+    @eye    = ( final_trans*eye4 )[ 0..2 ]
+    @lookat = ( final_trans*lookat4 )[ 0..2 ]
+  end
+
+  
+  def params()
+
+    aspect = @width.to_f / @height.to_f
+    hfov   = r2d( 2.0*Math.atan( aspect*Math.tan( d2r(0.5*@vfov ) ) ) )
+
+    w    = @lookat - @eye
+    flen = Math.sqrt( Vector.dot( w, w ) )
+    u    = Vector.normalize( Vector.cross( w, Vector.normalize( @up ) ) )
+    v    = Vector.normalize( Vector.cross( u , w ) )
+    ulen = flen * Math.tan( d2r(  hfov*0.5 ) )
+    u    = u*ulen
+    vlen = flen * Math.tan( d2r( @vfov*0.5 ) )
+    v    = v*vlen
+
+    [ @eye, u, v, w ]
   end
 
 end
@@ -158,8 +200,11 @@ class OptixViewer
     @frame_count = 0
     @width  = 512
     @height = 512
-  end
 
+    @camera        = nil  #
+    @context       = nil  # subclass needs to initialize these params
+    @output_buffer = nil  #
+  end
 
   def run
 
@@ -217,29 +262,29 @@ class OptixViewer
 
   def display()
 
-    # update camera
+    eye, u, v, w = @camera.params
+    @context.queryVariable( "eye" ).set3f( *eye ) 
+    @context.queryVariable(   "U" ).set3f( *u )
+    @context.queryVariable(   "V" ).set3f( *v )
+    @context.queryVariable(   "W" ).set3f( *w )
 
     launch()
 
-    buffer        = getOutputBuffer
-    @width, @height = buffer.getSize2D()
-    format        =  buffer.getFormat
+    @width, @height = @output_buffer.getSize2D()
+    format          = @output_buffer.getFormat
 
     if( format != FORMAT_UNSIGNED_BYTE4 )
       raise Exception( "OptixViewer display() - requires FORMAT_UNSIGNED_BYTE4 output buffer for now" )
     end
 
-    glDrawPixels( @width, @height, GL_BGRA, GL_UNSIGNED_BYTE, buffer.map().get() )
-    buffer.unmap
+    glDrawPixels( @width, @height, GL_BGRA, GL_UNSIGNED_BYTE, @output_buffer.map().get() )
+    @output_buffer.unmap
 
     glutSwapBuffers
     
-    puts @frame_count
-
-
     @frame_count += 1
-
   end
+
 
   def keyPressed( key, x, y )
     case key
@@ -250,13 +295,25 @@ class OptixViewer
     end
   end
 
+
   def mouseButton( button, state, x, y)
+    if( state == GLUT_UP )
+      @camera.mouseUp( button, x, @width - y - 1 )
+    else
+      @camera.mouseDown( button, x, @width - y - 1 )
+    end
+
+    glutPostRedisplay
   end
     
+
   def mouseMotion( x, y )
+    @camera.motion( x, @width - y - 1 )
   end
 
+
   def resize( width, height )
+
   end
 
 end

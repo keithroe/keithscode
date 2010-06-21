@@ -1,5 +1,17 @@
 
 
+
+################################################################################
+#
+# Misc functions
+#
+################################################################################
+
+def d2r( d );   d*Math::PI/180.0   end
+def r2d( r );   r*180.0/Math::PI   end
+
+
+
 ################################################################################
 #
 # Vector class of arbitrary length.  Move this into c exenstion with fixed size
@@ -8,6 +20,10 @@
 ################################################################################
 
 class Vector < Array
+
+  def Vector.create( *v )
+    Vector.new( v.flatten ) # allow Vector.create( Vector[1,2,3], 4 ) 
+  end
 
   def x(); self[0] end
   def y(); self[1] end
@@ -18,12 +34,8 @@ class Vector < Array
     self
   end
   
-  def to_ary
-    self
-  end
-
   def -@
-    self.map { |x| -x } 
+    Vector.new( self.map { |x| -x }  )
   end
 
   def +( b )
@@ -93,6 +105,10 @@ class Vector < Array
   def to_s
     "( #{self.join( ',' )} )"
   end
+  
+  def to_str
+    to_s
+  end
 
 end
 
@@ -111,6 +127,13 @@ class Matrix
     end
   end
 
+  def Matrix.createFromBasis( u, v, w, t )
+    Matrix.new( [ u.x, v.x, w.x, t.x,
+                  u.y, v.y, w.y, t.y,
+                  u.z, v.z, w.z, t.z,
+                  0.0, 0.0, 0.0, 1.0 ] )
+  end
+
   def []( i )
     @m[i]
   end
@@ -121,7 +144,24 @@ class Matrix
 
   def *( b )
     if b.is_a? Matrix
-      # TODO
+      v = Vector.new [  self[ 0] * b[ 0] + self[ 1] * b[ 4] + self[ 2] * b[ 8] + self[ 3] * b[12],
+                        self[ 0] * b[ 1] + self[ 1] * b[ 5] + self[ 2] * b[ 9] + self[ 3] * b[13],
+                        self[ 0] * b[ 2] + self[ 1] * b[ 6] + self[ 2] * b[10] + self[ 3] * b[14],
+                        self[ 0] * b[ 3] + self[ 1] * b[ 7] + self[ 2] * b[11] + self[ 3] * b[15],
+                        self[ 4] * b[ 0] + self[ 5] * b[ 4] + self[ 6] * b[ 8] + self[ 7] * b[12],
+                        self[ 4] * b[ 1] + self[ 5] * b[ 5] + self[ 6] * b[ 9] + self[ 7] * b[13],
+                        self[ 4] * b[ 2] + self[ 5] * b[ 6] + self[ 6] * b[10] + self[ 7] * b[14],
+                        self[ 4] * b[ 3] + self[ 5] * b[ 7] + self[ 6] * b[11] + self[ 7] * b[15],
+                        self[ 8] * b[ 0] + self[ 9] * b[ 4] + self[10] * b[ 8] + self[11] * b[12],
+                        self[ 8] * b[ 1] + self[ 9] * b[ 5] + self[10] * b[ 9] + self[11] * b[13],
+                        self[ 8] * b[ 2] + self[ 9] * b[ 6] + self[10] * b[10] + self[11] * b[14],
+                        self[ 8] * b[ 3] + self[ 9] * b[ 7] + self[10] * b[11] + self[11] * b[15],
+                        self[12] * b[ 0] + self[13] * b[ 4] + self[14] * b[ 8] + self[15] * b[12],
+                        self[12] * b[ 1] + self[13] * b[ 5] + self[14] * b[ 9] + self[15] * b[13],
+                        self[12] * b[ 2] + self[13] * b[ 6] + self[14] * b[10] + self[15] * b[14],
+                        self[12] * b[ 3] + self[13] * b[ 7] + self[14] * b[11] + self[15] * b[15] ]
+      return Matrix.new(v) 
+
     elsif b.is_a? Vector
       return Vector[ m[ 0]*b.x + m[ 1]*b.y + m[ 2]*b.z + m[ 3]*b.w,
                      m[ 4]*b.x + m[ 5]*b.y + m[ 6]*b.z + m[ 7]*b.w, 
@@ -131,6 +171,44 @@ class Matrix
       return @m.map { |x| x*b.to_f }
     end
   end
+
+  def determinant
+    m[ 0]*m[ 5]*m[10]*m[15]-
+    m[ 0]*m[ 5]*m[11]*m[14]+m[ 0]*m[ 9]*m[14]*m[ 7]-
+    m[ 0]*m[ 9]*m[ 6]*m[15]+m[ 0]*m[13]*m[ 6]*m[11]-
+    m[ 0]*m[13]*m[10]*m[ 7]-m[ 4]*m[ 1]*m[10]*m[15]+m[ 4]*m[ 1]*m[11]*m[14]-
+    m[ 4]*m[ 9]*m[14]*m[ 3]+m[ 4]*m[ 9]*m[ 2]*m[15]-
+    m[ 4]*m[13]*m[ 2]*m[11]+m[ 4]*m[13]*m[10]*m[ 3]+m[ 8]*m[ 1]*m[ 6]*m[15]-
+    m[ 8]*m[ 1]*m[14]*m[ 7]+m[ 8]*m[ 5]*m[14]*m[ 3]-
+    m[ 8]*m[ 5]*m[ 2]*m[15]+m[ 8]*m[13]*m[ 2]*m[ 7]-
+    m[ 8]*m[13]*m[ 6]*m[ 3]-
+    m[12]*m[ 1]*m[ 6]*m[11]+m[12]*m[ 1]*m[10]*m[ 7]-
+    m[12]*m[ 5]*m[10]*m[ 3]+m[12]*m[ 5]*m[ 2]*m[11]-
+    m[12]*m[ 9]*m[ 2]*m[ 7]+m[12]*m[ 9]*m[ 6]*m[ 3]
+  end
+
+  def inverse
+    v = Array.new( 16 ) 
+    d = determinant()
+    v[ 0]= d*(m[ 5]*(m[10]*m[15] - m[14]*m[11]) + m[ 9]*(m[14]*m[ 7] - m[ 6]*m[15]) + m[13]*(m[ 6]*m[11] - m[10]*m[ 7]))
+    v[ 4]= d*(m[ 6]*(m[ 8]*m[15] - m[12]*m[11]) + m[10]*(m[12]*m[ 7] - m[ 4]*m[15]) + m[14]*(m[ 4]*m[11] - m[ 8]*m[ 7]))
+    v[ 8]= d*(m[ 7]*(m[ 8]*m[13] - m[12]*m[ 9]) + m[11]*(m[12]*m[ 5] - m[ 4]*m[13]) + m[15]*(m[ 4]*m[ 9] - m[ 8]*m[ 5]))
+    v[12]= d*(m[ 4]*(m[13]*m[10] - m[ 9]*m[14]) + m[ 8]*(m[ 5]*m[14] - m[13]*m[ 6]) + m[12]*(m[ 9]*m[ 6] - m[ 5]*m[10]))
+    v[ 1]= d*(m[ 9]*(m[ 2]*m[15] - m[14]*m[ 3]) + m[13]*(m[10]*m[ 3] - m[ 2]*m[11]) + m[ 1]*(m[14]*m[11] - m[10]*m[15]))
+    v[ 5]= d*(m[10]*(m[ 0]*m[15] - m[12]*m[ 3]) + m[14]*(m[ 8]*m[ 3] - m[ 0]*m[11]) + m[ 2]*(m[12]*m[11] - m[ 8]*m[15]))
+    v[ 9]= d*(m[11]*(m[ 0]*m[13] - m[12]*m[ 1]) + m[15]*(m[ 8]*m[ 1] - m[ 0]*m[ 9]) + m[ 3]*(m[12]*m[ 9] - m[ 8]*m[13]))
+    v[13]= d*(m[ 8]*(m[13]*m[ 2] - m[ 1]*m[14]) + m[12]*(m[ 1]*m[10] - m[ 9]*m[ 2]) + m[ 0]*(m[ 9]*m[14] - m[13]*m[10]))
+    v[ 2]= d*(m[13]*(m[ 2]*m[ 7] - m[ 6]*m[ 3]) + m[ 1]*(m[ 6]*m[15] - m[14]*m[ 7]) + m[ 5]*(m[14]*m[ 3] - m[ 2]*m[15]))
+    v[ 6]= d*(m[14]*(m[ 0]*m[ 7] - m[ 4]*m[ 3]) + m[ 2]*(m[ 4]*m[15] - m[12]*m[ 7]) + m[ 6]*(m[12]*m[ 3] - m[ 0]*m[15]))
+    v[10]= d*(m[15]*(m[ 0]*m[ 5] - m[ 4]*m[ 1]) + m[ 3]*(m[ 4]*m[13] - m[12]*m[ 5]) + m[ 7]*(m[12]*m[ 1] - m[ 0]*m[13]))
+    v[14]= d*(m[12]*(m[ 5]*m[ 2] - m[ 1]*m[ 6]) + m[ 0]*(m[13]*m[ 6] - m[ 5]*m[14]) + m[ 4]*(m[ 1]*m[14] - m[13]*m[ 2]))
+    v[ 3]= d*(m[ 1]*(m[10]*m[ 7] - m[ 6]*m[11]) + m[ 5]*(m[ 2]*m[11] - m[10]*m[ 3]) + m[ 9]*(m[ 6]*m[ 3] - m[ 2]*m[ 7]))
+    v[ 7]= d*(m[ 2]*(m[ 8]*m[ 7] - m[ 4]*m[11]) + m[ 6]*(m[ 0]*m[11] - m[ 8]*m[ 3]) + m[10]*(m[ 4]*m[ 3] - m[ 0]*m[ 7]))
+    v[11]= d*(m[ 3]*(m[ 8]*m[ 5] - m[ 4]*m[ 9]) + m[ 7]*(m[ 0]*m[ 9] - m[ 8]*m[ 1]) + m[11]*(m[ 4]*m[ 1] - m[ 0]*m[ 5]))
+    v[15]= d*(m[ 0]*(m[ 5]*m[10] - m[ 9]*m[ 6]) + m[ 4]*(m[ 9]*m[ 2] - m[ 1]*m[10]) + m[ 8]*(m[ 1]*m[ 6] - m[ 5]*m[ 2]))
+    return Matrix.new( v )
+  end
+
 end
 
 
@@ -139,10 +217,14 @@ end
 # Quaternion for representing rotations
 #
 ################################################################################
-def Quaternion
+class Quaternion
 
-  def initialize( w, x, y, z )
-    @q = [ w, x, y, z ]
+  def initialize( *args )
+    if args.size == 1
+      @q = [ args[0][0], args[0][1], args[0][2], args[0][3] ] 
+    else  
+      @q = args.flatten 
+    end
   end
 
   def []( i )
@@ -160,10 +242,9 @@ def Quaternion
   def z(); @q[3] end
 
   def Quaternion.create( *args )
-    if args.size == 2 && args[0].is_a? Vector && args[1].is_a? Vector
+    if( args.size == 2 && args[0].is_a?( Vector ) && args[1].is_a?( Vector ) )
       # We have a to, from vector pair representing rotation
       from, to = *args 
-      puts "creating quat from #{from} -> #{to}"
       c = Vector.cross( from, to )
       w = Vector.dot( from, to )
       x = c[0]
@@ -192,7 +273,7 @@ def Quaternion
   end
   
 
-  def *( b )
+  def /( b )
     f = b.to_f
     return Quaternion.new( @q[0]/f, @q[1]/f, @q[2]/f, @q[3]/f )
   end
@@ -257,6 +338,10 @@ def Quaternion
 
   def to_s
     "[ #{@q[0]}, ( #{@q[1]}, #{@q[2]}, #{@q[3]} ) ]"
+  end
+  
+  def to_str
+    to_s
   end
 
 end
