@@ -14,9 +14,9 @@
 
 
 #include <math/Vector3.h>
-#include <Mesh/Bbox.h>
-#include <Viewer/Camera.h>
-#include <Viewer/Timer.h>
+#include <mesh/BBox.h>
+#include <viewer/Camera.h>
+#include <viewer/Timer.h>
 #include <vector>
 
 class Mesh;

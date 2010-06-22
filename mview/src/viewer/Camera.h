@@ -14,7 +14,13 @@
 
 #include <viewer/Arcball.h>
 #include <mesh/BBox.h>
-#include <GLUT/glut.h>
+
+#if defined(__APPLE__)
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
+
 
 class  Camera
 {

@@ -2,9 +2,15 @@
 #include <mesh/Mesh.h>
 #include <viewer/Viewer.h>
 #include <math/Vector3.h>
-#include <GLUT/glut.h>
 #include <pthread.h>
 #include <sstream>
+#include <cstdlib>
+
+#if defined(__APPLE__)
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
 
 // define static members
 Viewer* Viewer::_instance = NULL;
