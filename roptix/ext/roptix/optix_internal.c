@@ -301,6 +301,110 @@ RTresult displayFilePPM(const char* filename, RTbuffer buffer)
   return RT_SUCCESS;
 }
 
+/******************************************************************************\
+ *
+ * Module functions 
+ *
+\******************************************************************************/
+
+static VALUE optixGetElementSize( VALUE module, VALUE format )
+{
+  int element_size = 0;
+
+  switch( NUM2INT( format ) ){
+  case RT_FORMAT_FLOAT:
+    element_size = sizeof(float);
+    break;
+  case RT_FORMAT_FLOAT2:
+    element_size = sizeof(float)*2;
+    break;
+  case RT_FORMAT_FLOAT3:
+    element_size = sizeof(float)*3;
+    break;
+  case RT_FORMAT_FLOAT4:
+    element_size = sizeof(float)*4;
+    break;
+  case RT_FORMAT_BYTE:
+    element_size = sizeof(char);
+    break;
+  case RT_FORMAT_BYTE2:
+    element_size = sizeof(char)*2;
+    break;
+  case RT_FORMAT_BYTE3:
+    element_size = sizeof(char)*3;
+    break;
+  case RT_FORMAT_BYTE4:
+    element_size = sizeof(char)*4;
+    break;
+  case RT_FORMAT_UNSIGNED_BYTE:
+    element_size = sizeof(unsigned char);
+    break;
+  case RT_FORMAT_UNSIGNED_BYTE2:
+    element_size = sizeof(unsigned char)*2;
+    break;
+  case RT_FORMAT_UNSIGNED_BYTE3:
+    element_size = sizeof(unsigned char)*3;
+    break;
+  case RT_FORMAT_UNSIGNED_BYTE4:
+    element_size = sizeof(unsigned char)*4;
+    break;
+  case RT_FORMAT_SHORT:
+    element_size = sizeof(short);
+    break;
+  case RT_FORMAT_SHORT2:
+    element_size = sizeof(short)*2;
+    break;
+  case RT_FORMAT_SHORT3:
+    element_size = sizeof(short)*3;
+    break;
+  case RT_FORMAT_SHORT4:
+    element_size = sizeof(short)*4;
+    break;
+  case RT_FORMAT_UNSIGNED_SHORT:
+    element_size = sizeof(unsigned short);
+    break;
+  case RT_FORMAT_UNSIGNED_SHORT2:
+    element_size = sizeof(unsigned short)*2;
+    break;
+  case RT_FORMAT_UNSIGNED_SHORT3:
+    element_size = sizeof(unsigned short)*3;
+    break;
+  case RT_FORMAT_UNSIGNED_SHORT4:
+    element_size = sizeof(unsigned short)*4;
+    break;
+  case RT_FORMAT_INT:
+    element_size = sizeof(int);
+    break;
+  case RT_FORMAT_INT2:
+    element_size = sizeof(int)*2;
+    break;
+  case RT_FORMAT_INT3:
+    element_size = sizeof(int)*3;
+    break;
+  case RT_FORMAT_INT4:
+    element_size = sizeof(int)*4;
+    break;
+  case RT_FORMAT_UNSIGNED_INT:
+    element_size = sizeof(unsigned int);
+    break;
+  case RT_FORMAT_UNSIGNED_INT2:
+    element_size = sizeof(unsigned int)*2;
+    break;
+  case RT_FORMAT_UNSIGNED_INT3:
+    element_size = sizeof(unsigned int)*3;
+    break;
+  case RT_FORMAT_UNSIGNED_INT4:
+    element_size = sizeof(unsigned int)*4;
+    break;
+  case RT_FORMAT_USER:
+  case RT_FORMAT_UNKNOWN:
+    // These will return 0
+    break;
+  }
+
+  return INT2NUM( element_size );
+}
+
 
 /******************************************************************************\
  *
@@ -3734,6 +3838,9 @@ void Init_roptix_internal()
 {
   /* Module to act as namespace */
   module_optix  = rb_define_module( "Optix" );
+
+  /* Module functions */
+  rb_define_module_function( module_optix, "getElementSize", optixGetElementSize, 1 );
 
   /* Module constants for all OptiX enumerated values */
   rb_define_const( module_optix, "FORMAT_UNKNOWN", INT2NUM( RT_FORMAT_UNKNOWN ) );

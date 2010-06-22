@@ -26,8 +26,9 @@ class MantaScene < OptixViewer
     variable.set1f( 1e-4 )
 
     variable = @context.declareVariable( "output_buffer" )
-    @output_buffer = @context.createBuffer( BUFFER_OUTPUT, FORMAT_UNSIGNED_BYTE4, @width, @height )
+    @output_buffer = OptixViewer.createOutputBuffer( FORMAT_UNSIGNED_BYTE4, @width, @height, true )
     variable.setObject( @output_buffer )
+
 
     # ray gen prog 
     ray_gen_program = @context.createProgramFromPTXFile( "#{$dir}/ptx/pinhole_camera.ptx", "pinhole_camera" )
@@ -202,7 +203,7 @@ class MantaScene < OptixViewer
   end
 
   def launch 
-    @context.launch( 0, @width, @height )
+    #@context.launch( 0, @width, @height )
   end
 end
 
