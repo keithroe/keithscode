@@ -7,14 +7,15 @@ YACC      = bison -y
 
 LIBS      = -lm  
 
+
 #CXXFLAGS  = -O3 -DNDEBUG -g3 -Wall -I./src 
 #CFLAGS    = -O3 -DNDEBUG -g -Wall -I./src 
 CXXFLAGS  = -g -Wall -I./src 
 CFLAGS    = -g -Wall -I./src 
-GLLIBS    = -framework GLUT -framework OpenGL -framework Foundation
-LEXLIB    = 
-DSOFLAGS  = -flat_namespace -undefined suppress -bundle -noprebind
+#GLLIBS    = -framework GLUT -framework OpenGL -framework Foundation
+GLLIBS    = -lglut -lGL -lGLU -lX11
 LDFLAGS   =  
+LEXLIB    = 
 
 SRCDIR    = .
 

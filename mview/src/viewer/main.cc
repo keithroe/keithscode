@@ -7,10 +7,12 @@
  *                                                                           *
 \*****************************************************************************/
 
-#include <iostream>
-#include <string>
 #include <mesh/Mesh.h>
 #include <viewer/Viewer.h>
+#include <iostream>
+#include <string>
+#include <cstdlib>
+
 
 
 void printUsage();

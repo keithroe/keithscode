@@ -6,11 +6,17 @@
 #include <mesh/BBox.h> 
 #include <math/Vector3.h> 
 #include <io/MeshIO.h> 
-#include <GLUT/glut.h> 
 #include <string> 
 #include <iostream> 
 #include <map> 
 #include <vector> 
+#include <cstdlib>
+
+#if defined(__APPLE__)
+#  include <GLUT/glut.h>
+#else
+#  include <GL/glut.h>
+#endif
 
 
 Mesh::Mesh()
