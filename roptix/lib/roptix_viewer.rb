@@ -285,18 +285,18 @@ class OptixViewer
   end
 
   def OptixViewer.createOutputBuffer( format, width, height, use_vbo = true )
-    if( use_vbo )
+    if( use_vbo && false  )
       #Allocate first the memory for the gl buffer, then attach it to OptiX.
       vbo = glGenBuffers( 1 )
       glBindBuffer( GL_ARRAY_BUFFER, vbo )
       glBufferData( GL_ARRAY_BUFFER, getElementSize( format ) * width * height, 0, GL_STREAM_DRAW )
       glBindBuffer( GL_ARRAY_BUFFER, 0 )
 
-      buffer = @context.createBufferFromGLBO( RT_BUFFER_OUTPUT, vbo )
+      buffer = @context.createBufferFromGLBO( BUFFER_OUTPUT, vbo )
       buffer.setFormat(format)
       buffer.setSize( width, height )
     else
-      buffer = context.createBuffer( RT_BUFFER_OUTPUT, format, width, height )
+      buffer = @context.createBuffer( BUFFER_OUTPUT, format, width, height )
     end
 
   end
