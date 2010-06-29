@@ -26,7 +26,8 @@ class MantaScene < OptixViewer
     variable.set1f( 1e-4 )
 
     variable = @context.declareVariable( "output_buffer" )
-    @output_buffer = OptixViewer.createOutputBuffer( FORMAT_UNSIGNED_BYTE4, @width, @height, true )
+    #@output_buffer = OptixViewer.createOutputBuffer( FORMAT_UNSIGNED_BYTE4, @width, @height, true )
+    @output_buffer = @context.createBuffer( BUFFER_OUTPUT, FORMAT_UNSIGNED_BYTE4, @width, @height )
     variable.setObject( @output_buffer )
 
 
@@ -203,7 +204,7 @@ class MantaScene < OptixViewer
   end
 
   def launch 
-    #@context.launch( 0, @width, @height )
+    @context.launch( 0, @width, @height )
   end
 end
 
