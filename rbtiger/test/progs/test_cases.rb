@@ -1,27 +1,27 @@
 
-test_cases =  {
-  "success" => [
-    "test1.tig",
-    "test2.tig",
-    "test3.tig",
-    "test4.tig",
-    "test5.tig",
-    "test6.tig",
-    "test7.tig",
-    "test8.tig",
-    "test12.tig",
-    "test27.tig",
-    "test30.tig",
-    "test37.tig",
-    "test41.tig",
-    "test42.tig",
-    "test44.tig",
-    "test46.tig",
-    "test47.tig",
-    "test48.tig"
-  ],
-   
-  TypeMismatch => [
+$success_test_cases = [
+  "test1.tig",
+  "test2.tig",
+  "test3.tig",
+  "test4.tig",
+  "test5.tig",
+  "test6.tig",
+  "test7.tig",
+  "test8.tig",
+  "test12.tig",
+  "test27.tig",
+  "test30.tig",
+  "test37.tig",
+  "test41.tig",
+  "test42.tig",
+  "test44.tig",
+  "test46.tig",
+  "test47.tig",
+  "test48.tig"
+]
+
+$failure_test_cases =  {
+  RBTiger::TypeMismatch => [
     "test9.tig",
     "test10.tig",
     "test11.tig",
@@ -42,7 +42,7 @@ test_cases =  {
     "test43.tig",
   ],
 
-  UndefinedSymbol => [
+  RBTiger::UndefinedSymbol => [
     "test17.tig",
     "test18.tig",
     "test19.tig",
@@ -51,7 +51,7 @@ test_cases =  {
     "test33.tig",
   ],
 
-  RBException => [
+  RBTiger::RBException => [
     "test16.tig",
     "test35.tig",
     "test36.tig",
@@ -59,7 +59,8 @@ test_cases =  {
     "test39.tig",
     "test45.tig"
   ],
-  RBException => [
+  RBTiger::SyntaxError => [
+    "test49.tig"
   ]
 }
 
