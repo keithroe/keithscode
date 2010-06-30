@@ -1,9 +1,6 @@
 
 
 #TODO: look into encapsulating types for field_list elements, translate return type, formal params, etc
-#TODO: categorize test cases by exactly the type of failure they should produce (file with hash)
-#TODO: move each iteration of unit test loops (each file parse or typecheck) into its own function
-#      can add these test functions programmatically
 #TODO: reworkd Exceptions to allow more specific error descriptions (eg, name of variable associated
 #      with a type mismatch, "undefined type" or "undefined record field" instead of undefined type
 #      perhaps blocks could be used as a callback mechanism for providing specific exceptions
