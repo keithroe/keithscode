@@ -1,5 +1,6 @@
 ActionController::Routing::Routes.draw do |map|
   map.resources :microposts
+  map.resources :users
 
   # The priority is based upon order of creation: first created -> highest priority.
 
@@ -47,6 +48,8 @@ ActionController::Routing::Routes.draw do |map|
   map.about   '/about',   :controller => 'pages', :action => 'about'
   map.help    '/help',    :controller => 'pages', :action => 'help'
   map.signup  '/signup',  :controller => 'users', :action => 'new'
+
+
 
 
 end
