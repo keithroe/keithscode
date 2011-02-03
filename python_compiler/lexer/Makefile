@@ -13,4 +13,5 @@ pylex: alex PyToken
 test:
 	./pylex < testcases/simple.py
 	./pylex < testcases/input.py
+	./pylex < testcases/string.py
 

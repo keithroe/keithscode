@@ -109,14 +109,32 @@ tokens :-
   ">>="                 { mkL RSHIFTEQ    }
   "<<="                 { mkL LSHIFTEQ    }
   "**="                 { mkL STARSTAREQ  }
-
+  .                     { mkE             }
+  
 {
 
 data Lexeme = Lexeme AlexPosn PyToken.Token String
 
 
 mkL :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
-mkL tok (p,_,str) len = return (Lexeme p tok (take len str))
+mkL tok (posn,_,str) len = return (Lexeme posn tok (take len str))
+
+
+mkE :: AlexInput -> Int -> Alex Lexeme
+mkE input@(posn,_,str) len =
+    let
+        posnString (AlexPn _ line col) = show line ++ ':': show col
+        errorString = "Line: " ++ posnString posn ++ " before '" ++ (take len str )  ++ "'"
+    in
+        return (Lexeme posn (ERROR $ errorString ) (take len str) )
+
+
+--mkE :: AlexInput -> Int -> Alex Lexeme
+--mkE input@(posn,_,str) len = return (Lexeme posn (ERROR $ errorString ) (take len str) )
+--                 where errorString = "Line: " ++ showPosn posn ++ " before '" ++ (take len str )  ++ "'"
+--showPosn (AlexPn _ line col) = show line ++ ':': show col
+
+           
 
 
 tokens :: String -> Either String [ PyToken.Token ]
@@ -130,13 +148,19 @@ tokens str = runAlex str $ do
 
 
 
-alexEOF :: Lexeme
 alexEOF = return (Lexeme undefined PEOF "")
 
+
+printTokens :: Either String [ PyToken.Token ] -> IO () 
+printTokens (Left  x ) = print x
+printTokens (Right x ) = sequence_ ( map print x )
 
 
 main = do
   s <- getContents
-  print (tokens s)
-
+  --print (tokens s)
+  --map print ( uneither ( tokens s ) )
+  --map print ( uneither ( tokens s ) )
+  printTokens ( tokens s )
 }
+
