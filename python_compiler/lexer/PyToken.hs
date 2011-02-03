@@ -21,9 +21,10 @@ data Token
     | INDENT
     | DEDENT
     | PEOF
+    | ERROR     String
 
     -- Identifier
-    | ID      String
+    | ID        String
 
     -- literals
     | STRING    String
