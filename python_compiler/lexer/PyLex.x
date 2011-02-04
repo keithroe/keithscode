@@ -10,12 +10,18 @@ import PyToken
 %wrapper "monad"
 
 -- character sets --------------------------------------------------------------
+$lf = \n  -- line feed
+$cr = \r  -- carriage return
+$eol_char = [$lf $cr] -- any end of line character
+$not_eol_char = ~$eol_char -- anything but an end of line character
+$white_char   = [\ \n\r\f\v\t]
+$white_no_nl = $white_char # $eol_char
 $shortstringcharsingle =  [^\n\\']
 $shortstringchardouble =  [^\n\\"]
 $longstringchar        =  [^\n]
 
-
 -- macros ----------------------------------------------------------------------
+@eol_pattern           = $lf | $cr $lf | $cr $lf  
 @stringprefix          =  r | R
 @stringescapeseq       =  "\".
 @shortstringitemsingle =  $shortstringcharsingle | @stringescapeseq
@@ -29,10 +35,18 @@ $longstringchar        =  [^\n]
 
 
 
+
 -- tokens ----------------------------------------------------------------------
 
 tokens :-
-  $white+               ;
+<0> {
+  ()                    { begin start     }
+}
+
+<start> {
+  $white_no_nl+         ;
+  \# ($not_eol_char)*   ; 
+  @eol_pattern          { mkL NEWLINE     }
   "False"               { mkL FALSE       }
   "None"                { mkL NONE        }
   "True"                { mkL TRUE        }
@@ -111,6 +125,7 @@ tokens :-
   "**="                 { mkL STARSTAREQ  }
   .                     { mkE             }
   
+}
 {
 
 data Lexeme = Lexeme AlexPosn PyToken.Token String
@@ -147,7 +162,7 @@ tokens str = runAlex str $ do
   loop
 
 
-
+alexEOF :: (Monad m) => m Lexeme 
 alexEOF = return (Lexeme undefined PEOF "")
 
 
@@ -156,6 +171,7 @@ printTokens (Left  x ) = print x
 printTokens (Right x ) = sequence_ ( map print x )
 
 
+main :: IO ()
 main = do
   s <- getContents
   --print (tokens s)
