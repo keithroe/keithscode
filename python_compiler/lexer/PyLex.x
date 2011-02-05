@@ -3,19 +3,20 @@
 module Main (main) where
 
 import PyToken
+import PyLexUtil
 }
 
 
 
-%wrapper "monad"
+%wrapper "monadUser"
 
 -- character sets --------------------------------------------------------------
-$lf = \n  -- line feed
-$cr = \r  -- carriage return
-$eol_char = [$lf $cr] -- any end of line character
-$not_eol_char = ~$eol_char -- anything but an end of line character
-$white_char   = [\ \n\r\f\v\t]
-$white_no_nl = $white_char # $eol_char
+$lf                    = \n  -- line feed
+$cr                    = \r  -- carriage return
+$eol_char              = [$lf $cr] -- any end of line character
+$not_eol_char          = ~$eol_char -- anything but an end of line character
+$white_char            = [\ \n\r\f\v\t]
+$white_no_nl           = $white_char # $eol_char
 $shortstringcharsingle =  [^\n\\']
 $shortstringchardouble =  [^\n\\"]
 $longstringchar        =  [^\n]
@@ -130,6 +131,10 @@ tokens :-
 
 data Lexeme = Lexeme AlexPosn PyToken.Token String
 
+data UserState = UserState [Int] [Token] [Int]
+
+userStartState = UserState [] [] []
+
 
 mkL :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
 mkL tok (posn,_,str) len = return (Lexeme posn tok (take len str))
@@ -169,6 +174,7 @@ alexEOF = return (Lexeme undefined PEOF "")
 printTokens :: Either String [ PyToken.Token ] -> IO () 
 printTokens (Left  x ) = print x
 printTokens (Right x ) = sequence_ ( map print x )
+
 
 
 main :: IO ()
