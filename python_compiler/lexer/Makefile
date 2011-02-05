@@ -5,10 +5,13 @@ PyToken: PyToken.hs
 	ghc -c PyToken.hs
 
 alex: PyLex.x
-	alex PyLex.x
+	alex PyLex.x 
 
-pylex: alex PyToken
-	ghc -o pylex PyLex.hs PyToken.o
+PyLexUtil: PyLexUtil.hs
+	ghc -c PyLexUtil.hs
+
+pylex: alex PyToken PyLexUtil
+	ghc -o pylex PyLex.hs PyToken.o PyLexUtil.o
 
 test:
 	./pylex < testcases/simple.py
