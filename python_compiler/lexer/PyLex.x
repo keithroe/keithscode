@@ -3,7 +3,6 @@
 module Main (main) where
 
 import PyToken
-import PyLexUtil
 }
 
 
@@ -128,12 +127,22 @@ tokens :-
   
 }
 {
-
+--------------------------------------------------------------------------------
+--
+-- User types
+--
+--------------------------------------------------------------------------------
 data Lexeme = Lexeme AlexPosn PyToken.Token String
 
-data UserState = UserState [Int] [Token] [Int]
+data UserState = UserState {
+    start_codes    :: [Int],        -- Stack of start codes
+    matched_delims :: [Token],      -- Stack of opening delimiters (eg, '(', '[' )
+    indents        :: [Int]         -- Stack of indentation levels (in spaces)
+} deriving( Show )
 
-userStartState = UserState [] [] []
+userStartState :: UserState  
+userStartState = UserState [0, start] [] [0]
+
 
 
 mkL :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
@@ -174,7 +183,6 @@ alexEOF = return (Lexeme undefined PEOF "")
 printTokens :: Either String [ PyToken.Token ] -> IO () 
 printTokens (Left  x ) = print x
 printTokens (Right x ) = sequence_ ( map print x )
-
 
 
 main :: IO ()
