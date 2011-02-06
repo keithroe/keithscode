@@ -3,6 +3,7 @@
 module Main (main) where
 
 import PyToken
+import PyLexUtil
 }
 
 
@@ -10,43 +11,70 @@ import PyToken
 %wrapper "monadUser"
 
 -- character sets --------------------------------------------------------------
-$lf                    = \n  -- line feed
-$cr                    = \r  -- carriage return
-$eol_char              = [$lf $cr] -- any end of line character
-$not_eol_char          = ~$eol_char -- anything but an end of line character
+$lf                    = \n
+$cr                    = \r
+$eol_char              = [$lf $cr]
+$not_eol_char          = ~$eol_char
 $white_char            = [\ \n\r\f\v\t]
 $white_no_nl           = $white_char # $eol_char
-$shortstringcharsingle =  [^\n\\']
-$shortstringchardouble =  [^\n\\"]
-$longstringchar        =  [^\n]
+
+$shortstringcharsingle = [^\n\\']
+$shortstringchardouble = [^\n\\"]
+$longstringchar        = [^\n]
+
+$lowercase             = [a-z]
+$uppercase             = [A-Z]
+
+$digit                 = [0-9]
+$nonzerodigit          = [1-9]
+$octdigit              = [0-7]
+$bindigit              = [0-1]
+$hexdigit              = [$digit a-f A-F] 
 
 -- macros ----------------------------------------------------------------------
 @eol_pattern           = $lf | $cr $lf | $cr $lf  
-@stringprefix          =  r | R
-@stringescapeseq       =  "\".
-@shortstringitemsingle =  $shortstringcharsingle | @stringescapeseq
-@shortstringitemdouble =  $shortstringchardouble | @stringescapeseq
-@longstringitem        =  $longstringchar | @stringescapeseq
-@shortstring           =  "'" @shortstringitemsingle* "'" |
-                          "\"" @shortstringitemdouble* "\""
-@longstring            =  "'''" @longstringitem* "'''" | 
-                          "\"\"\""@longstringitem* "\"\"\""
-@stringliteral         =  @stringprefix? (@shortstring | @longstring)
 
+@stringprefix          = r | R
+@stringescapeseq       = "\".
+@shortstringitemsingle = $shortstringcharsingle | @stringescapeseq
+@shortstringitemdouble = $shortstringchardouble | @stringescapeseq
+@longstringitem        = $longstringchar | @stringescapeseq
+@shortstring           = "'" @shortstringitemsingle* "'" | "\"" @shortstringitemdouble* "\""
+@longstring            = "'''" @longstringitem* "'''" | "\"\"\""@longstringitem* "\"\"\""
+@stringliteral         = @stringprefix? (@shortstring | @longstring)
 
+@letter                = $lowercase | $uppercase
+@identifier            = (@letter|_) (@letter | $digit | _)*
+
+@decimalinteger        = $nonzerodigit $digit* | 0+
+@octinteger            = 0 (o | O) $octdigit+
+@hexinteger            = 0 (x | X) $hexdigit+
+@bininteger            = 0 (b | B) $bindigit+
+@integer               = @decimalinteger | @octinteger | @hexinteger | @bininteger
 
 
 -- tokens ----------------------------------------------------------------------
 
 tokens :-
+
+$white_no_nl+         ;
+\# ($not_eol_char)*   ; 
+\\ @eol_pattern       ;
+
 <0> {
-  ()                    { begin start     }
+  ()                    { begin begin_logical_line }
 }
 
-<start> {
-  $white_no_nl+         ;
-  \# ($not_eol_char)*   ; 
+<begin_logical_line > {
+  @eol_pattern          ;
+  ()                    { handleIndentation `andBegin` logical_line }
+}
+
+<logical_line> {
+  ^ $white_no_nl* @eol_pattern ;
+  
   @eol_pattern          { mkL NEWLINE     }
+
   "False"               { mkL FALSE       }
   "None"                { mkL NONE        }
   "True"                { mkL TRUE        }
@@ -123,45 +151,70 @@ tokens :-
   ">>="                 { mkL RSHIFTEQ    }
   "<<="                 { mkL LSHIFTEQ    }
   "**="                 { mkL STARSTAREQ  }
-  .                     { mkE             }
+  @identifier           { mkId            }
+  @integer              { mkInt           }
+.                     { mkError         }
   
 }
+
 {
 --------------------------------------------------------------------------------
 --
 -- User types
 --
 --------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- Lexeme
 data Lexeme = Lexeme AlexPosn PyToken.Token String
-
-data UserState = UserState {
-    start_codes    :: [Int],        -- Stack of start codes
-    matched_delims :: [Token],      -- Stack of opening delimiters (eg, '(', '[' )
-    indents        :: [Int]         -- Stack of indentation levels (in spaces)
-} deriving( Show )
-
-userStartState :: UserState  
-userStartState = UserState [0, start] [] [0]
-
-
 
 mkL :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
 mkL tok (posn,_,str) len = return (Lexeme posn tok (take len str))
 
+mkId :: AlexInput -> Int -> Alex Lexeme
+mkId input@(posn,_,str) len = return ( Lexeme posn (ID stringval) (stringval) ) 
+                              where stringval = take len str
 
-mkE :: AlexInput -> Int -> Alex Lexeme
-mkE input@(posn,_,str) len =
+mkInt :: AlexInput -> Int -> Alex Lexeme
+mkInt input@(posn,_,str) len = return ( Lexeme posn (INT $ stringToInt stringval) (stringval) ) 
+                              where stringval = take len str
+
+mkError :: AlexInput -> Int -> Alex Lexeme
+mkError input@(posn,_,str) len =
     let
         posnString (AlexPn _ line col) = show line ++ ':': show col
         errorString = "Line: " ++ posnString posn ++ " before '" ++ (take len str )  ++ "'"
     in
         return (Lexeme posn (ERROR $ errorString ) (take len str) )
 
+mkXError :: AlexInput -> Int -> Alex Lexeme
+mkXError input@(posn,_,str) len =
+    let
+        posnString (AlexPn _ line col) = show line ++ ':': show col
+        errorString = "X Line: " ++ posnString posn ++ " before '" ++ (take len str )  ++ "'"
+    in
+        return (Lexeme posn (ERROR $ errorString ) (take len str) )
 
---mkE :: AlexInput -> Int -> Alex Lexeme
---mkE input@(posn,_,str) len = return (Lexeme posn (ERROR $ errorString ) (take len str) )
---                 where errorString = "Line: " ++ showPosn posn ++ " before '" ++ (take len str )  ++ "'"
---showPosn (AlexPn _ line col) = show line ++ ':': show col
+
+--------------------------------------------------------------------------------
+-- UserState
+data UserState = UserState {
+    --start_codes    :: [Int],        -- Stack of start codes
+    matched_delims :: [Token],      -- Stack of opening delimiters (eg, '(', '[' )
+    indents        :: [Int]         -- Stack of indentation levels (in spaces)
+} deriving( Show )
+
+userStartState :: UserState  
+userStartState = UserState  [] [0]
+
+
+
+
+handleIndentation  _ _  =
+    do alexMonadScan
+
+
+
 
            
 
