@@ -164,8 +164,10 @@ $white_no_nl+         ;
 --
 --------------------------------------------------------------------------------
 
+
 --------------------------------------------------------------------------------
 -- Lexeme
+
 data Lexeme = Lexeme AlexPosn PyToken.Token String
 
 mkL :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
@@ -198,25 +200,61 @@ mkXError input@(posn,_,str) len =
 
 --------------------------------------------------------------------------------
 -- UserState
+
 data UserState = UserState {
-    --start_codes    :: [Int],        -- Stack of start codes
-    matched_delims :: [Token],      -- Stack of opening delimiters (eg, '(', '[' )
-    indents        :: [Int]         -- Stack of indentation levels (in spaces)
+    delimDepth    :: Int,      -- Current depth of opening delims (eg, '(', '[' ) 
+    indentStack   :: [Int]     -- Stack of indentation levels (in spaces)
 } deriving( Show )
+
 
 userStartState :: UserState  
 userStartState = UserState  [] [0]
 
 
+currentIndent :: Alex Int
+currentIndent = 
+    do userData <- alexGetUserData
+       return ( last $ indentStack userData )
 
 
-handleIndentation  _ _  =
-    do alexMonadScan
+currentDelimDepth :: Alex Int
+currentDelimDepth = 
+    do userData <- alexGetUserData
+       return ( delimDepth userData )
+
+
+decDelimDepth :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
+decDelimDepth token = 
+    do userData <- alexGetUserData
+       currentD <- currentDelimDepth
+       currentI <- currentIndent
+       alexSetUserData $ UserState (currentD - 1) currentI
+       return mkL token
+       
+
+incDelimDepth :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
+incDelimDepth token = 
+    do userData <- alexGetUserData
+       currentD <- currentDelimDepth
+       currentI <- currentIndent
+       alexSetUserData $ UserState (currentD + 1) currentI
+       return mkL token
+
+
+
+handleIndentation :: AlexInput -> Int -> Alex Lexeme
+handleIndentation  input@(posn,_,str) len =
+    do state <- alexGetUserData 
+       currentInd <- currentIndent
+       case compare currentInd ( currentColumn posn )of
+            
+       alexMonadScan
 
 
 
 
            
+currentColumn:: AlexPosn -> I
 
 
 tokens :: String -> Either String [ PyToken.Token ]

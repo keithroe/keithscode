@@ -19,7 +19,7 @@ data Token
     -- Whitespace
     = NEWLINE
     | INDENT
-    | DEDENT
+    | DEDENT    Int
     | PEOF
     | ERROR     String
 
