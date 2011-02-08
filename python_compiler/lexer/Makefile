@@ -14,7 +14,8 @@ pylex: alex PyToken PyLexUtil
 	ghc -o pylex PyLex.hs PyToken.o PyLexUtil.o
 
 test:
-	./pylex < testcases/blanklines.py
+	./pylex < testcases/indent.py
+	#./pylex < testcases/blanklines.py
 	#./pylex < testcases/simple.py
 	#./pylex < testcases/input.py
 	#./pylex < testcases/string.py
