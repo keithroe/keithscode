@@ -100,7 +100,7 @@ data Token
     | DOT        -- .
     | SEMICOLON  -- ;
     | AT         -- @
-    | EQ         -- =
+    | PEQ         -- =
     | PLUSEQ     -- +=
     | MINUSEQ    -- -=
     | STAREQ     -- *=

@@ -138,7 +138,7 @@ $white_no_nl+         ;
   "."                   { mkL DOT         } 
   ";"                   { mkL SEMICOLON   } 
   "@"                   { mkL AT          } 
-  "="                   { mkL PyToken.EQ  } 
+  "="                   { mkL PEQ         } 
   "+="                  { mkL PLUSEQ      } 
   "-="                  { mkL MINUSEQ     } 
   "*="                  { mkL STAREQ      }
@@ -153,7 +153,7 @@ $white_no_nl+         ;
   "**="                 { mkL STARSTAREQ  }
   @identifier           { mkId            }
   @integer              { mkInt           }
-.                     { mkError         }
+  .                     { mkError         }
   
 }
 
@@ -208,13 +208,19 @@ data UserState = UserState {
 
 
 userStartState :: UserState  
-userStartState = UserState 0 [0]
+userStartState = UserState 0 [1]
 
 
 currentIndent :: Alex Int
 currentIndent = 
     do userData <- alexGetUserData
-       return ( last $ indentStack userData )
+       return $ head $ indentStack userData
+
+
+pushIndent :: Int -> Alex ()
+pushIndent x = do currentDD <- currentDelimDepth
+                  currentIS <- currentIndentStack
+                  alexSetUserData ( UserState currentDD (x:currentIS) )
 
 
 currentIndentStack :: Alex [ Int ]
@@ -247,14 +253,20 @@ incDelimDepth token input len=
        mkL token input len
 
 
+currentColumn :: AlexPosn -> Int
+currentColumn (AlexPn _ _ col) = col 
+
+
 handleIndentation :: AlexInput -> Int -> Alex Lexeme
 handleIndentation  input@(posn,_,str) len =
     do state <- alexGetUserData 
        currentInd <- currentIndent
-       -- case compare currentInd ( currentColumn posn )of
-       alexMonadScan
-            
-
+       let currentCol = currentColumn posn
+       case compare currentInd currentCol of
+           EQ -> skip input len
+           GT -> mkL (DEDENT 1 )input len
+           LT -> do pushIndent currentCol 
+                    mkL INDENT input len
 
 
 
