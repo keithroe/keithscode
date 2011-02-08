@@ -208,13 +208,19 @@ data UserState = UserState {
 
 
 userStartState :: UserState  
-userStartState = UserState  [] [0]
+userStartState = UserState 0 [0]
 
 
 currentIndent :: Alex Int
 currentIndent = 
     do userData <- alexGetUserData
        return ( last $ indentStack userData )
+
+
+currentIndentStack :: Alex [ Int ]
+currentIndentStack = 
+    do userData <- alexGetUserData
+       return ( indentStack userData )
 
 
 currentDelimDepth :: Alex Int
@@ -224,37 +230,36 @@ currentDelimDepth =
 
 
 decDelimDepth :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
-decDelimDepth token = 
-    do userData <- alexGetUserData
-       currentD <- currentDelimDepth
-       currentI <- currentIndent
-       alexSetUserData $ UserState (currentD - 1) currentI
-       return mkL token
+decDelimDepth token input len= 
+    do userData  <- alexGetUserData
+       currentIS <- currentIndentStack
+       currentD  <- currentDelimDepth
+       alexSetUserData ( UserState (currentD - 1) currentIS )
+       mkL token input len
        
 
 incDelimDepth :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
-incDelimDepth token = 
-    do userData <- alexGetUserData
-       currentD <- currentDelimDepth
-       currentI <- currentIndent
-       alexSetUserData $ UserState (currentD + 1) currentI
-       return mkL token
-
+incDelimDepth token input len= 
+    do userData  <- alexGetUserData
+       currentIS <- currentIndentStack
+       currentD  <- currentDelimDepth
+       alexSetUserData ( UserState (currentD + 1) currentIS )
+       mkL token input len
 
 
 handleIndentation :: AlexInput -> Int -> Alex Lexeme
 handleIndentation  input@(posn,_,str) len =
     do state <- alexGetUserData 
        currentInd <- currentIndent
-       case compare currentInd ( currentColumn posn )of
-            
+       -- case compare currentInd ( currentColumn posn )of
        alexMonadScan
+            
 
 
 
 
            
-currentColumn:: AlexPosn -> I
+--currentColumn:: AlexPosn -> I
 
 
 tokens :: String -> Either String [ PyToken.Token ]
