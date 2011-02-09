@@ -40,9 +40,10 @@ $hexdigit              = [$digit a-f A-F]
 @shortstringitemsingle = $shortstringcharsingle | @stringescapeseq
 @shortstringitemdouble = $shortstringchardouble | @stringescapeseq
 @longstringitem        = $longstringchar | @stringescapeseq
-@shortstring           = "'" @shortstringitemsingle* "'" | "\"" @shortstringitemdouble* "\""
-@longstring            = "'''" @longstringitem* "'''" | "\"\"\""@longstringitem* "\"\"\""
-@stringliteral         = @stringprefix? (@shortstring | @longstring)
+@shortstring           = ' @shortstringitemsingle* ' | \" @shortstringitemdouble* \"
+@longstring            = ''' @longstringitem* ''' | \"\"\" @longstringitem* \"\"\"
+@shortstringliteral    = @stringprefix? @shortstring
+@longstringliteral     = @stringprefix? @longstring
 
 @letter                = $lowercase | $uppercase
 @identifier            = (@letter|_) (@letter | $digit | _)*
@@ -165,6 +166,8 @@ $white_no_nl+         ;
   @integer              { mkInt           }
   @floatnumber          { mkFloat         }
   @imagnumber           { mkImag          }
+  @longstringliteral    { mkLongString    }
+  @shortstringliteral   { mkShortString   }
   .                     { mkError         }
   
 }
@@ -200,6 +203,15 @@ mkFloat input@(posn,_,str) len = return ( Lexeme posn (FLOAT $ stringToDouble st
 mkImag :: AlexInput -> Int -> Alex Lexeme
 mkImag input@(posn,_,str) len = return ( Lexeme posn (IMAG $ stringToDouble (init stringval ) ) (stringval) ) 
                                 where stringval = take len str
+
+mkShortString :: AlexInput -> Int -> Alex Lexeme
+mkShortString input@(posn,_,str) len = return ( Lexeme posn (STRING ( init $ tail $ stringval) ) (stringval) ) 
+                                       where stringval = take len str
+
+mkLongString :: AlexInput -> Int -> Alex Lexeme
+mkLongString input@(posn,_,str) len = return ( Lexeme posn (STRING ( drop 3 ( take (len-3) stringval ) ) ) (stringval) )
+                                      where stringval = take len str
+
 mkError :: AlexInput -> Int -> Alex Lexeme
 mkError input@(posn,_,str) len =
     let

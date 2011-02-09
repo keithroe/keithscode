@@ -1,4 +1,4 @@
 (KEYWORD return)
-(LIT 1.)
+(LIT 1.0)
 (ID "foo")
 (ENDMARKER)
