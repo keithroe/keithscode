@@ -73,7 +73,7 @@ $white_no_nl+         ;
 <logical_line> {
   ^ $white_no_nl* @eol_pattern ;
   
-  @eol_pattern          { mkL NEWLINE     }
+  @eol_pattern          { mkL NEWLINE `andBegin` begin_logical_line }
 
   "False"               { mkL FALSE       }
   "None"                { mkL NONE        }
@@ -222,6 +222,21 @@ pushIndent x = do currentDD <- currentDelimDepth
                   currentIS <- currentIndentStack
                   alexSetUserData ( UserState currentDD (x:currentIS) )
 
+dedentWhile :: Int -> [Int] -> Int 
+dedentWhile col dedent_stack = dedentWhile' col dedent_stack 
+    where dedentWhile' col (x:xs)
+              | col < x   = 1 + dedentWhile' col xs 
+              | otherwise = 0  
+
+
+popIndent :: Int -> Alex PyToken.Token 
+popIndent column = do currentDD <- currentDelimDepth
+                      currentIS <- currentIndentStack
+                      let num_dedents = dedentWhile column currentIS
+                      let newDD = drop num_dedents currentIS 
+                      alexSetUserData ( UserState currentDD (newDD) )
+                      return (DEDENT num_dedents)
+
 
 currentIndentStack :: Alex [ Int ]
 currentIndentStack = 
@@ -264,7 +279,8 @@ handleIndentation  input@(posn,_,str) len =
        let currentCol = currentColumn posn
        case compare currentInd currentCol of
            EQ -> skip input len
-           GT -> mkL (DEDENT 1 )input len
+           GT -> do token <- popIndent currentCol
+                    mkL (DEDENT 1) input len
            LT -> do pushIndent currentCol 
                     mkL INDENT input len
 

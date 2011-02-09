@@ -1,16 +1,16 @@
 
-all: alex pylex test
+all: pylex test
 
-PyToken: PyToken.hs
+PyToken.o: PyToken.hs
 	ghc -c PyToken.hs
 
-alex: PyLex.x
+PyLex.hs: PyLex.x
 	alex PyLex.x 
 
-PyLexUtil: PyLexUtil.hs
+PyLexUtil.o: PyLexUtil.hs
 	ghc -c PyLexUtil.hs
 
-pylex: alex PyToken PyLexUtil
+pylex: PyLex.hs PyToken.o PyLexUtil.o
 	ghc -o pylex PyLex.hs PyToken.o PyLexUtil.o
 
 test:
@@ -20,3 +20,6 @@ test:
 	#./pylex < testcases/input.py
 	#./pylex < testcases/string.py
 
+
+clean:
+	rm *.o *.hi PyLex.hs pylex
