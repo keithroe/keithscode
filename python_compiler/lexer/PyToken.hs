@@ -90,8 +90,8 @@ data Token
     | NOTEQ      -- !=
     
     -- Delimiters
-    | RPAREN     -- (
-    | LPAREN     -- )
+    | LPAREN     -- (
+    | RPAREN     -- )
     | LBRACK     -- [
     | RBRACK     -- ]
     | LCURLY     -- {
