@@ -32,8 +32,8 @@ data Token
     -- literals
     | STRING    String
     | INT       Int
-    | FLOAT     Float
-    | Imaginary Float
+    | FLOAT     Double
+    | IMAG      Double
 
     -- KeywordS
     | FALSE
@@ -129,7 +129,7 @@ renderClass  (ID        x) = "(ID \""  ++ x ++ "\")"
 renderClass  (STRING    x) = "(LIT \"" ++ x ++ "\")"
 renderClass  (INT       x) = "(LIT " ++ show x ++ ")"
 renderClass  (FLOAT     x) = "(LIT " ++ show x ++ ")"
-renderClass  (Imaginary x) = "(LIT " ++ show x ++ ")"
+renderClass  (IMAG      x) = "(LIT " ++ show x ++ "i)"
 
 renderClass  FALSE         = "(KEYWORD False)" 
 renderClass  CLASS         = "(KEYWORD class)" 

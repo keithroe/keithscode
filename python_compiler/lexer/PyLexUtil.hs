@@ -18,3 +18,12 @@ stringToInt str@(x0:x1:xs)
         readBin str = fst $ Numeric.readInt 2 (`elem` "01") Data.Char.digitToInt str !! 0
        
 
+stringToDouble :: String -> Double
+stringToDouble str@('.':_) = read ('0':stringToDoubleRest str)
+stringToDouble str         = read (stringToDoubleRest str)
+
+stringToDoubleRest :: String -> String
+stringToDoubleRest []     = []
+stringToDoubleRest ['.']  = ".0"
+stringToDoubleRest (x:xs) = x : stringToDoubleRest xs
+
