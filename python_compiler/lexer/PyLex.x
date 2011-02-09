@@ -222,6 +222,7 @@ pushIndent x = do currentDD <- currentDelimDepth
                   currentIS <- currentIndentStack
                   alexSetUserData ( UserState currentDD (x:currentIS) )
 
+
 dedentWhile :: Int -> [Int] -> Int 
 dedentWhile col dedent_stack = dedentWhile' col dedent_stack 
     where dedentWhile' col (x:xs)
@@ -280,9 +281,11 @@ handleIndentation  input@(posn,_,str) len =
        case compare currentInd currentCol of
            EQ -> skip input len
            GT -> do token <- popIndent currentCol
-                    mkL (DEDENT 1) input len
+                    mkL token input len
            LT -> do pushIndent currentCol 
-                    mkL INDENT input len
+                    currentIS <- currentIndentStack 
+                    let size = length  currentIS
+                    mkL (INDENT currentCol) input len
 
 
 
