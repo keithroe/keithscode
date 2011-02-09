@@ -1,0 +1,5 @@
+(PUNCT "(")
+(ID "N")
+(PUNCT "=")
+(LIT 5)
+(ERROR "newline in string")

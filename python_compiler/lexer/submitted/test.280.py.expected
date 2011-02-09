@@ -1,0 +1,7 @@
+(KEYWORD def)
+(ID "fact")
+(PUNCT "(")
+(ID "x")
+(PUNCT ")")
+(PUNCT ":")
+(ENDMARKER)

@@ -1,0 +1,2 @@
+(LIT "\"hi")
+(ERROR "unterminated string literal at EOF")

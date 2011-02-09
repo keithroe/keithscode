@@ -1,0 +1,5 @@
+(KEYWORD if)
+(PUNCT "(")
+(KEYWORD True)
+(PUNCT ")")
+(ENDMARKER)

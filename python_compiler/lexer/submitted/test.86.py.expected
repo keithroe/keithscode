@@ -1,0 +1,5 @@
+(LIT "long string")
+(KEYWORD with)
+(ID "quote")
+(ID "char")
+(ERROR "unterminated string literal at EOF")

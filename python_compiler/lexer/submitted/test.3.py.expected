@@ -1,0 +1,6 @@
+(INDENT)
+(KEYWORD def)
+(ID "hello")
+(PUNCT "(")
+(ID "x")
+(ENDMARKER)

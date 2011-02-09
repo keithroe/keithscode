@@ -1,0 +1,6 @@
+(KEYWORD def)
+(ID "get")
+(PUNCT "(")
+(ID "x")
+(PUNCT ")")
+(ENDMARKER)

@@ -1,0 +1,3 @@
+#comment
+fact("hello" #comment
+)

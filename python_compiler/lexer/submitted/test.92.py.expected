@@ -1,0 +1,5 @@
+(ID "fact")
+(PUNCT "(")
+(LIT "hello")
+(PUNCT ")")
+(ENDMARKER)

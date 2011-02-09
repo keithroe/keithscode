@@ -1,0 +1,8 @@
+(ID "a")
+(PUNCT "=")
+(ERROR "unknown char: '\'")
+(NEWLINE)
+(INDENT)
+(ID "b")
+(DEDENT)
+(ENDMARKER)

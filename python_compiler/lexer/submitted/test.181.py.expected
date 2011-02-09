@@ -1,0 +1,8 @@
+(LIT "abc")
+(ID "xxxx")
+(LIT "efg")
+(NEWLINE)
+(LIT "")
+(LIT "")
+(LIT "")
+(ENDMARKER)

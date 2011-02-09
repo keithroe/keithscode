@@ -1,0 +1,8 @@
+(ID "foo")
+(ID "bar")
+(ERROR "unknown char: '\'")
+(NEWLINE)
+(INDENT)
+(ID "baz")
+(DEDENT)
+(ENDMARKER)

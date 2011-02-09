@@ -1,0 +1,3 @@
+(LIT "hello")
+(LIT " world")
+(ENDMARKER)

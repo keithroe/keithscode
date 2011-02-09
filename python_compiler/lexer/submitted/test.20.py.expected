@@ -1,0 +1,5 @@
+(PUNCT "(")
+(KEYWORD if)
+(ID "string")
+(PUNCT "==")
+(ERROR "newline in string")

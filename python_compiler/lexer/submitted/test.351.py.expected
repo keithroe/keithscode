@@ -1,0 +1,4 @@
+(LIT 3.14)
+(PUNCT "+")
+(LIT +2.15i)
+(ENDMARKER)

@@ -1,0 +1,5 @@
+(ID "x")
+(ERROR "unknown char: '\'")
+(PUNCT "+")
+(LIT 1)
+(ENDMARKER)

@@ -32,6 +32,7 @@ $bindigit              = [0-1]
 $hexdigit              = [$digit a-f A-F] 
 
 -- macros ----------------------------------------------------------------------
+
 @eol_pattern           = $lf | $cr $lf | $cr $lf  
 
 @stringprefix          = r | R
@@ -51,6 +52,15 @@ $hexdigit              = [$digit a-f A-F]
 @hexinteger            = 0 (x | X) $hexdigit+
 @bininteger            = 0 (b | B) $bindigit+
 @integer               = @decimalinteger | @octinteger | @hexinteger | @bininteger
+
+@intpart               =  digit+
+@fraction              =  \. digit+
+@exponent              =  ("e" | "E") ("+" | "-")? digit+
+@pointfloat            =  (@intpart)? @fraction | @intpart \. 
+@exponentfloat         =  (@intpart | @pointfloat) @exponent
+@floatnumber           =  @pointfloat | @exponentfloat
+@imagnumber            =  (floatnumber | intpart) ("j" | "J")
+
 
 
 -- tokens ----------------------------------------------------------------------
@@ -153,6 +163,8 @@ $white_no_nl+         ;
   "**="                 { mkL STARSTAREQ  }
   @identifier           { mkId            }
   @integer              { mkInt           }
+  @floatnumber          { mkFloat         }
+  @imagnumber           { mkImag          }
   .                     { mkError         }
   
 }
@@ -179,6 +191,10 @@ mkId input@(posn,_,str) len = return ( Lexeme posn (ID stringval) (stringval) )
 
 mkInt :: AlexInput -> Int -> Alex Lexeme
 mkInt input@(posn,_,str) len = return ( Lexeme posn (INT $ stringToInt stringval) (stringval) ) 
+                              where stringval = take len str
+
+mkFloat :: AlexInput -> Float -> Alex Lexeme
+mkFloat input@(posn,_,str) len = return ( Lexeme posn (FLOAT $ stringToFloat stringval) (stringval) ) 
                               where stringval = take len str
 
 mkError :: AlexInput -> Int -> Alex Lexeme
@@ -286,11 +302,6 @@ handleIndentation  input@(posn,_,str) len =
                     currentIS <- currentIndentStack 
                     let size = length  currentIS
                     mkL (INDENT currentCol) input len
-
-
-
-           
---currentColumn:: AlexPosn -> I
 
 
 tokens :: String -> Either String [ PyToken.Token ]
