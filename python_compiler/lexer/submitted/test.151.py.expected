@@ -1,0 +1,7 @@
+(PUNCT "(")
+(ID "N")
+(PUNCT "=")
+(LIT 5)
+(PUNCT "]")
+(NEWLINE)
+(ENDMARKER)

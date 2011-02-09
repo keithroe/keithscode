@@ -1,0 +1,5 @@
+(ID "x")
+(PUNCT "=")
+(PUNCT "-")
+(LIT +1i)
+(ENDMARKER)

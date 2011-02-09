@@ -1,0 +1,4 @@
+(PUNCT "(")
+(KEYWORD as)
+(PUNCT ")")
+(ENDMARKER)

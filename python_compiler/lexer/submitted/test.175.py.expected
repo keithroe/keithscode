@@ -1,0 +1,4 @@
+(ID "x")
+(PUNCT "=")
+(ERROR "unknown char: '\'")
+(ERROR "unterminated string literal at EOF")

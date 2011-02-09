@@ -17,3 +17,4 @@ stringToInt str@(x0:x1:xs)
         readBin :: String -> Int
         readBin str = fst $ Numeric.readInt 2 (`elem` "01") Data.Char.digitToInt str !! 0
        
+

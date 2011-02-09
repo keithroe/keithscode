@@ -1,0 +1,6 @@
+(ID "s")
+(PUNCT "=")
+(LIT "foo ")
+(ID "OK")
+(LIT " \'he is")
+(ENDMARKER)

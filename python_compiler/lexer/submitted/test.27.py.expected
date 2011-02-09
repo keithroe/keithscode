@@ -1,0 +1,6 @@
+(ERROR "unknown char: '?'")
+(NEWLINE)
+(ID "x")
+(PUNCT "=")
+(LIT 1)
+(ENDMARKER)

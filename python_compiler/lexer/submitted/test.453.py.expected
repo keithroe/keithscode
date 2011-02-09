@@ -1,0 +1,6 @@
+(ID "a")
+(NEWLINE)
+(INDENT)
+(ID "b")
+(DEDENT)
+(ENDMARKER)

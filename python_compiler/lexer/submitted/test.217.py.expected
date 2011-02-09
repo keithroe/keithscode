@@ -1,0 +1,6 @@
+(PUNCT "(")
+(LIT 1)
+(LIT 2)
+(LIT 3)
+(PUNCT ")")
+(ENDMARKER)

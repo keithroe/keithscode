@@ -1,0 +1,5 @@
+(PUNCT "(")
+(ID "d")
+(PUNCT "=")
+(LIT "1.4 + 8} hello there")
+(ENDMARKER)

@@ -1,0 +1,7 @@
+(LIT "abc")
+(ID "xxxx")
+(LIT "efg")
+(NEWLINE)
+(LIT "\" ")
+(LIT " ")
+(ERROR "unterminated string literal at EOF")

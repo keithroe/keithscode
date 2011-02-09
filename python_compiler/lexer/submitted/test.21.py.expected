@@ -1,0 +1,7 @@
+(PUNCT "(")
+(KEYWORD if)
+(ID "string")
+(PUNCT "==")
+(LIT "can I do this?")
+(PUNCT ")")
+(ENDMARKER)

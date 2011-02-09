@@ -1,0 +1,3 @@
+(LIT "He is ")
+(ID "OK")
+(ERROR "unterminated string literal at EOF")

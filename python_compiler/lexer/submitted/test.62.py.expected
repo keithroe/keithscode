@@ -1,0 +1,5 @@
+(KEYWORD if)
+(ID "x")
+(PUNCT "==")
+(LIT 5)
+(ENDMARKER)

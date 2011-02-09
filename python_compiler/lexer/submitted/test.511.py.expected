@@ -1,0 +1,6 @@
+(ID "foo")
+(NEWLINE)
+(INDENT)
+(ID "baz")
+(DEDENT)
+(ENDMARKER)

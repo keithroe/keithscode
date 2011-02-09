@@ -1,0 +1,6 @@
+(ID "x")
+(PUNCT "=")
+(LIT 1)
+(NEWLINE)
+(LIT "This is just a string")
+(ENDMARKER)

@@ -1,0 +1,5 @@
+(ID "s")
+(PUNCT "=")
+(LIT " ")
+(ID "ok")
+(ERROR "unterminated string literal at EOF")

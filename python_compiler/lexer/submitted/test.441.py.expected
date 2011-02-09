@@ -1,0 +1,3 @@
+(ID "s")
+(PUNCT "=")
+(ERROR "unterminated string literal at EOF")
