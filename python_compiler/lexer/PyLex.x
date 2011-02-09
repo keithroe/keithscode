@@ -36,7 +36,7 @@ $hexdigit              = [$digit a-f A-F]
 @eol_pattern           = $lf | $cr $lf | $cr $lf  
 
 @stringprefix          = r | R
-@stringescapeseq       = "\".
+@stringescapeseq       = \\.
 @shortstringitemsingle = $shortstringcharsingle | @stringescapeseq
 @shortstringitemdouble = $shortstringchardouble | @stringescapeseq
 @longstringitem        = $longstringchar | @stringescapeseq
@@ -53,13 +53,13 @@ $hexdigit              = [$digit a-f A-F]
 @bininteger            = 0 (b | B) $bindigit+
 @integer               = @decimalinteger | @octinteger | @hexinteger | @bininteger
 
-@intpart               =  digit+
-@fraction              =  \. digit+
-@exponent              =  ("e" | "E") ("+" | "-")? digit+
-@pointfloat            =  (@intpart)? @fraction | @intpart \. 
-@exponentfloat         =  (@intpart | @pointfloat) @exponent
-@floatnumber           =  @pointfloat | @exponentfloat
-@imagnumber            =  (floatnumber | intpart) ("j" | "J")
+@intpart               = $digit+
+@fraction              = \. $digit+
+@exponent              = (e | E) (\+ | \-)? $digit+
+@pointfloat            = (@intpart? @fraction) | @intpart \. 
+@exponentfloat         = (@intpart | @pointfloat) @exponent
+@floatnumber           = @pointfloat | @exponentfloat
+@imagnumber            = (@floatnumber | @intpart) (j | J)
 
 
 
@@ -193,10 +193,13 @@ mkInt :: AlexInput -> Int -> Alex Lexeme
 mkInt input@(posn,_,str) len = return ( Lexeme posn (INT $ stringToInt stringval) (stringval) ) 
                               where stringval = take len str
 
-mkFloat :: AlexInput -> Float -> Alex Lexeme
-mkFloat input@(posn,_,str) len = return ( Lexeme posn (FLOAT $ stringToFloat stringval) (stringval) ) 
-                              where stringval = take len str
+mkFloat :: AlexInput -> Int -> Alex Lexeme
+mkFloat input@(posn,_,str) len = return ( Lexeme posn (FLOAT $ stringToDouble stringval) (stringval) ) 
+                                 where stringval = take len str
 
+mkImag :: AlexInput -> Int -> Alex Lexeme
+mkImag input@(posn,_,str) len = return ( Lexeme posn (IMAG $ stringToDouble (init stringval ) ) (stringval) ) 
+                                where stringval = take len str
 mkError :: AlexInput -> Int -> Alex Lexeme
 mkError input@(posn,_,str) len =
     let
