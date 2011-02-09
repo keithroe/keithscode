@@ -127,8 +127,8 @@ $white_no_nl+         ;
   ">="                  { mkL RANGLEEQ    } 
   "=="                  { mkL EQEQ        } 
   "!="                  { mkL NOTEQ       } 
-  "("                   { mkL RPAREN      } 
-  ")"                   { mkL LPAREN      } 
+  "("                   { mkL LPAREN      } 
+  ")"                   { mkL RPAREN      } 
   "["                   { mkL LBRACK      } 
   "]"                   { mkL RBRACK      } 
   "{"                   { mkL LCURLY      } 
@@ -322,7 +322,7 @@ main = do
   --print (tokens s)
   --map print ( uneither ( tokens s ) )
   --map print ( uneither ( tokens s ) )
-  printTokens ( tokens s )
+  --printTokens ( tokens s )
   printTokensForClass ( tokens s )
 }
 
