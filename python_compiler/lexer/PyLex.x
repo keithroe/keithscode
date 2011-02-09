@@ -311,6 +311,10 @@ printTokens :: Either String [ PyToken.Token ] -> IO ()
 printTokens (Left  x ) = print x
 printTokens (Right x ) = sequence_ ( map print x )
 
+printTokensForClass :: Either String [ PyToken.Token ] -> IO () 
+printTokensForClass (Left  x ) = print x
+printTokensForClass (Right x ) = sequence_ ( map (putStrLn. renderClass) x )
+
 
 main :: IO ()
 main = do
@@ -319,5 +323,6 @@ main = do
   --map print ( uneither ( tokens s ) )
   --map print ( uneither ( tokens s ) )
   printTokens ( tokens s )
+  printTokensForClass ( tokens s )
 }
 
