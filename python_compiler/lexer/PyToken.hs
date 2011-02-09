@@ -121,16 +121,16 @@ data Token
 
 renderClass :: Token -> String
 renderClass  NEWLINE       = "(NEWLINE)"
-renderClass  (INDENT    x) = "(INDENT)"
-renderClass  (DEDENT    x) = init $ unlines (replicate x "(DEDENT)")
+renderClass  (INDENT   x ) = "(INDENT)"
+renderClass  (DEDENT   x ) = init $ unlines (replicate x "(DEDENT)")
 renderClass  PEOF          = "(ENDMARKER)"
-renderClass  (ERROR     x) = "(ERROR " ++ x ++ "\")"
-renderClass  (ID        x) = "(ID \""  ++ x ++ "\")"
-renderClass  (STRING    x) = "(LIT \"" ++ x ++ "\")"
-renderClass  (INT       x) = "(LIT " ++ show x ++ ")"
-renderClass  (FLOAT     x) = "(LIT " ++ show x ++ ")"
-renderClass  (IMAG      x) = "(LIT " ++ show x ++ "i)"
-
+renderClass  (ERROR    xs) = "(ERROR " ++ xs ++ ")"
+renderClass  (ID       xs) = "(ID \""  ++ xs ++ "\")"
+renderClass  (STRING   xs) = "(LIT \"" ++ concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs ] ++ "\")"
+renderClass  (INT      x ) = "(LIT " ++ show x ++ ")"
+renderClass  (FLOAT    x ) = "(LIT " ++ show x ++ ")"
+renderClass  (IMAG     x ) | x < 0.0   = "(LIT "  ++ show x ++ "i)"
+                           | otherwise = "(LIT +" ++ show x ++ "i)"
 renderClass  FALSE         = "(KEYWORD False)" 
 renderClass  CLASS         = "(KEYWORD class)" 
 renderClass  FINALLY       = "(KEYWORD finally)"

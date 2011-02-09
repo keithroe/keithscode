@@ -1,3 +1,4 @@
 (KEYWORD return)
-(LIT +1.i)
+(LIT +1.0i)
+(NEWLINE)
 (ENDMARKER)

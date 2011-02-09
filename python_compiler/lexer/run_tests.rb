@@ -25,7 +25,7 @@ num_tests = 523
   else
     puts "failed."
     puts diff
-    #exit
+    exit
   end
 end
 
