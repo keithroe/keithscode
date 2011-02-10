@@ -37,7 +37,7 @@ $hexdigit              = [$digit a-f A-F]
 @eol_pattern           = $lf | $cr $lf | $cr $lf  
 
 @stringprefix          = r | R
-@stringescapeseq       = \\.
+@stringescapeseq       = \\ (.|@eol_pattern)
 @shortstringitemsingle = $shortstringcharsingle | @stringescapeseq
 @shortstringitemdouble = $shortstringchardouble | @stringescapeseq
 @longstringitem        = $longstringchar | @stringescapeseq
@@ -45,6 +45,7 @@ $hexdigit              = [$digit a-f A-F]
 @longstring            = ''' @longstringitem* ''' | \"\"\" @longstringitem* \"\"\"
 @shortstringliteral    = @stringprefix? @shortstring
 @longstringliteral     = @stringprefix? @longstring
+
 
 @letter                = $lowercase | $uppercase
 @identifier            = (@letter|_) (@letter | $digit | _)*
@@ -224,7 +225,8 @@ mkError input@(posn,_,str) len =
 
 
 --------------------------------------------------------------------------------
--- UserState
+-- UserState -- TODO: Move UserState datatype and all pure code into separate
+--                    file, leaving Alex IO code here
 
 data UserState = UserState {
     delimDepth    :: Int,      -- Current depth of opening delims (eg, '(', '[' ) 

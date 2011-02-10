@@ -15,6 +15,7 @@ module PyToken
     )
     where
 
+import PyLexUtil
 
 
 data Token
@@ -119,6 +120,25 @@ data Token
     deriving (Eq, Show)
 
 
+strsub :: Eq a => [a] -> [a] -> [a] -> [a]
+strsub [] _ _ = []
+strsub s find repl =
+    if take (length find) s == find
+        then repl ++ (strsub(drop (length find) s) find repl)
+        else [head s] ++ (strsub (tail s) find repl)
+
+
+processString :: String -> String
+processString xs = xs''''''
+    where 
+    xs'       = strsub xs    "\\\""   "\"" 
+    xs''      = strsub xs'   "\\'"    "'" 
+    xs'''     = strsub xs''   "\\\n"   "" 
+    xs''''    = strsub xs'''  "\\\r\n" "" 
+    xs'''''   = strsub xs'''' "\\\r"   "" 
+    xs''''''  = concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs''''' ] 
+
+
 renderClass :: Token -> String
 renderClass  NEWLINE       = "(NEWLINE)"
 renderClass  (INDENT   x ) = "(INDENT)"
@@ -126,7 +146,8 @@ renderClass  (DEDENT   x ) = init $ unlines (replicate x "(DEDENT)")
 renderClass  PEOF          = "(ENDMARKER)"
 renderClass  (ERROR    xs) = "(ERROR " ++ xs ++ ")"
 renderClass  (ID       xs) = "(ID \""  ++ xs ++ "\")"
-renderClass  (STRING   xs) = "(LIT \"" ++ concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs ] ++ "\")"
+--renderClass  (STRING   xs) = "(LIT \"" ++ concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs ] ++ "\")"
+renderClass  (STRING   xs) = "(LIT \"" ++ processString xs ++ "\")"
 renderClass  (INT      x ) = "(LIT " ++ show x ++ ")"
 renderClass  (FLOAT    x ) = "(LIT " ++ show x ++ ")"
 renderClass  (IMAG     x ) | x < 0.0   = "(LIT "  ++ show x ++ "i)"
