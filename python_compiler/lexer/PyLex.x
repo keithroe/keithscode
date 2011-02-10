@@ -207,11 +207,11 @@ mkImag input@(posn,_,str) len = return ( Lexeme posn (IMAG $ stringToDouble (ini
                                 where stringval = take len str
 
 mkShortString :: AlexInput -> Int -> Alex Lexeme
-mkShortString input@(posn,_,str) len = return ( Lexeme posn (STRING ( init $ tail $ stringval) ) (stringval) ) 
+mkShortString input@(posn,_,str) len = return ( Lexeme posn (STRING $ processShortString stringval ) (stringval) ) 
                                        where stringval = take len str
 
 mkLongString :: AlexInput -> Int -> Alex Lexeme
-mkLongString input@(posn,_,str) len = return ( Lexeme posn (STRING ( drop 3 ( take (len-3) stringval ) ) ) (stringval) )
+mkLongString input@(posn,_,str) len = return ( Lexeme posn (STRING $ processLongString stringval ) (stringval) )
                                       where stringval = take len str
 
 mkError :: AlexInput -> Int -> Alex Lexeme

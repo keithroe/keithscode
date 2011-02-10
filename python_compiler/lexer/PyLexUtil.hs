@@ -27,3 +27,45 @@ stringToDoubleRest []     = []
 stringToDoubleRest ['.']  = ".0"
 stringToDoubleRest (x:xs) = x : stringToDoubleRest xs
 
+
+
+strsub :: Eq a => [a] -> [a] -> [a] -> [a]
+strsub [] _ _ = []
+strsub s find repl =
+    if take (length find) s == find
+        then repl ++ (strsub(drop (length find) s) find repl)
+        else [head s] ++ (strsub (tail s) find repl)
+
+
+unescapeString :: String -> String
+unescapeString xs = xs'''''
+    where
+    xs'       = strsub xs     "\\\""   "\""
+    xs''      = strsub xs'    "\\'"    "'"
+    xs'''     = strsub xs''   "\\\n"   ""
+    xs''''    = strsub xs'''  "\\\r\n" ""
+    xs'''''   = strsub xs'''' "\\\r"   ""
+
+escapeString :: String -> String
+escapeString xs = concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs ]
+
+stripShortQuotes :: String -> String
+stripShortQuotes xs = init $ tail $ xs 
+
+stripLongQuotes :: String -> String
+stripLongQuotes xs = drop 3 ( take (length xs - 3) xs )
+                             
+
+processShortString :: String -> String
+processShortString [] = []
+processShortString (x:xs)
+  | x == 'r' || x == 'R'   = stripShortQuotes (x:xs)
+  | otherwise              = escapeString $ stripShortQuotes (x:xs)
+
+
+processLongString :: String -> String
+processLongString [] = [] 
+processLongString (x:xs) 
+  | x == 'r' || x == 'R'   = stripLongQuotes (x:xs)
+  | otherwise              = escapeString $ stripShortQuotes (x:xs)
+
