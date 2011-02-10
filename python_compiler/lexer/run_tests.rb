@@ -18,7 +18,7 @@ quit_on_fail = true
     next
   end
 
-  diff              = `diff #{outfile} #{expectedfile}`
+  diff              = `diff -I '(ERROR.*' #{outfile} #{expectedfile}`
   side_by_side_diff = `diff -y #{outfile} #{expectedfile}`
   
 

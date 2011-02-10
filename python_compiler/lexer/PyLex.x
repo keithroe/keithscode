@@ -342,10 +342,11 @@ printTokens (Right x ) = sequence_ ( map print x )
 
 printTokensForClass :: Either String [ PyToken.Token ] -> IO () 
 printTokensForClass (Left  x  ) = print x
-printTokensForClass (Right xs ) = sequence_ ( map putStrLn (map renderClass ( take $ findError xs ) ) )
+printTokensForClass (Right xs ) = sequence_ ( map putStrLn (map renderClass ( take  (findError xs +1 ) xs ) ) )
                                   where
-                                      findError(ERROR x) = True
-                                      isError _ = False 
+                                      findError []             = 0 
+                                      findError ((ERROR x):xs) = 0 
+                                      findError (_:xs)         = 1 + findError( xs ) 
 
 
 main :: IO ()
