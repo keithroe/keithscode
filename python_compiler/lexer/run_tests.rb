@@ -3,6 +3,8 @@
 passed    = 0
 num_tests = 523
 
+quit_on_fail = true
+
 1.upto( num_tests ) do |i|
   infile       = "submitted/test.#{i}.py"
   outfile      = "submitted/test.#{i}.py.mine"
@@ -16,7 +18,8 @@ num_tests = 523
     next
   end
 
-  diff = `diff #{outfile} #{expectedfile}`
+  diff              = `diff #{outfile} #{expectedfile}`
+  side_by_side_diff = `diff -y #{outfile} #{expectedfile}`
   
 
   if( diff.empty? )
@@ -24,8 +27,8 @@ num_tests = 523
     passed += 1
   else
     puts "failed."
-    puts diff
-    exit
+    puts side_by_side_diff
+    exit if quit_on_fail
   end
 end
 
