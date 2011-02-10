@@ -59,13 +59,13 @@ stripLongQuotes xs = drop 3 ( take (length xs - 3) xs )
 processShortString :: String -> String
 processShortString [] = []
 processShortString (x:xs)
-  | x == 'r' || x == 'R'   = stripShortQuotes (x:xs)
+  | x == 'r' || x == 'R'   = stripShortQuotes (xs)
   | otherwise              = escapeString $ stripShortQuotes (x:xs)
 
 
 processLongString :: String -> String
 processLongString [] = [] 
 processLongString (x:xs) 
-  | x == 'r' || x == 'R'   = stripLongQuotes (x:xs)
+  | x == 'r' || x == 'R'   = stripLongQuotes (xs)
   | otherwise              = escapeString $ stripShortQuotes (x:xs)
 
