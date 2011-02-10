@@ -4,6 +4,7 @@ module Main (main) where
 
 import PyToken
 import PyLexUtil
+import Data.List 
 }
 
 
@@ -82,9 +83,7 @@ $white_no_nl+         ;
 }
 
 <logical_line> {
-  ^ $white_no_nl* @eol_pattern ;
-  
-  @eol_pattern          { mkL NEWLINE `andBegin` begin_logical_line }
+  ^ $white_no_nl* @eol_pattern            ;
 
   "False"               { mkL FALSE       }
   "None"                { mkL NONE        }
@@ -138,12 +137,12 @@ $white_no_nl+         ;
   ">="                  { mkL RANGLEEQ    } 
   "=="                  { mkL EQEQ        } 
   "!="                  { mkL NOTEQ       } 
-  "("                   { mkL LPAREN      } 
-  ")"                   { mkL RPAREN      } 
-  "["                   { mkL LBRACK      } 
-  "]"                   { mkL RBRACK      } 
-  "{"                   { mkL LCURLY      } 
-  "}"                   { mkL RCURLY      } 
+  "("                   { incDelimDepth LPAREN      } 
+  ")"                   { decDelimDepth RPAREN      } 
+  "["                   { incDelimDepth LBRACK      } 
+  "]"                   { decDelimDepth RBRACK      } 
+  "{"                   { incDelimDepth LCURLY      } 
+  "}"                   { decDelimDepth RCURLY      } 
   ","                   { mkL COMMA       } 
   ":"                   { mkL COLON       } 
   "."                   { mkL DOT         } 
@@ -162,6 +161,8 @@ $white_no_nl+         ;
   ">>="                 { mkL RSHIFTEQ    }
   "<<="                 { mkL LSHIFTEQ    }
   "**="                 { mkL STARSTAREQ  }
+
+  @eol_pattern          { handleNewline   } 
   @identifier           { mkId            }
   @integer              { mkInt           }
   @floatnumber          { mkFloat         }
@@ -220,13 +221,6 @@ mkError input@(posn,_,str) len =
     in
         return (Lexeme posn (ERROR $ errorString ) (take len str) )
 
-mkXError :: AlexInput -> Int -> Alex Lexeme
-mkXError input@(posn,_,str) len =
-    let
-        posnString (AlexPn _ line col) = show line ++ ':': show col
-        errorString = "X Line: " ++ posnString posn ++ " before '" ++ (take len str )  ++ "'"
-    in
-        return (Lexeme posn (ERROR $ errorString ) (take len str) )
 
 
 --------------------------------------------------------------------------------
@@ -319,6 +313,15 @@ handleIndentation  input@(posn,_,str) len =
                     mkL (INDENT currentCol) input len
 
 
+handleNewline :: AlexInput -> Int -> Alex Lexeme
+handleNewline input len = 
+    do userData  <- alexGetUserData
+       currentD  <- currentDelimDepth
+       if currentD > 0
+           then skip input len
+           else (mkL NEWLINE `andBegin` begin_logical_line) input len
+
+
 tokens :: String -> Either String [ PyToken.Token ]
 tokens str = runAlex str $ do
   let loop = do tok@( Lexeme _ cl _) <- alexMonadScan;
@@ -338,8 +341,11 @@ printTokens (Left  x ) = print x
 printTokens (Right x ) = sequence_ ( map print x )
 
 printTokensForClass :: Either String [ PyToken.Token ] -> IO () 
-printTokensForClass (Left  x ) = print x
-printTokensForClass (Right x ) = sequence_ ( map (putStrLn. renderClass) x )
+printTokensForClass (Left  x  ) = print x
+printTokensForClass (Right xs ) = sequence_ ( map putStrLn (map renderClass ( take $ findError xs ) ) )
+                                  where
+                                      findError(ERROR x) = True
+                                      isError _ = False 
 
 
 main :: IO ()
