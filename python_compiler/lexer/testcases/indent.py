@@ -1,7 +1,7 @@
 
 def foo( bar ):
   if baz:
-    foobar
+    foobar = 1 + 2
     if loo:
       2
 
