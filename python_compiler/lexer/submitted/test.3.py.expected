@@ -3,4 +3,5 @@
 (ID "hello")
 (PUNCT "(")
 (ID "x")
+(DEDENT)
 (ENDMARKER)

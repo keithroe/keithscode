@@ -6,7 +6,7 @@
 (LIT 1)
 (PUNCT ":")
 (KEYWORD return)
-(LIT +1.i)
+(LIT +1.0i)
 (KEYWORD elif)
 (ID "x")
 (PUNCT "==")
