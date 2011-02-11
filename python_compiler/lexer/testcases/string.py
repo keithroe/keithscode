@@ -4,3 +4,4 @@
 '"bar"'
 """foo"""
 '''foo'''
+'foo \n \" bar'

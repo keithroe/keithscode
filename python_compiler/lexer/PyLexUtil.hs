@@ -38,7 +38,7 @@ strsub s find repl =
 
 
 unescapeString :: String -> String
-unescapeString xs = xs'''''''
+unescapeString xs = xs''''''' 
     where
     xs'         = strsub xs       "\\\\"   "\\"
     xs''        = strsub xs'      "\\\""   "\""
@@ -48,12 +48,9 @@ unescapeString xs = xs'''''''
     xs''''''    = strsub xs'''''  "\\\r"   ""
     xs'''''''   = strsub xs'''''' "\\\n"   ""
 
-    {--
-
-    --}
 
 escapeString :: String -> String
-escapeString xs = concat [ if x == '"' || x == '\'' || x == '\\' then '\\':[x] else [x] | x <- xs ]
+escapeString xs = concat [ if x == '\"' || x == '\'' || x == '\\' then '\\':[x] else [x] | x <- xs ]
 
 stripShortQuotes :: String -> String
 stripShortQuotes xs = init $ tail $ xs 
@@ -66,12 +63,13 @@ processShortString :: String -> String
 processShortString [] = []
 processShortString (x:xs)
   | x == 'r' || x == 'R'   = escapeString $ stripShortQuotes (xs)
-  | otherwise              = escapeString $ unescapeString $ stripShortQuotes (x:xs)
+  | otherwise              = unescapeString $ stripShortQuotes (x:xs)
+  -- | otherwise              = escapeString $ unescapeString $ stripShortQuotes (x:xs)
 
 
 processLongString :: String -> String
 processLongString [] = [] 
 processLongString (x:xs) 
   | x == 'r' || x == 'R'   = escapeString $ stripLongQuotes (xs)
-  | otherwise              = escapeString $ unescapeString $ stripShortQuotes (x:xs)
+  | otherwise              = escapeString $ unescapeString $ stripLongQuotes (x:xs)
 

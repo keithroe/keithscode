@@ -119,7 +119,7 @@ data Token
     | STARSTAREQ -- **=
     deriving (Eq, Show)
 
-
+{--
 strsub :: Eq a => [a] -> [a] -> [a] -> [a]
 strsub [] _ _ = []
 strsub s find repl =
@@ -138,6 +138,7 @@ processString xs = xs''''''
     xs'''''   = strsub xs'''' "\\\r"   "" 
     xs''''''  = concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs''''' ] 
 
+--}
 
 renderClass :: Token -> String
 renderClass  NEWLINE       = "(NEWLINE)"
@@ -147,7 +148,7 @@ renderClass  PEOF          = "(ENDMARKER)"
 renderClass  (ERROR    xs) = "(ERROR " ++ xs ++ ")"
 renderClass  (ID       xs) = "(ID \""  ++ xs ++ "\")"
 --renderClass  (STRING   xs) = "(LIT \"" ++ concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs ] ++ "\")"
-renderClass  (STRING   xs) = "(LIT \"" ++ processString xs ++ "\")"
+renderClass  (STRING   xs) = "(LIT \"" ++ xs ++ "\")"
 renderClass  (INT      x ) = "(LIT " ++ show x ++ ")"
 renderClass  (FLOAT    x ) = "(LIT " ++ show x ++ ")"
 renderClass  (IMAG     x ) | x < 0.0   = "(LIT "  ++ show x ++ "i)"
