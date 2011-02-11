@@ -145,6 +145,7 @@ renderClass  NEWLINE       = "(NEWLINE)"
 renderClass  (INDENT   x ) = "(INDENT)"
 renderClass  (DEDENT   x ) = init $ unlines (replicate x "(DEDENT)")
 renderClass  (PEOF     x ) = unlines ( replicate x "(DEDENT)" ) ++ "(ENDMARKER)"
+--renderClass  (PEOF     x ) = "(ENDMARKER " ++ show x ++ ")"
 renderClass  (ERROR    xs) = "(ERROR " ++ xs ++ ")"
 renderClass  (ID       xs) = "(ID \""  ++ xs ++ "\")"
 renderClass  (STRING   xs) = "(LIT \"" ++ xs ++ "\")"
