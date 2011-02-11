@@ -72,8 +72,8 @@ $hexdigit              = [$digit a-f A-F]
 tokens :-
 
 $white_no_nl+         ;
-\# ($not_eol_char)*   ; 
 \\ @eol_pattern       ;
+\# ($not_eol_char)*   ;
 
 <0> {
   ()                    { begin begin_logical_line }
@@ -324,19 +324,34 @@ handleNewline input len =
            then skip input len
            else (mkL NEWLINE `andBegin` begin_logical_line) input len
 
+handleComment :: AlexInput -> Int -> Alex Lexeme
+handleComment input len = 
+    do userData  <- alexGetUserData
+       currentD  <- currentDelimDepth
+       if currentD > 0
+           then skip input len
+           else (mkL NEWLINE `andBegin` begin_logical_line) input len
+
 
 tokens :: String -> Either String [ PyToken.Token ]
 tokens str = runAlex str $ do
-  let loop = do tok@( Lexeme _ cl _) <- alexMonadScan;
-                if cl == PEOF
-                   then return [cl]
-                   else do toks <- loop
-                           return (cl:toks)
+  let loop = do ( Lexeme _ cl _) <- alexMonadScan;
+                processToken cl
+                where
+                processToken (PEOF i) = return [(PEOF i)]
+                processToken cl = do toks <- loop
+                                     return (cl:toks)
   loop
 
 
-alexEOF :: (Monad m) => m Lexeme 
-alexEOF = return (Lexeme undefined PEOF "")
+alexEOF :: Alex Lexeme 
+alexEOF = do currentIS <- currentIndentStack
+             return (Lexeme undefined ( PEOF $ length currentIS - 1 ) "")
+             --return (Lexeme undefined ( DEDENT $ length currentIS ) "")
+             --return (Lexeme undefined ( DEDENT 1 ) "")
+             --return (Lexeme undefined ( DEDENT 1 ) "")
+--alexEOF :: Alex Lexeme 
+--alexEOF = return (Lexeme undefined PEOF "")
 
 
 printTokens :: Either String [ PyToken.Token ] -> IO () 

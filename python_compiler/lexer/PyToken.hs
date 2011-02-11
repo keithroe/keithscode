@@ -24,7 +24,7 @@ data Token
     = NEWLINE
     | INDENT    Int
     | DEDENT    Int
-    | PEOF
+    | PEOF      Int   -- indentation level at end of file
     | ERROR     String
 
     -- Identifier
@@ -144,10 +144,9 @@ renderClass :: Token -> String
 renderClass  NEWLINE       = "(NEWLINE)"
 renderClass  (INDENT   x ) = "(INDENT)"
 renderClass  (DEDENT   x ) = init $ unlines (replicate x "(DEDENT)")
-renderClass  PEOF          = "(ENDMARKER)"
+renderClass  (PEOF     x ) = unlines ( replicate x "(DEDENT)" ) ++ "(ENDMARKER)"
 renderClass  (ERROR    xs) = "(ERROR " ++ xs ++ ")"
 renderClass  (ID       xs) = "(ID \""  ++ xs ++ "\")"
---renderClass  (STRING   xs) = "(LIT \"" ++ concat [ if x == '"' || x == '\'' then '\\':[x] else [x] | x <- xs ] ++ "\")"
 renderClass  (STRING   xs) = "(LIT \"" ++ xs ++ "\")"
 renderClass  (INT      x ) = "(LIT " ++ show x ++ ")"
 renderClass  (FLOAT    x ) = "(LIT " ++ show x ++ ")"

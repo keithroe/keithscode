@@ -3,6 +3,7 @@
 passed    = 0
 num_tests = 523
 
+quit_on_fail = false 
 quit_on_fail = true
 
 1.upto( num_tests ) do |i|
