@@ -50,7 +50,10 @@ unescapeString xs = xs'''''''
 
 
 escapeString :: String -> String
-escapeString xs = concat [ if x == '\"' || x == '\'' || x == '\\' then '\\':[x] else [x] | x <- xs ]
+escapeString xs = concat xs''
+    where
+    xs'  = [ if x == '\"' || x == '\'' || x == '\\' then '\\':[x] else [x] | x <- xs ]
+    xs'' = [ if x == '\n' then '\\':'n':xs else x:xs | (x:xs) <- xs' ]
 
 stripShortQuotes :: String -> String
 stripShortQuotes xs = init $ tail $ xs 
@@ -62,14 +65,16 @@ stripLongQuotes xs = drop 3 ( take (length xs - 3) xs )
 processShortString :: String -> String
 processShortString [] = []
 processShortString (x:xs)
+  | x == 'b' || x == 'B'   = processShortString xs 
   | x == 'r' || x == 'R'   = escapeString $ stripShortQuotes (xs)
-  | otherwise              = unescapeString $ stripShortQuotes (x:xs)
+  | otherwise              = escapeString $ unescapeString $ stripShortQuotes (x:xs)
   -- | otherwise              = escapeString $ unescapeString $ stripShortQuotes (x:xs)
 
 
 processLongString :: String -> String
 processLongString [] = [] 
 processLongString (x:xs) 
+  | x == 'b' || x == 'B'   = processLongString xs 
   | x == 'r' || x == 'R'   = escapeString $ stripLongQuotes (xs)
   | otherwise              = escapeString $ unescapeString $ stripLongQuotes (x:xs)
 

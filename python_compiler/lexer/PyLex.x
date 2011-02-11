@@ -36,7 +36,8 @@ $hexdigit              = [$digit a-f A-F]
 
 @eol_pattern           = $lf | $cr $lf | $cr $lf  
 
-@stringprefix          = r | R
+@stringprefix          = r | R | b | B | br | Br | bR | BR -- Not handling unicode for now
+
 @stringescapeseq       = \\ (.|@eol_pattern)
 @shortstringitemsingle = $shortstringcharsingle | @stringescapeseq
 @shortstringitemdouble = $shortstringchardouble | @stringescapeseq
