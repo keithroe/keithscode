@@ -143,6 +143,7 @@ processString xs = xs''''''
 renderClass :: Token -> String
 renderClass  NEWLINE       = "(NEWLINE)"
 renderClass  (INDENT   x ) = "(INDENT)"
+renderClass  (DEDENT   0 ) = "adfkjdlkfjdkls" 
 renderClass  (DEDENT   x ) = init $ unlines (replicate x "(DEDENT)")
 renderClass  (PEOF     x ) = unlines ( replicate x "(DEDENT)" ) ++ "(ENDMARKER)"
 --renderClass  (PEOF     x ) = "(ENDMARKER " ++ show x ++ ")"
