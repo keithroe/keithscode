@@ -255,16 +255,20 @@ dedentWhile :: Int -> [Int] -> Int
 dedentWhile col dedent_stack = dedentWhile' col dedent_stack 
     where dedentWhile' col (x:xs)
               | col < x   = 1 + dedentWhile' col xs 
+              | col > x   = -1
               | otherwise = 0  
 
 
-popIndent :: Int -> Alex PyToken.Token 
-popIndent column = do currentDD <- currentDelimDepth
-                      currentIS <- currentIndentStack
-                      let num_dedents = dedentWhile column currentIS
-                      let newDD = drop num_dedents currentIS 
-                      alexSetUserData ( UserState currentDD (newDD) )
-                      return (DEDENT num_dedents)
+popIndent :: AlexPosn -> Int -> Alex PyToken.Token 
+popIndent (AlexPn _ l c) column = do currentDD <- currentDelimDepth
+                                     currentIS <- currentIndentStack
+                                     let num_dedents = dedentWhile column currentIS
+                                     if( num_dedents < 0 ) 
+                                         then return (ERROR $ show l)
+                                         else do
+                                             let newDD = drop num_dedents currentIS 
+                                             alexSetUserData ( UserState currentDD (newDD) )
+                                             return (DEDENT num_dedents)
 
 
 currentIndentStack :: Alex [ Int ]
@@ -308,7 +312,7 @@ handleIndentation  input@(posn,_,str) len =
        let currentCol = currentColumn posn
        case compare currentInd currentCol of
            EQ -> skip input len
-           GT -> do token <- popIndent currentCol
+           GT -> do token <- popIndent posn currentCol
                     mkL token input len
            LT -> do pushIndent currentCol 
                     currentIS <- currentIndentStack 
