@@ -5,6 +5,7 @@ module Main (main) where
 import PyToken
 import PyLexUtil
 import Data.List 
+import Control.Exception
 }
 
 
@@ -19,9 +20,11 @@ $not_eol_char          = ~$eol_char
 $white_char            = [\ \n\r\f\v\t]
 $white_no_nl           = $white_char # $eol_char
 
-$shortstringcharsingle = [^\n\\']
-$shortstringchardouble = [^\n\\"]
-$longstringchar        = [^\n]
+$not_single_quote      = [. \n] # '
+$not_double_quote      = [. \n] # \"
+$shortstringcharsingle = [^\n\r\\']
+$shortstringchardouble = [^\n\r\"]
+$longstringchar        = [^\n\r\"']
 
 $lowercase             = [a-z]
 $uppercase             = [A-Z]
@@ -38,12 +41,17 @@ $hexdigit              = [$digit a-f A-F]
 
 @stringprefix          = r | R | b | B | br | Br | bR | BR -- Not handling unicode for now
 
+@one_single_quote      = ' $not_single_quote
+@two_single_quotes     = '' $not_single_quote
+@one_double_quote      = \" $not_double_quote
+@two_double_quotes     = \"\" $not_double_quote
 @stringescapeseq       = \\ (.|@eol_pattern)
 @shortstringitemsingle = $shortstringcharsingle | @stringescapeseq
 @shortstringitemdouble = $shortstringchardouble | @stringescapeseq
-@longstringitem        = $longstringchar | @stringescapeseq
+@longstringitemdouble  = $longstringchar | '  | @stringescapeseq | @one_double_quote | @two_double_quotes
+@longstringitemsingle  = $longstringchar | \" | @stringescapeseq | @one_single_quote | @two_single_quotes
 @shortstring           = ' @shortstringitemsingle* ' | \" @shortstringitemdouble* \"
-@longstring            = ''' @longstringitem* ''' | \"\"\" @longstringitem* \"\"\"
+@longstring            = ''' @longstringitemsingle* ''' | \"\"\" @longstringitemdouble* \"\"\"
 @shortstringliteral    = @stringprefix? @shortstring
 @longstringliteral     = @stringprefix? @longstring
 
@@ -85,7 +93,7 @@ $white_no_nl+         ;
 }
 
 <logical_line> {
-  ^ $white_no_nl* @eol_pattern            ;
+  -- ^ $white_no_nl* @eol_pattern            ;
 
   "False"               { mkL FALSE       }
   "None"                { mkL NONE        }
@@ -251,24 +259,24 @@ pushIndent x = do currentDD <- currentDelimDepth
                   alexSetUserData ( UserState currentDD (x:currentIS) )
 
 
-dedentWhile :: Int -> [Int] -> Int 
-dedentWhile col dedent_stack = dedentWhile' col dedent_stack 
-    where dedentWhile' col (x:xs)
-              | col < x   = 1 + dedentWhile' col xs 
-              | col > x   = -1
-              | otherwise = 0  
+dedentWhile :: Int -> [Int] -> Maybe Int 
+dedentWhile col (x:xs)
+    | col < x   = case (dedentWhile col xs ) of 
+                      Nothing -> Nothing
+                      Just i  -> Just( 1 + i )
+    | col > x   = Nothing 
+    | otherwise = Just 0  
 
 
 popIndent :: AlexPosn -> Int -> Alex PyToken.Token 
 popIndent (AlexPn _ l c) column = do currentDD <- currentDelimDepth
                                      currentIS <- currentIndentStack
                                      let num_dedents = dedentWhile column currentIS
-                                     if( num_dedents < 0 ) 
-                                         then return (ERROR $ show l)
-                                         else do
-                                             let newDD = drop num_dedents currentIS 
-                                             alexSetUserData ( UserState currentDD (newDD) )
-                                             return (DEDENT num_dedents)
+                                     case dedentWhile column currentIS of 
+                                         Nothing -> return (ERROR $ "Bad indentation at " ++ show l ++ ":" ++ show c )
+                                         Just num_dedents -> do let newDD = drop num_dedents currentIS 
+                                                                alexSetUserData ( UserState currentDD (newDD) )
+                                                                return (DEDENT num_dedents)
 
 
 currentIndentStack :: Alex [ Int ]
@@ -306,6 +314,7 @@ currentColumn (AlexPn _ _ col) = col
 
 
 handleIndentation :: AlexInput -> Int -> Alex Lexeme
+handleIndentation  input@(posn,_,[]) len = skip input len  -- EOF without newline
 handleIndentation  input@(posn,_,str) len =
     do state <- alexGetUserData 
        currentInd <- currentIndent

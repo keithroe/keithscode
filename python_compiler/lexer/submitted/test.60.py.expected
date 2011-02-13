@@ -8,5 +8,4 @@
 (INDENT)
 (ID "hello")
 (NEWLINE)
-(DEDENT)
 (ERROR "mis-indented program")
