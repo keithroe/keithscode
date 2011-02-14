@@ -3,8 +3,8 @@
 passed    = 0
 num_tests = 523
 
-quit_on_fail = false 
 quit_on_fail = true
+quit_on_fail = false 
 
 1.upto( num_tests ) do |i|
   infile       = "submitted/test.#{i}.py"

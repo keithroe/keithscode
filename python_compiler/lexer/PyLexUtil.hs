@@ -37,6 +37,7 @@ strsub s find repl =
         else [head s] ++ (strsub (tail s) find repl)
 
 
+{--
 unescapeString :: String -> String
 unescapeString xs = xs''''''' 
     where
@@ -47,8 +48,24 @@ unescapeString xs = xs'''''''
     xs'''''     = strsub xs''''   "\\\r\n" ""
     xs''''''    = strsub xs'''''  "\\\r"   ""
     xs'''''''   = strsub xs'''''' "\\\n"   ""
+--}
+
+unescapeString :: String -> String
+unescapeString ( '\\':'\\':xs )      = '\\' : unescapeString xs
+unescapeString ( '\\':'\'':xs )      = '\'' : unescapeString xs
+unescapeString ( '\\':'"':xs )       = '"'  : unescapeString xs
+unescapeString ( '\\':'b':xs )       = '\b' : unescapeString xs
+unescapeString ( '\\':'f':xs )       = '\f' : unescapeString xs
+unescapeString ( '\\':'a':xs )       = '\a' : unescapeString xs
+unescapeString ( '\\':'n':xs )       = '\n' : unescapeString xs
+unescapeString ( '\\':'\r':'\n':xs ) =   unescapeString xs
+unescapeString ( '\\':'\n':xs )      =        unescapeString xs
+unescapeString ( '\\':'\r':xs )      =        unescapeString xs
+unescapeString ( x:xs )              = x    : unescapeString xs 
+unescapeString []                    = [] 
 
 
+-- TODO: rework escape string to be like unescapeString and handle unrecognized escapes as ( ['\\' : x : xs ] )
 escapeString :: String -> String
 escapeString xs = concat xs''
     where
