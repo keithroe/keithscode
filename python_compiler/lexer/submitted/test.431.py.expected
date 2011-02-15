@@ -12,6 +12,6 @@
 (PUNCT "=")
 (LIT 1)
 (PUNCT "+")
-(LIT +2.i)
+(LIT +2.0i)
 (NEWLINE)
 (ENDMARKER)

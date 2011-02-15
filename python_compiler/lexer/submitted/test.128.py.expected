@@ -79,5 +79,4 @@
 (ID "x")
 (PUNCT ")")
 (NEWLINE)
-(DEDENT)
 (ERROR "mis-indented program")

@@ -2,4 +2,5 @@
 (PUNCT "=")
 (LIT 1)
 (NEWLINE)
+(LIT "")
 (ERROR "unterminated string literal at EOF")

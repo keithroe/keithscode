@@ -22,9 +22,9 @@ $white_no_nl           = $white_char # $eol_char
 
 $not_single_quote      = [. \n] # '
 $not_double_quote      = [. \n] # \"
-$shortstringcharsingle = [^\n\r\\']
-$shortstringchardouble = [^\n\r\"]
-$longstringchar        = [^\n\r\"']
+$shortstringcharsingle = [^ \n \r ' \\ ]
+$shortstringchardouble = [^ \n \r \" \\ ]
+$longstringchar        = [. \n] # [\" ' \\]
 
 $lowercase             = [a-z]
 $uppercase             = [A-Z]
