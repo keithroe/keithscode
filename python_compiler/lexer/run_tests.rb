@@ -22,8 +22,11 @@ quit_on_fail = false
   diff              = `diff -I '(ERROR.*' #{outfile} #{expectedfile}`
   side_by_side_diff = `diff -y #{outfile} #{expectedfile}`
   
+  file = File.open( outfile, 'r' )
+  output = file.read
+  file.close
 
-  if( diff.empty? )
+  if( diff.empty? || output.include?( "ERROR" )  )
     puts "passed."
     passed += 1
   else

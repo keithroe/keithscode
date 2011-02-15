@@ -1,4 +1,4 @@
 (ID "x")
 (PUNCT "=")
-(LIT +1i)
+(LIT +1.0i)
 (ENDMARKER)

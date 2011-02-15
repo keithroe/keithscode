@@ -10,7 +10,7 @@
 (KEYWORD elif)
 (ID "x")
 (PUNCT "==")
-(LIT .1e000)
+(LIT 0.1)
 (PUNCT ":")
 (KEYWORD return)
 (LIT 1)
