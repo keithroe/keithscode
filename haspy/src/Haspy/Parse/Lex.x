@@ -11,8 +11,6 @@ module Haspy.Parse.Lex
 
 import Haspy.Parse.Token
 import Haspy.Parse.Util
---import Data.List 
---import Control.Exception
 
 }
 
@@ -100,7 +98,6 @@ $white_no_nl+         ;
 }
 
 <logical_line> {
-  -- ^ $white_no_nl* @eol_pattern            ;
 
   "False"               { mkL FALSE       }
   "None"                { mkL NONE        }
@@ -191,15 +188,17 @@ $white_no_nl+         ;
 }
 
 {
---------------------------------------------------------------------------------
---
--- User types
---
---------------------------------------------------------------------------------
 
 
+alexEOF :: Alex Lexeme 
+alexEOF = do currentIS <- currentIndentStack
+             return (Lexeme undefined ( PEOF $ length currentIS - 1 ) "")
+
 --------------------------------------------------------------------------------
+--
 -- Lexeme
+--
+--------------------------------------------------------------------------------
 
 data Lexeme = Lexeme AlexPosn Token String
 
@@ -241,8 +240,11 @@ mkError (posn,_,str) len =
 
 
 --------------------------------------------------------------------------------
+--
 -- UserState -- TODO: Move UserState datatype and all pure code into separate
 --                    file, leaving Alex IO code here
+--
+--------------------------------------------------------------------------------
 
 data UserState = UserState {
     delimDepth    :: Int,      -- Current depth of opening delims (eg, '(', '[' ) 
@@ -318,6 +320,12 @@ currentColumn :: AlexPosn -> Int
 currentColumn (AlexPn _ _ col) = col 
 
 
+-------------------------------------------------------------------------------
+--
+-- Helper Actions
+-- 
+-------------------------------------------------------------------------------
+
 handleIndentation :: AlexInput -> Int -> Alex Lexeme
 handleIndentation  input@(_,_,[]) len = skip input len  -- EOF without newline
 handleIndentation  input@(posn,_,_) len =
@@ -339,6 +347,13 @@ handleNewline input len =
            else (mkL NEWLINE `andBegin` begin_logical_line) input len
 
 
+
+-------------------------------------------------------------------------------
+--
+-- Public lexer interface 
+-- 
+-------------------------------------------------------------------------------
+
 tokens :: String -> [ Token ]
 tokens str = toTokens $ runAlex str $ do
     let loop = do ( Lexeme _ cl _) <- alexMonadScan;
@@ -354,9 +369,6 @@ tokens str = toTokens $ runAlex str $ do
         toTokens (Right x) = x 
 
 
-alexEOF :: Alex Lexeme 
-alexEOF = do currentIS <- currentIndentStack
-             return (Lexeme undefined ( PEOF $ length currentIS - 1 ) "")
 
 
 printTokens :: [ Token ] -> IO () 
