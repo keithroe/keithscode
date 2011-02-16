@@ -1,13 +1,20 @@
 
 {
-module Main (main) where
 
-import PyToken
-import PyLexUtil
-import Data.List 
-import Control.Exception
+module Haspy.Parse.Lex
+    (
+    tokens,
+    printTokens,
+    printTokensForClass
+    )
+    where
+
+import Haspy.Parse.Token
+import Haspy.Parse.Util
+--import Data.List 
+--import Control.Exception
+
 }
-
 
 
 %wrapper "monadUser"
@@ -194,37 +201,37 @@ $white_no_nl+         ;
 --------------------------------------------------------------------------------
 -- Lexeme
 
-data Lexeme = Lexeme AlexPosn PyToken.Token String
+data Lexeme = Lexeme AlexPosn Token String
 
-mkL :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
+mkL :: Token -> AlexInput -> Int -> Alex Lexeme
 mkL tok (posn,_,str) len = return (Lexeme posn tok (take len str))
 
 mkId :: AlexInput -> Int -> Alex Lexeme
-mkId input@(posn,_,str) len = return ( Lexeme posn (ID stringval) (stringval) ) 
-                              where stringval = take len str
+mkId (posn,_,str) len = return ( Lexeme posn (ID stringval) (stringval) ) 
+                        where stringval = take len str
 
 mkInt :: AlexInput -> Int -> Alex Lexeme
-mkInt input@(posn,_,str) len = return ( Lexeme posn (INT $ stringToInt stringval) (stringval) ) 
-                              where stringval = take len str
+mkInt (posn,_,str) len = return ( Lexeme posn (INT $ stringToInt stringval) (stringval) ) 
+                         where stringval = take len str
 
 mkFloat :: AlexInput -> Int -> Alex Lexeme
-mkFloat input@(posn,_,str) len = return ( Lexeme posn (FLOAT $ stringToDouble stringval) (stringval) ) 
-                                 where stringval = take len str
+mkFloat (posn,_,str) len = return ( Lexeme posn (FLOAT $ stringToDouble stringval) (stringval) ) 
+                           where stringval = take len str
 
 mkImag :: AlexInput -> Int -> Alex Lexeme
-mkImag input@(posn,_,str) len = return ( Lexeme posn (IMAG $ stringToDouble (init stringval ) ) (stringval) ) 
-                                where stringval = take len str
+mkImag (posn,_,str) len = return ( Lexeme posn (IMAG $ stringToDouble (init stringval ) ) (stringval) ) 
+                          where stringval = take len str
 
 mkShortString :: AlexInput -> Int -> Alex Lexeme
-mkShortString input@(posn,_,str) len = return ( Lexeme posn (STRING $ processShortString stringval ) (stringval) ) 
-                                       where stringval = take len str
+mkShortString (posn,_,str) len = return ( Lexeme posn (STRING $ processShortString stringval ) (stringval) ) 
+                                 where stringval = take len str
 
 mkLongString :: AlexInput -> Int -> Alex Lexeme
-mkLongString input@(posn,_,str) len = return ( Lexeme posn (STRING $ processLongString stringval ) (stringval) )
-                                      where stringval = take len str
+mkLongString (posn,_,str) len = return ( Lexeme posn (STRING $ processLongString stringval ) (stringval) )
+                                where stringval = take len str
 
 mkError :: AlexInput -> Int -> Alex Lexeme
-mkError input@(posn,_,str) len =
+mkError (posn,_,str) len =
     let
         posnString (AlexPn _ line col) = show line ++ ':': show col
         errorString = "Line: " ++ posnString posn ++ " before '" ++ (take len str )  ++ "'"
@@ -260,6 +267,7 @@ pushIndent x = do currentDD <- currentDelimDepth
 
 
 dedentWhile :: Int -> [Int] -> Maybe Int 
+dedentWhile _ [] = error "dedentWhile: indentStack empty!  Should always have len >= 1"
 dedentWhile col (x:xs)
     | col < x   = case (dedentWhile col xs ) of 
                       Nothing -> Nothing
@@ -268,10 +276,9 @@ dedentWhile col (x:xs)
     | otherwise = Just 0  
 
 
-popIndent :: AlexPosn -> Int -> Alex PyToken.Token 
+popIndent :: AlexPosn -> Int -> Alex Token 
 popIndent (AlexPn _ l c) column = do currentDD <- currentDelimDepth
                                      currentIS <- currentIndentStack
-                                     let num_dedents = dedentWhile column currentIS
                                      case dedentWhile column currentIS of 
                                          Nothing -> return (ERROR $ "Bad indentation at " ++ show l ++ ":" ++ show c )
                                          Just num_dedents -> do let newDD = drop num_dedents currentIS 
@@ -291,22 +298,20 @@ currentDelimDepth =
        return ( delimDepth userData )
 
 
-decDelimDepth :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
+decDelimDepth :: Token -> AlexInput -> Int -> Alex Lexeme
 decDelimDepth token input len= 
-    do userData  <- alexGetUserData
-       currentIS <- currentIndentStack
+    do currentIS <- currentIndentStack
        currentD  <- currentDelimDepth
        alexSetUserData ( UserState (currentD - 1) currentIS )
        mkL token input len
        
 
-incDelimDepth :: PyToken.Token -> AlexInput -> Int -> Alex Lexeme
-incDelimDepth token input len= 
-    do userData  <- alexGetUserData
-       currentIS <- currentIndentStack
+incDelimDepth :: Token -> AlexInput -> Int -> Alex Lexeme
+incDelimDepth tok input len= 
+    do currentIS <- currentIndentStack
        currentD  <- currentDelimDepth
        alexSetUserData ( UserState (currentD + 1) currentIS )
-       mkL token input len
+       mkL tok input len
 
 
 currentColumn :: AlexPosn -> Int
@@ -314,39 +319,27 @@ currentColumn (AlexPn _ _ col) = col
 
 
 handleIndentation :: AlexInput -> Int -> Alex Lexeme
-handleIndentation  input@(posn,_,[]) len = skip input len  -- EOF without newline
-handleIndentation  input@(posn,_,str) len =
-    do state <- alexGetUserData 
-       currentInd <- currentIndent
+handleIndentation  input@(_,_,[]) len = skip input len  -- EOF without newline
+handleIndentation  input@(posn,_,_) len =
+    do currentInd <- currentIndent
        let currentCol = currentColumn posn
        case compare currentInd currentCol of
            EQ -> skip input len
-           GT -> do token <- popIndent posn currentCol
-                    mkL token input len
+           GT -> do tok <- popIndent posn currentCol
+                    mkL tok input len
            LT -> do pushIndent currentCol 
-                    currentIS <- currentIndentStack 
-                    let size = length  currentIS
                     mkL (INDENT currentCol) input len
 
 
 handleNewline :: AlexInput -> Int -> Alex Lexeme
 handleNewline input len = 
-    do userData  <- alexGetUserData
-       currentD  <- currentDelimDepth
-       if currentD > 0
-           then skip input len
-           else (mkL NEWLINE `andBegin` begin_logical_line) input len
-
-handleComment :: AlexInput -> Int -> Alex Lexeme
-handleComment input len = 
-    do userData  <- alexGetUserData
-       currentD  <- currentDelimDepth
+    do currentD  <- currentDelimDepth
        if currentD > 0
            then skip input len
            else (mkL NEWLINE `andBegin` begin_logical_line) input len
 
 
-tokens :: String -> [ PyToken.Token ]
+tokens :: String -> [ Token ]
 tokens str = toTokens $ runAlex str $ do
     let loop = do ( Lexeme _ cl _) <- alexMonadScan;
                   processToken cl
@@ -356,7 +349,7 @@ tokens str = toTokens $ runAlex str $ do
                                            return (cl:toks)
     loop
     where
-        toTokens :: Either String [ PyToken.Token ] -> [ PyToken.Token ]
+        toTokens :: Either String [ Token ] -> [ Token ]
         toTokens (Left  x) = [ (ERROR x) ]
         toTokens (Right x) = x 
 
@@ -366,24 +359,13 @@ alexEOF = do currentIS <- currentIndentStack
              return (Lexeme undefined ( PEOF $ length currentIS - 1 ) "")
 
 
-printTokens :: [ PyToken.Token ] -> IO () 
+printTokens :: [ Token ] -> IO () 
 printTokens x = sequence_ ( map print x )
 
-printTokensForClass :: [ PyToken.Token ] -> IO () 
-printTokensForClass xs = sequence_ ( map putStrLn (map renderClass ( take  (findError xs +1 ) xs ) ) )
+printTokensForClass :: [ Token ] -> IO () 
+printTokensForClass toks = sequence_ ( map putStrLn (map renderClass ( take  (findError toks + 1 ) toks ) ) )
                          where
                              findError []             = 0 
-                             findError ((ERROR x):xs) = 0 
+                             findError ((ERROR _):_)  = 0 
                              findError (_:xs)         = 1 + findError( xs ) 
-
-
-main :: IO ()
-main = do
-  s <- getContents
-  --print (tokens s)
-  --map print ( uneither ( tokens s ) )
-  --map print ( uneither ( tokens s ) )
-  --printTokens ( tokens s )
-  printTokensForClass ( tokens s )
 }
-
