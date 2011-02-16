@@ -1,0 +1,25 @@
+Name:           Haspy 
+Version:        0.0.1
+Cabal-Version:  >= 1.2
+License:        MIT 
+License-File:   LICENSE
+Author:         R. Keith Morley 
+Copyright:      Copyright: (c) 2011 R. Keith Morley 
+Synopsis:       Python compiler written in haskell.
+Build-Type:     Simple
+
+Executable haspy-lex 
+  Main-Is:        LexMain.hs
+  ghc-options:    -Wall
+  Build-Tools:  
+      alex,
+      happy
+  Build-Depends:  
+      base >= 4.0,
+      array
+  Hs-Source-Dirs: src, src/Haspy/Parse
+  Other-Modules:
+      Haspy.Parse.Lex
+      Haspy.Parse.Util
+      Haspy.Parse.Token
+
