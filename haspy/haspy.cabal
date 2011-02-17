@@ -12,6 +12,19 @@ Executable haspy-lex
   Main-Is:        LexMain.hs
   ghc-options:    -Wall
   Build-Tools:  
+      alex
+  Build-Depends:  
+      base >= 4.0,
+      array
+  Hs-Source-Dirs: src, src/Haspy/Parse
+  Other-Modules:
+      Haspy.Parse.Lex
+      Haspy.Parse.Util
+      Haspy.Parse.Token
+
+Executable haspy-parse
+  Main-Is:        ParseMain.hs
+  Build-Tools:  
       alex,
       happy
   Build-Depends:  
@@ -19,6 +32,7 @@ Executable haspy-lex
       array
   Hs-Source-Dirs: src, src/Haspy/Parse
   Other-Modules:
+      Haspy.Parse.Parse
       Haspy.Parse.Lex
       Haspy.Parse.Util
       Haspy.Parse.Token
