@@ -6,6 +6,6 @@ import Haspy.Parse.Lex
 main :: IO ()
 main = do
   s <- getContents
-  --printTokens ( tokens s )
-  printTokensForClass ( tokens s )
+  printTokens ( tokens s )
+  --printTokensForClass ( tokens s )
 

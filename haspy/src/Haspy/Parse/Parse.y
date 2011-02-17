@@ -124,10 +124,11 @@ input :: { String }
 
 tokens :: { String }
     : token                { show $1 }
-    | tokens tokens        { show $2 ++ $1 }
+    | tokens token         { $1 ++ "|" ++  show $2 }
 
 token :: { Token }
     : DEF        { DEF }
+    | NEWLINE    { NEWLINE }
     | PEOF       { PEOF $1 }
 
 
