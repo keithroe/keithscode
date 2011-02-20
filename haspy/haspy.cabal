@@ -34,6 +34,7 @@ Executable haspy-parse
   Other-Modules:
       Haspy.Parse.Parse
       Haspy.Parse.Lex
+      Haspy.Parse.AST
       Haspy.Parse.Util
       Haspy.Parse.Token
 

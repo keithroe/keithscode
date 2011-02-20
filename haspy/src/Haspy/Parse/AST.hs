@@ -1,12 +1,15 @@
 
+module Haspy.Parse.AST where
 
-data Mod = Module(stmt* body)
-      | Interactive(stmt* body)
-      | Expression(expr body)
 
-      -- not really an actual node but useful in Jython's typesystem.
-      | Suite(stmt* body)
 
+data Mod = Module {
+        modBody :: [ Stmt ] 
+    }
+
+data Stmt = Stmt 
+
+{--
 data Stmt
     = FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list, expr? returns)
     | ClassDef(identifier name, expr* bases, keyword* keywords, expr? starargs, expr? kwargs, stmt* body, expr *decorator_list)
@@ -138,8 +141,11 @@ data arg
     = (identifier arg, expr? annotation)
 
         -- keyword arguments supplied to call
-        keyword = (identifier arg, expr value)
+data keyword 
+    = (identifier arg, expr value)
 
         -- import name with optional 'as' alias.
-        alias = (identifier name, identifier? asname)
+data alias
+    = (identifier name, identifier? asname)
 
+--}
