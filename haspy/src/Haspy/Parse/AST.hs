@@ -104,16 +104,49 @@ data Stmt
     | Continue
 
         -- BoolOp() can use left & right?
-data expr = BoolOp(boolop op, expr* values)
-    | BinOp(expr left, operator op, expr right)
-    | UnaryOp(unaryop op, expr operand)
-    | Lambda(arguments args, expr body)
-    | IfExp(expr test, expr body, expr orelse)
-    | Dict(expr* keys, expr* values)
-    | Set(expr* elts)
-    | ListComp(expr elt, comprehension* generators)
-    | SetComp(expr elt, comprehension* generators)
-    DictComp(expr key, expr value, comprehension* generators)
+data expr 
+    = Test { 
+          testOp     :: BoolOp,
+          testValues :: [Expr]
+      }
+    | BinOp {
+          binOpLeft  :: Expr,
+          binOpOp    :: Op,
+          binOpRight :: Expr
+      }
+    | UnaryOp {
+          unaryOpOp     :: Op,
+          unartyOperand :: Expr
+      }
+    | Lambda {
+          lambdaArgs :: Arguments,
+          lambdaBody :: Expr
+      }
+    | IfExp {
+          ifExpTest   :: Expr,
+          ifExpBody   :: Expr,
+          ifExpOrElse :: Expr
+      }
+    | Dict {
+          dictKeys   :: [Expr],
+          dictValues :: [Expr]
+      }
+    | Set {
+          setElts :: [Expr]
+      }
+    | ListComp {
+          listCompElt        :: Expr,
+          listCompGenerators :: [Comprehension]
+      }
+    | SetComp {
+          setCompElt        :: Expr,
+          setCompGenerators :: [Comprehension]
+      }
+    | DictComp {
+          dictCompKey        :: [Expr],
+          dictCompValue      :: [Expr],
+          dictCompGenerators :: [Comprehension]
+      }
     | GeneratorExp(expr elt, comprehension* generators)
     -- the grammar constrains where yield expressions can occur
     | Yield(expr? value)
