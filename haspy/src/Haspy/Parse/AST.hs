@@ -2,45 +2,106 @@
 module Haspy.Parse.AST where
 
 
+data Ident = Ident {
+       identName :: String
+    }
 
 data Mod = Module {
         modBody :: [ Stmt ] 
     }
 
-data Stmt = Stmt 
 
-{--
 data Stmt
-    = FunctionDef(identifier name, arguments args, stmt* body, expr* decorator_list, expr? returns)
-    | ClassDef(identifier name, expr* bases, keyword* keywords, expr? starargs, expr? kwargs, stmt* body, expr *decorator_list)
-    | Return(expr? value)
+    = FuncDef {
+          funcDefName               :: Ident,
+          functionDefArgs           :: Args,
+          functionDefBody           :: [Stmt],
+          functionDefDecoratorListt :: [Expr],
+          functionDefReturns        :: Maybe Expr
+      }
+    | ClassDef {
+          classDefName          :: Ident,
+          classDefBases         :: [ Expr ],
+          classDefKeywords      :: [ Keyword ],
+          classDefStarArgs      :: Maybe Expr,
+          classDefKwargs        :: Maybe Expr,
+          classDefBody          :: [ Stmt ],
+          classDefDecoratorList :: [ expr ]
+      }
+    | Return {
+          returnValue :: Maybe expr
+      }
+    | Delete {
+          deleteTargets :: [Expr]
+      }
+    | Assign {
+          assignTargets :: [Expr],
+          assignValue   :: Expr
+      }
+    | AugAssign {
+          expr target, operator op, expr value)
+      }
 
-    | Delete(expr* targets)
-    | Assign(expr* targets, expr value)
-    | AugAssign(expr target, operator op, expr value)
+    | For {
+          forTarget :: Expr,
+          forIter   :: Expr,
+          forBody   :: [Stmt],
+          forOrElse :: [Stmt]
+      }
+    | While {
+          whileTest   :: Expr,
+          whileBody   :: [Stmt],
+          whileOrElse :: [Stmt]
+      }
+    | If {
+          ifTest   :: Expr,
+          ifBody   :: [Stmt],
+          ifOrElse :: [Stmt]
+      }
+    | With {
+          withContextExpr  :: Expr,
+          withOptionalVars :: Maybe Expr,
+          withBody         :: [Stmt]
+      }
 
-    -- use 'orelse' because else is a keyword in target languages
-    | For(expr target, expr iter, stmt* body, stmt* orelse)
-    | While(expr test, stmt* body, stmt* orelse)
-    | If(expr test, stmt* body, stmt* orelse)
-    | With(expr context_expr, expr? optional_vars, stmt* body)
+    | Raise {
+          raiseExc   :: Maybe Expr,
+          raiseCuase :: Maybe Expr
+      }
+    | TryExcept {
+          tryExceptBody    :: [Stmt],
+          tryExceptHandler :: [ExceptHandler],
+          tryExceptOrElse  :: [Stmt]
+      }
+    | TryFinally {
+          tryFinallyBody      :: [Stmt],
+          tryFinallyFinalBody :: [Stmt]
+      }
+    | Assert {
+          assertTest :: Expr,
+          assertMsg  :: Maybe Expr
+      }
+    | Import { 
+          importNames :: [Alias]
+      }
+    | ImportFrom {
+          importFromModule :: Ident,
+          importFromNames  :: [Alias],
+          importFromLevel  :: Maybe Int
+      }
 
-    | Raise(expr? exc, expr? cause)
-    | TryExcept(stmt* body, excepthandler* handlers, stmt* orelse)
-    | TryFinally(stmt* body, stmt* finalbody)
-    | Assert(expr test, expr? msg)
-
-    | Import(alias* names)
-    | ImportFrom(identifier module, alias* names, int? level)
-
-    | Global(identifier* names)
-    | Nonlocal(identifier* names)
-    | Expr(expr value)
-    | Pass | Break | Continue
-
-    -- XXX Jython will be different
-    -- col_offset is the byte offset in the utf8 string the parser uses
-    attributes (int lineno, int col_offset)
+    | Global {
+          globalNames :: [Ident]
+      }
+    | Nonlocal {
+          nonlocalNames :: [Ident]
+      }
+    | Expression {
+          expressionValue :: Expr
+      }
+    | Pass 
+    | Break 
+    | Continue
 
         -- BoolOp() can use left & right?
 data expr = BoolOp(boolop op, expr* values)
