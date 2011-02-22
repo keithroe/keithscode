@@ -124,26 +124,31 @@ import Haspy.Parse.AST
 -- Parameterized productions
 --
 --------------------------------------------------------------------------------
-opt(p)           : p                          { Just $1 }
-                 |                            { Nothing }
+opt(p)                  : p                                { Just $1 }
+                        |                                  { Nothing }
 
-rev_list1(p)     : p                          { [$1] }
-                 | rev_list1(p) p             { $2 : $1 }
 
-delim_list(p,q ) : p                          { [$1]
-                 | delim_list( p, q ) q p     { $3 : $1 }
+reverseList(p)          : p                                { [$1] }
+                        | reverseList(p) p                 { $2 : $1 }
 
-fst(p,q)         : p q                        { $1 }
-snd(p,q)         : p q                        { $2 }
-or(p,q)          : p                          { $1 }                
-                 | q                          { $1 }                
+reverseDelimList(p,q )  : p                                { [$1] }
+                        | reverseDelimList( p, q ) q p     { $3 : $1 }
 
-both(p,q)        : p q                        { ($1,$2) }
+delimList(p,q )         : reverseDelimList( p, q )         { reverse $1 } 
 
-oneOrMOre(p)     : rev_list1(p)               { reverse $1 }
+fst(p,q)                : p q                              { $1 }
+snd(p,q)                : p q                              { $2 }
+or(p,q)                 : p                                { $1 }                
+                        | q                                { $1 }                
+either(p,q)             : p                                { Left  $1 }
+                        | q                                { Right $1 }
 
-zeroOrMOre(p)    : list1(p)                   { $1 }
-                 |                            { [] }
+both(p,q)               : p q                              { ($1,$2) }
+
+oneOrMOre(p)            : reverseList(p)                   { reverse $1 }
+
+zeroOrMOre(p)           : oneOrMOre(p)                     { $1 }
+                        |                                  { [] }
 
 
 --------------------------------------------------------------------------------
@@ -154,27 +159,8 @@ zeroOrMOre(p)    : list1(p)                   { $1 }
 
 
 file_input :: { Module }
-file_input
-    : zeroOrMOre( or( stmt, NEWLINE ) ) PEOF     { 
-
-decorator :: { Expr } 
-decorator : '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
-
-
-decorators :: { [Expr] }
-decorators : oneOrMOre( decorator ) : { $1 } 
-
-decorated: decorators (classdef | funcdef)
-funcdef: 'def' NAME parameters ['->' test] ':' suite
-parameters: '(' [typedargslist] ')'
-typedargslist: ((tfpdef ['=' test] ',')*
-                ('*' [tfpdef] (',' tfpdef ['=' test])* [',' '**' tfpdef] | '**' tfpdef)
-                | tfpdef ['=' test] (',' tfpdef ['=' test])* [','])
-tfpdef: NAME [':' test]
-varargslist: ((vfpdef ['=' test] ',')*
-              ('*' [vfpdef] (',' vfpdef ['=' test])*  [',' '**' vfpdef] | '**' vfpdef)
-              | vfpdef ['=' test] (',' vfpdef ['=' test])* [','])
-vfpdef: NAME
+file_input | zeroOrMOre( either( stmt, NEWLINE ) ) PEOF
+             { Module ( concat ( lefts $1 ) ) }
 
 
 stmt :: { [Stmt] }
@@ -197,13 +183,34 @@ small_stmt
     | nonlocal_stmt
     | assert_stmt
 
+{--
+single_input: NEWLINE | simple_stmt | compound_stmt NEWLINE
+file_input: (NEWLINE | stmt)* ENDMARKER
+eval_input: testlist NEWLINE* ENDMARKER
+
+decorator: '@' dotted_name [ '(' [arglist] ')' ] NEWLINE
+decorators: decorator+
+decorated: decorators (classdef | funcdef)
+funcdef: 'def' NAME parameters ['->' test] ':' suite
+parameters: '(' [typedargslist] ')'
+typedargslist: ((tfpdef ['=' test] ',')*
+                ('*' [tfpdef] (',' tfpdef ['=' test])* [',' '**' tfpdef] | '**' tfpdef)
+                | tfpdef ['=' test] (',' tfpdef ['=' test])* [','])
+tfpdef: NAME [':' test]
+varargslist: ((vfpdef ['=' test] ',')*
+              ('*' [vfpdef] (',' vfpdef ['=' test])*  [',' '**' vfpdef] | '**' vfpdef)
+              | vfpdef ['=' test] (',' vfpdef ['=' test])* [','])
+vfpdef: NAME
+
+stmt: simple_stmt | compound_stmt
+simple_stmt: small_stmt (';' small_stmt)* [';'] NEWLINE
+small_stmt: (expr_stmt | del_stmt | pass_stmt | flow_stmt |
+             import_stmt | global_stmt | nonlocal_stmt | assert_stmt)
 expr_stmt: testlist (augassign (yield_expr|testlist) |
-                              ('=' (yield_expr|testlist))*)
-                              augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
-                                          '<<=' | '>>=' | '**=' | '//=')
-
-
-del_stmt: 'del' exprlist
+                     ('=' (yield_expr|testlist))*)
+augassign: ('+=' | '-=' | '*=' | '/=' | '%=' | '&=' | '|=' | '^=' |
+            '<<=' | '>>=' | '**=' | '//=')
+# For normal assignments, additional restrictions enforced by the interpreter
 del_stmt: 'del' exprlist
 pass_stmt: 'pass'
 flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
@@ -214,11 +221,9 @@ yield_stmt: yield_expr
 raise_stmt: 'raise' [test ['from' test]]
 import_stmt: import_name | import_from
 import_name: 'import' dotted_as_names
-
-compound_stmt :: { Stmt }
-compound_stmt
-
-
+# note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
+import_from: ('from' (('.' | '...')* dotted_name | ('.' | '...')+)
+              'import' ('*' | '(' import_as_names ')' | import_as_names))
 import_as_name: NAME ['as' NAME]
 dotted_as_name: dotted_name ['as' NAME]
 import_as_names: import_as_name (',' import_as_name)* [',']
@@ -293,10 +298,7 @@ testlist1: test (',' test)*
 encoding_decl: NAME
 
 yield_expr: 'yield' [testlist]
-
---expr :: { Expr }
---  : plusExpr          { $1 }
---  | listExpr          { $1 }
+--}
 
 
 {
