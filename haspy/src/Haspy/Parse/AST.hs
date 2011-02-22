@@ -16,17 +16,17 @@ data Stmt
           funcDefName               :: Ident,
           functionDefArgs           :: Args,
           functionDefBody           :: [Stmt],
-          functionDefDecoratorListt :: [Expr],
+          functionDefDecoratorListt :: [Decorator],
           functionDefReturns        :: Maybe Expr
       }
     | ClassDef {
           classDefName          :: Ident,
-          classDefBases         :: [ Expr ],
-          classDefKeywords      :: [ Keyword ],
+          classDefBases         :: [Expr],
+          classDefKeywords      :: [Keyword],
           classDefStarArgs      :: Maybe Expr,
           classDefKwargs        :: Maybe Expr,
-          classDefBody          :: [ Stmt ],
-          classDefDecoratorList :: [ expr ]
+          classDefBody          :: [Stmt],
+          classDefDecoratorList :: [Decorator]
       }
     | Return {
           returnValue :: Maybe expr
@@ -147,30 +147,78 @@ data expr
           dictCompValue      :: [Expr],
           dictCompGenerators :: [Comprehension]
       }
-    | GeneratorExp(expr elt, comprehension* generators)
+    | GeneratorExp {
+          generatorExpElt        :: Expr,
+          generatorExpGenerators :: [Comprehension]
+      }
     -- the grammar constrains where yield expressions can occur
-    | Yield(expr? value)
+    | Yield {
+        yieldValue :: Maybe Expr
+      }
     -- need sequences for compare to distinguish between
     -- x < 4 < 3 and (x < 4) < 3
-    | Compare(expr left, cmpop* ops, expr* comparators)
-    | Call(expr func, expr* args, keyword* keywords,
-    expr? starargs, expr? kwargs)
-    | Num(object n) -- a number as a PyObject.
-    | Str(string s) -- need to specify raw, unicode, etc?
+    | Compare {
+          compareLeft        :: Expr,
+          compareOps         :: [ CmpOp ],
+          compareComparators :: [expr]
+      }
+    | Call {
+          callFunc     :: Expr,
+          callArgs     :: [Expr],
+          callKeywords :: [Keyword],
+          callStarArgs :: Maybe Expr, 
+          callKWArgs   :: Maybe Expr
+      }
+    | Float {
+          floatVal :: Double
+      }
+    | Int {
+          intVal :: Integer 
+      }
+    | Imag {
+          imageVal :: Double 
+      }
+    | Str {
+          strVal :: String
+      }
     | Bytes(string s)
+          bytesVal :: String
+      }
     | Ellipsis
-    -- other literals? bools?
-
     -- the following expression can appear in assignment context
-    | Attribute(expr value, identifier attr, expr_context ctx)
-    | Subscript(expr value, slice slice, expr_context ctx)
-    | Starred(expr value, expr_context ctx)
-    | Name(identifier id, expr_context ctx)
-    | List(expr* elts, expr_context ctx) 
-    | Tuple(expr* elts, expr_context ctx)
+    | Attribute {
+          attributeValue :: Expr, 
+          attributeAttr  :: Ident,
+          attributeCtx   :: ExprContext
+      }
+    | Subscript {
+          subscriptValue :: Expr,
+          subscriteSlice :: Slice,
+          subscriptCtx   :: ExprContext
+      }
+    | Starred {
+          starredValue :: Expr,
+          starredCtx   :: ExprContext
+      }
+    | Name {
+          nameID  :: Ident,
+          nameCtx :: ExprContext 
+      }
+    | List {
+          listElts :: [Expr],
+          listCtx  :: ExprContext
+    | Tuple {
+          tupleElts :: [Expr],
+          tupleCtx  :: ExprContext
+      }
 
 
-data expr_context 
+data Decorator
+    = Decorator {
+          decoratorName :: Name
+          decoratorArgs :: [Arg]
+      }
+data ExprContext 
     = Load
     | Store
     | Del
@@ -178,10 +226,18 @@ data expr_context
     | AugStore
     | Param
 
-data slice 
-    = Slice(expr? lower, expr? upper, expr? step) 
-    | ExtSlice(slice* dims) 
-    | Index(expr value) 
+data Slice 
+    = Slice {
+          sliceLower :: Maybe Expr,
+          sliceUpper :: Maybe Expr,
+          sliceStep  :: Maybe Expr,
+      }
+    | ExtSlice {
+          extSiceDims :: [Slice]
+      }
+    | Index {
+          indexValue :: Expr
+      }
 
 data boolop 
     = And 
@@ -207,7 +263,7 @@ data unaryop
     | UAdd
     | USub
 
-data cmpop
+data CmpOp
     = Eq
     | NotEq
     | Lt
@@ -219,27 +275,51 @@ data cmpop
     | In
     | NotIn
 
-data comprehension
-    = (expr target, expr iter, expr* ifs)
+data Comprehension
+    = Comprehension {
+          comprehensionTarget :: Expr,
+          comprehensionIter   :: Expr,
+          comprehensionIfs    :: [Expr]
+      }
 
-  -- not sure what to call the first argument for raise and except
-data excepthandler
-    = ExceptHandler(expr? type, identifier? name, stmt* body)
 
-data arguments
-    = (arg* args, identifier? vararg, expr? varargannotation,
-                     arg* kwonlyargs, identifier? kwarg,
-                     expr? kwargannotation, expr* defaults,
-                     expr* kw_defaults)
-data arg 
-    = (identifier arg, expr? annotation)
+-- not sure what to call the first argument for raise and except
+data ExceptHandler
+    = ExceptHandler {
+          exceptType :: Maybe Expr,
+          exceptName :: Maybe Ident,
+          exceptBody :: [Stmt]
+      }
 
-        -- keyword arguments supplied to call
-data keyword 
-    = (identifier arg, expr value)
+data Args
+    = Args {
+          argsArgs :: [Arg],
+          argsVarArg :: Maybe Ident,
+          argsVarArgAnnotation :: Maybe Expr,
+          argsKWOnlyArgs       :: [Arg],
+          argsKWArg            :: Maybe Ident,
+          argsKWArgAnnotation  :: Maybe Expr,
+          argsDefaults         :: [Expr],
+          argsKWDefaults       :: [Expr]
+      }
 
-        -- import name with optional 'as' alias.
-data alias
-    = (identifier name, identifier? asname)
+data Arg 
+    = Arg {
+          argArg        :: Ident,
+          argAnnotation :: Maybe Expr
+      }
 
---}
+-- keyword arguments supplied to call
+data Keyword 
+    = Keyword {
+          keywordArg   :: Ident,
+          keywordValue :: Expr
+      }
+
+-- import name with optional 'as' alias.
+data Alias
+    = Alias {
+          aliasName   :: Ident,
+          aliasAsName :: Maybe Ident
+      }
+
