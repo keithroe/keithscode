@@ -290,7 +290,7 @@ augassign :: { Op }
 
 del_stmt :: { Stmt }  
 del_stmt
-    : DEL exprlist    { }
+    : DEL exprlist    { Delete $2 }
 
 
 pass_stmt :: { Stmt }
@@ -299,33 +299,91 @@ pass_stmt
 
 
 
-# For normal assignments, additional restrictions enforced by the interpreter
-del_stmt: 'del' exprlist
-pass_stmt: 'pass'
-flow_stmt: break_stmt | continue_stmt | return_stmt | raise_stmt | yield_stmt
-break_stmt: 'break'
-continue_stmt: 'continue'
-return_stmt: 'return' [testlist]
-yield_stmt: yield_expr
-raise_stmt: 'raise' [test ['from' test]]
-import_stmt: import_name | import_from
-import_name: 'import' dotted_as_names
-# note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
-import_from: ('from' (('.' | '...')* dotted_name | ('.' | '...')+)
-              'import' ('*' | '(' import_as_names ')' | import_as_names))
-import_as_name: NAME ['as' NAME]
-dotted_as_name: dotted_name ['as' NAME]
-import_as_names: import_as_name (',' import_as_name)* [',']
-dotted_as_names: dotted_as_name (',' dotted_as_name)*
-dotted_name: NAME ('.' NAME)*
-global_stmt: 'global' NAME (',' NAME)*
-nonlocal_stmt: 'nonlocal' NAME (',' NAME)*
-assert_stmt: 'assert' test [',' test]
+flow_stmt :: { Stmt }
+    : break_stmt        { $1 }
+    | continue_stmt     { $1 }
+    | return_stmt       { $1 }
+    | raise_stmt        { $1 }
+    | yield_stmt        { $1 }
 
-compound_stmt: if_stmt | while_stmt | for_stmt | try_stmt | with_stmt | funcdef | classdef | decorated
-if_stmt: 'if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
-while_stmt: 'while' test ':' suite ['else' ':' suite]
-for_stmt: 'for' exprlist 'in' testlist ':' suite ['else' ':' suite]
+break_stmt :: { Stmt }
+    : BREAK { Break } 
+
+continue_stmt :: { Stmt }
+    : CONTINUE { Continute } 
+
+return_stmt :: { Stmt }
+    : RETURN opt( testlist )   { Return $2 }
+
+yield_stmt :: { Stmt }
+    : yield_expr  { $1 }
+
+raise_stmt :: { Stmt }
+    -- raise_stmt: 'raise' [test ['from' test]]
+    : RAISE test_from_test  { Raise $2 }    
+
+test_from_test :: { ( Expr, Expr ) }
+    : opt( test )          { ( $1, Nothing) } 
+    | test FROM test       { ( $1, $3 ) }
+
+import_stmt :: { Stmt }
+    : import_name
+    --| import_from
+
+import_name :: { Stmt }
+    : IMPORT dotted_as_names     { Import $2 } 
+
+-- # note below: the ('.' | '...') is necessary because '...' is tokenized as ELLIPSIS
+--import_from: 'from' (('.' | '...')* dotted_name | ('.' | '...')+)
+--              'import' ('*' | '(' import_as_names ')' | import_as_names)
+--import_as_name: NAME ['as' NAME]
+--import_as_names: import_as_name (',' import_as_name)* [',']
+
+dotted_as_name :: { Alias }
+    : dotted_name opt( snd( 'as', NAME ) )          { Alias $1 $2 }      
+
+dotted_as_names: { [Alias] }
+    : delimList( dotted_as_name, ',' )              { $1 }
+
+dotted_name :: { Ident }
+    : NAME                             { $1 }
+    | dotted_name '.' NAME             { $1 ++ $2 ++ $3 }   -- string concat
+
+global_stmt :: { Stmt }
+    : 'global' delimList( NAME, ',' )        { Global $2 }
+
+nonlocal_stmt :: { Stmt }
+    : 'nonlocal' delimList( NAME, ',' )        { Nonlocal $2 }
+
+assert_stmt :: { Stmt }
+    : 'assert' test opt( snd( ',', test ) )    { Assert $2  $3 }
+
+compound_stmt ::: { Stmt }
+    : if_stmt        { $1 }
+    | while_stmt     { $1 }
+    | for_stmt       { $1 }
+    | try_stmt       { $1 }
+    | with_stmt      { $1 }
+    | funcdef        { $1 }
+    | classdef       { $1 }
+    | decorated      { $1 }
+
+if_stmt :: { Stmt }
+    -- if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
+    : IF test ':' suite zeroOrMore( elif ) opt( else )   { makeIfStmt( $2, $4, $5, $6 ) }  
+
+elif :: { ( Expr, [Stmt ] ) }
+    : ELIF test ':' suite   { ( $2, $4 ) }
+    
+else ::  { [Statement] }
+    : ELSE ':' suite        { $4 }
+
+while_stmt :: { Stmt }
+    : WHILE test ':' suite opt( else )      { While $2 $4 $5 }
+
+for_stmt :: { Stmt }
+    : FOR exprlist 'in' testlist ':' suite opt( else )  { For $2 $4 $5 $6 }
+
 try_stmt: ('try' ':' suite
            ((except_clause ':' suite)+
             ['else' ':' suite]
