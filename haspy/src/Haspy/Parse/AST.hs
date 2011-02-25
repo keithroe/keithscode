@@ -39,9 +39,10 @@ data Stmt
           assignValue   :: Expr
       }
     | AugAssign {
-          expr target, operator op, expr value)
+          augAssignTarget :: Expr,
+          augAssignOp     :: Op,
+          augAssignValue  :: Expr
       }
-
     | For {
           forTarget :: Expr,
           forIter   :: Expr,
@@ -121,7 +122,7 @@ data expr
     | Lambda {
           lambdaArgs :: Arguments,
           lambdaBody :: Expr
-      }
+      
     | IfExp {
           ifExpTest   :: Expr,
           ifExpBody   :: Expr,
@@ -243,7 +244,7 @@ data boolop
     = And 
     | Or 
 
-data operator 
+data Op 
     = Add 
     | Sub
     | Mult
@@ -293,8 +294,8 @@ data ExceptHandler
 
 data Args
     = Args {
-          argsArgs :: [Arg],
-          argsVarArg :: Maybe Ident,
+          argsArgs             :: [Arg],
+          argsVarArg           :: Maybe Ident,
           argsVarArgAnnotation :: Maybe Expr,
           argsKWOnlyArgs       :: [Arg],
           argsKWArg            :: Maybe Ident,
