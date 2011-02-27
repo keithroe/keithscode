@@ -1,7 +1,10 @@
 
 module Haspy.Parse.AST where
 
-
+--
+-- TODO: reconcile token naming with AST naming (ie, Token.PLUS -> AST.ADD)
+--
+--
 data Ident = Ident {
        identName :: String
     }
@@ -105,10 +108,15 @@ data Stmt
     | Continue
 
         -- BoolOp() can use left & right?
-data expr 
-    = Test { 
-          testOp     :: BoolOp,
-          testValues :: [Expr]
+data Expr 
+    = Test {
+          testIfTrue  :: Expr
+          testCond    :: Expr
+          testIfFalse :: Expr
+      }
+    | BoolOp { 
+          boolOpOp     :: BoolOp,
+          boolOpValues :: [Expr]
       }
     | BinOp {
           binOpLeft  :: Expr,
@@ -117,7 +125,7 @@ data expr
       }
     | UnaryOp {
           unaryOpOp     :: Op,
-          unartyOperand :: Expr
+          unaryOperand :: Expr
       }
     | Lambda {
           lambdaArgs :: Arguments,
@@ -161,7 +169,7 @@ data expr
     | Compare {
           compareLeft        :: Expr,
           compareOps         :: [ CmpOp ],
-          compareComparators :: [expr]
+          compareComparators :: [ expr ]
       }
     | Call {
           callFunc     :: Expr,
@@ -190,27 +198,27 @@ data expr
     | Attribute {
           attributeValue :: Expr, 
           attributeAttr  :: Ident,
-          attributeCtx   :: ExprContext
+          --attributeCtx   :: ExprContext
       }
     | Subscript {
           subscriptValue :: Expr,
           subscriteSlice :: Slice,
-          subscriptCtx   :: ExprContext
+          --subscriptCtx   :: ExprContext
       }
     | Starred {
           starredValue :: Expr,
-          starredCtx   :: ExprContext
+          --starredCtx   :: ExprContext
       }
     | Name {
           nameID  :: Ident,
-          nameCtx :: ExprContext 
+          --nameCtx :: ExprContext 
       }
     | List {
           listElts :: [Expr],
-          listCtx  :: ExprContext
+          --listCtx  :: ExprContext
     | Tuple {
           tupleElts :: [Expr],
-          tupleCtx  :: ExprContext
+          --tupleCtx  :: ExprContext
       }
 
 
@@ -219,6 +227,8 @@ data Decorator
           decoratorName :: Name
           decoratorArgs :: [Arg]
       }
+
+-- cannot figure out why we need this
 data ExprContext 
     = Load
     | Store
