@@ -264,7 +264,7 @@ small_stmt
 
 
 expr_stmt :: { Stmt }
-expr_stmt 
+expr_stmt
     -- testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
     : testlist_star_expr augassign either( yield_expr, testlist ) 
       { makeAugAssign $1 $2 $3 }
@@ -376,7 +376,10 @@ elif :: { ( Expr, [Stmt ] ) }
     : ELIF test ':' suite   { ( $2, $4 ) }
     
 else ::  { [Statement] }
-    : ELSE ':' suite        { $4 }
+    : ELSE ':' suite        { $3 }
+
+finally ::  { [Statement] }
+    : FINALLY ':' suite        { $3 }
 
 while_stmt :: { Stmt }
     : WHILE test ':' suite opt( else )      { While $2 $4 $5 }
@@ -384,35 +387,147 @@ while_stmt :: { Stmt }
 for_stmt :: { Stmt }
     : FOR exprlist 'in' testlist ':' suite opt( else )  { For $2 $4 $5 $6 }
 
-try_stmt: ('try' ':' suite
-           ((except_clause ':' suite)+
-            ['else' ':' suite]
-            ['finally' ':' suite] |
-           'finally' ':' suite))
-with_stmt: 'with' with_item (',' with_item)*  ':' suite
-with_item: test ['as' expr]
-# NB compile.c makes sure that the default except clause is last
-except_clause: 'except' [test ['as' NAME]]
-suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
+try_stmt :: { Stmt }
+    -- try_stmt: ('try' ':' suite ((except_clause ':' suite)+ ['else' ':' suite] ['finally' ':' suite] | 'finally' ':' suite))
+    : TRY ':' suite oneOrMOre( except_handler ) opt( else ) opt( finally )  { makeTry $2 $3 $4 $5 } 
+    | TRY ':' suite finally                                                 { makeTry $2 [] Nothing $3 }
+    
+except_handler :: { ExceptHandler }
+    : except_clause ':' suite                  { ExceptHandler (fst $1) (snd $1) $3 }
+     
+except_clause :: { ( Maybe Expr, Maybe Ident ) }
+    | EXCEPT                                             { ( Nothing, Nothing ) }
+    : EXCEPT both( test,  opt( snd( AS, NAME ) ) )     { $2 }
 
-test: or_test ['if' or_test 'else' test] | lambdef
-test_nocond: or_test | lambdef_nocond
-lambdef: 'lambda' [varargslist] ':' test
-lambdef_nocond: 'lambda' [varargslist] ':' test_nocond
-or_test: and_test ('or' and_test)*
-and_test: not_test ('and' not_test)*
-not_test: 'not' not_test | comparison
-comparison: expr (comp_op expr)*
-comp_op: '<'|'>'|'=='|'>='|'<='|'<>'|'!='|'in'|'not' 'in'|'is'|'is' 'not'
-star_expr: '*' expr
-expr: xor_expr ('|' xor_expr)*
-xor_expr: and_expr ('^' and_expr)*
-and_expr: shift_expr ('&' shift_expr)*
-shift_expr: arith_expr (('<<'|'>>') arith_expr)*
-arith_expr: term (('+'|'-') term)*
-term: factor (('*'|'/'|'%'|'//') factor)*
-factor: ('+'|'-'|'~') factor | power
-power: atom trailer* ['**' factor]
+with_stmt :: { Stmt }
+    : WITH oneOrMOre( with_item ) ':' suite       { makeWith $2 $4 }
+
+with_item :: { ( Expr, Maybe Expr ) }
+    : test opt( snd( 'as', expr ) )     { ( $1 $2 ) }
+
+suite :: { [ Stmt ] }
+    : simple_stmt                             { $1 }
+    | NEWLINE INDENT oneOrMOre( stmt ) DEDENT { $3 }
+
+-- test: or_test ['if' or_test 'else' test] | lambdef
+test :: { Expr }
+    : or_test opt( test_if )      { makeTest $1 $2 } 
+    | lambdef                     { $1 }
+
+test_if :: { (Expr, Expr) }
+    : IF or_test ELSE test   { ( $2 $4 ) }
+
+test_nocond :: {Expr}
+    : or_test            { $1 }
+    | lambdef_nocond     { $2 }
+
+lambdef ::  { Expr }
+    : LAMBDA opt(varargslist) ':' test           { Lambda $2 $4 }
+
+lambdef_nocond :: { Expr }
+    : LAMBDA opt(varargslist) ':' test_nocond    { Lambda $2 $4 }
+
+or_test :: { Expr }
+    -- and_test ('or' and_test)*
+    : and_test                    { $1 }
+    | or_test or_op and_test      { BinOp $1 $2 $3 }
+
+or_op :: { Op }
+   : OR        { Or }
+
+
+and_test :: { Expr }
+   : not_test                   { $1 }
+   : and_test and_op not_test   { BinOp $1 $2 $3 }
+
+not_test :: { Expr }
+   : not_op not_test          { UnaryOp $1 $2 }
+   | comparison               { $1 }
+
+not_op { UnaryOp }
+   : NOT  { Not }
+
+comparison :: { Expr }
+   : expr zeroOrMore( both( comparison, comp_op expr ) )     { makeCompare $1 $2 }
+
+
+comp_op :: { CmpOp } 
+   : '<'         { Lt    }
+   | '>'         { Gt    }
+   | '=='        { Eq    }
+   | '>='        { GtE   }
+   | '<='        { LtE   }
+   | '<>'        { NotEq }
+   | '!='        { NotEq }
+   | 'in'        { In    }
+   | 'not' 'in'  { NotIn }
+   | 'is'        { Is    }
+   | 'is' 'not'  { IsNot }
+
+star_expr :: { Expr }
+   | '*' expr    { Starred $2 }
+
+expr :: { Expr }
+   : xor_expr                    { $1 } 
+   | expr bit_or_op  xor_expr    { BinOp $1 $2 $3 }
+
+bit_or_op { Op }
+   : '|'       { BitOr }
+
+
+xor_expr :: { Expr }
+   : and_expr                          { $1 }
+   : xor_expr bit_xor_op  and_expr     { BinOp $1 $2 $3 }
+
+bit_xor_op { Op }
+   : '^'       { BitXor }
+
+and_expr :: { Expr }
+   : shift_expr                        { $1 }
+   | and_expr bit_and_op shift_expr    { BinOp $1 $2 $3 } 
+
+bit_and_op { Op }
+   : '$'       { BitAnd }
+
+shift_expr :: { Expr }
+   : arith_expr                        { $1 }
+   | shift_expr shift_op arith_expr    { BinOp $1 $2 $3 }   
+
+shift_op :: { Op }
+   : '<<'       { LShift }
+   | '>>'       { RShift }
+
+arith_expr :: { Expr }
+   : term                       { $1 }
+   | arith_exp arith_op term    { BinOp $1 $2 $3 }   
+
+arith_op :: { Op }
+   : '+'       { Add }
+   | '-'       { Sub }
+
+
+term :: { Expr } 
+   : factor                     { $1 }
+   | term term_op factor        { BinOp $1 $2 $3 }     
+
+term_op { Op }
+   : '*'   { Mult     }
+   | '/'   { Div      }
+   | '%'   { Mod      }
+   | '//'  { FloorDiv }
+
+factor: 
+   : factor_op factor  { UnaryOp $1 $2 }
+   | power             { $1 }
+
+factor_op :: { UnaryOp }
+   : '+' { UAdd }
+   | '-' { USub }
+   | '~' { Invert }
+
+power :: { Expr }
+   : atom trailer* ['**' factor]
+
 atom: ('(' [yield_expr|testlist_comp] ')' |
        '[' [testlist_comp] ']' |
        '{' [dictorsetmaker] '}' |
