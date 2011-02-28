@@ -528,10 +528,23 @@ factor_op :: { UnaryOp }
 power :: { Expr }
    : atom trailer* ['**' factor]
 
-atom: ('(' [yield_expr|testlist_comp] ')' |
-       '[' [testlist_comp] ']' |
-       '{' [dictorsetmaker] '}' |
-       NAME | NUMBER | STRING+ | '...' | 'None' | 'True' | 'False')
+atom :: { Expr }
+   : '(' yield_expr_or_testlist_comp ')'
+   | '[' [testlist_comp] ']'
+   | '{' [dictorsetmaker] '}'
+   | NAME 
+   | NUMBER 
+   | STRING+ 
+   | '...' 
+   | 'None' 
+   | 'True' 
+   | 'False'
+
+yield_expr_or_testlist_comp :: { Expr }
+   :                           { Tuple [] }
+   | yield_expr                { $1 } 
+   | testlist_comp             { ????  }
+
 testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
 trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 subscriptlist: subscript (',' subscript)* [',']
@@ -557,7 +570,8 @@ comp_if: 'if' test_nocond [comp_iter]
 # not used in grammar, but may appear in "node" passed from Parser to Compiler
 encoding_decl: NAME
 
-yield_expr: 'yield' [testlist]
+yield_expr :: { Expr }
+    : YIELD opt( testlist )   { Yield $1 }
 
 
 
