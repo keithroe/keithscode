@@ -22,9 +22,10 @@ def printAST( filename, out = sys.stdout ):
         node   = ast.parse( string )
         printNode( node, '', False, out )
 
-        out.write( "\n\n" + "-" * 80 );
-        out.write( "string dump of parser tree for file <{0}>:\n".format( filename ) )
+        out.write( "\n\n" + "-" * 80 + "\n" );
+        out.write( "string dump of parser tree for file <{0}>:\n\n".format( filename ) )
         out.write( ast.dump( node ) )
+        out.write( "\n\n" )
 
 
 def printNode( node, prefix = '', output_prefix = False, out = sys.stdout ):
