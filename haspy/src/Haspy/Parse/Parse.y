@@ -543,14 +543,20 @@ atom :: { Expr }
 yield_expr_or_testlist_comp :: { Expr }
    :                           { Tuple [] }
    | yield_expr                { $1 } 
-   | testlist_comp             { ????  }
+   | testlist_comp             { $1 }
 
-testlist_comp: (test|star_expr) ( comp_for | (',' (test|star_expr))* [','] )
+testlist_comp :: { Expr } 
+   : Either( test, star_expr ) comp_for                 {  ListComp $1 $2 }
+   | delimListTrailingOpt( either( test, star_expr )    {  List $1        }
+
 trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
 subscriptlist: subscript (',' subscript)* [',']
 subscript: test | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
-exprlist: (expr|star_expr) (',' (expr|star_expr))* [',']
+
+exprlist :: { Expr }   -- Tuple or single expr
+    : (expr|star_expr) (',' (expr|star_expr))* [',']
+
 testlist: test (',' test)* [',']
 dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
                   (test (comp_for | (',' test)* [','])) )
@@ -563,12 +569,15 @@ arglist: (argument ',')* (argument [',']
 # The reason that keywords are test nodes instead of NAME is that using NAME
 # results in an ambiguity. ast.c makes sure it's a NAME.
 argument: test [comp_for] | test '=' test  # Really [keyword '='] test
-comp_iter: comp_for | comp_if
-comp_for: 'for' exprlist 'in' or_test [comp_iter]
-comp_if: 'if' test_nocond [comp_iter]
 
-# not used in grammar, but may appear in "node" passed from Parser to Compiler
-encoding_decl: NAME
+comp_for :: { [ Comprehension ] }
+    : 'for' exprlist 'in' or_test opt( comp_iter )      { Comprehension $1  $2 $3 }
+
+comp_iter :: 
+    : comp_for
+    | comp_if
+
+comp_if: 'if' test_nocond [comp_iter]
 
 yield_expr :: { Expr }
     : YIELD opt( testlist )   { Yield $1 }
