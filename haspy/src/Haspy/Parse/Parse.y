@@ -449,11 +449,7 @@ not_op { UnaryOp }
 
 comparison :: { Expr }
    : expr zeroOrMore( both( comparison, comp_op expr ) )     { makeCompare $1 $2 }
-
-
-comp_op :: { CmpOp } 
-   : '<'         { Lt    }
-   | '>'         { Gt    }
+comp_op :: { CmpOp } : '<'         { Lt    } | '>'         { Gt    }
    | '=='        { Eq    }
    | '>='        { GtE   }
    | '<='        { LtE   }
@@ -526,19 +522,28 @@ factor_op :: { UnaryOp }
    | '~' { Invert }
 
 power :: { Expr }
-   : atom trailer* ['**' factor]
+   : atom_trailer                         { $1 }
+   | atom trailer power_op factor )       { BinOp $1 $2 }
+
+atom_trailer :: { Expr }
+   : atom trailer*                        { makeAtomTrailer $1, $2 }
+
+
+power_op :: { Op }
+   : '**' { Pow }
 
 atom :: { Expr }
-   : '(' yield_expr_or_testlist_comp ')'
-   | '[' [testlist_comp] ']'
-   | '{' [dictorsetmaker] '}'
-   | NAME 
-   | NUMBER 
-   | STRING+ 
-   | '...' 
-   | 'None' 
-   | 'True' 
-   | 'False'
+   : '(' yield_expr_or_testlist_comp ')'   { $1 }
+   | '[' [testlist_comp] ']'               { $1 }
+   | '{' [dictorsetmaker] '}'              { $1 } 
+   | ID                                    { Ident $1 }
+   | INT                                   { Int $1 }
+   | FLOAT                                 { Float $1 }
+   | oneOrMOre( STRING )                   { String (concat $1 } 
+   | '...'                                 { Ellipsis }
+   | 'None'                                { None }
+   | 'True'                                { True }
+   | 'False'                               { False }
 
 yield_expr_or_testlist_comp :: { Expr }
    :                           { Tuple [] }
@@ -546,10 +551,14 @@ yield_expr_or_testlist_comp :: { Expr }
    | testlist_comp             { $1 }
 
 testlist_comp :: { Expr } 
-   : Either( test, star_expr ) comp_for                 {  ListComp $1 $2 }
+   : Either( test, star_expr ) oneOrMore( comp_for )    {  ListComp $1 $2 }
    | delimListTrailingOpt( either( test, star_expr )    {  List $1        }
 
-trailer: '(' [arglist] ')' | '[' subscriptlist ']' | '.' NAME
+trailer :: { Expr }
+   : '(' [arglist] ')'        {
+   | '[' subscriptlist ']' 
+   | '.' ID
+
 subscriptlist: subscript (',' subscript)* [',']
 subscript: test | [test] ':' [test] [sliceop]
 sliceop: ':' [test]
@@ -570,14 +579,11 @@ arglist: (argument ',')* (argument [',']
 # results in an ambiguity. ast.c makes sure it's a NAME.
 argument: test [comp_for] | test '=' test  # Really [keyword '='] test
 
-comp_for :: { [ Comprehension ] }
-    : 'for' exprlist 'in' or_test opt( comp_iter )      { Comprehension $1  $2 $3 }
+comp_for :: { Comprehension }
+    : 'for' exprlist 'in' or_test zeroOrMore( comp_if ) { Comprehension $2 $4 $5 }
 
-comp_iter :: 
-    : comp_for
-    | comp_if
-
-comp_if: 'if' test_nocond [comp_iter]
+comp_if :: { Expr }
+    :: 'if' test_nocond    { $2 }
 
 yield_expr :: { Expr }
     : YIELD opt( testlist )   { Yield $1 }
