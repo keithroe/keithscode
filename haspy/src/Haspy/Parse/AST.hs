@@ -128,7 +128,7 @@ data Expr
           unaryOperand :: Expr
       }
     | Lambda {
-          lambdaArgs :: Arguments,
+          lambdaArgs :: Args,
           lambdaBody :: Expr
       
     | IfExp {
