@@ -15,19 +15,17 @@ data Mod = Module {
 
 
 data Stmt
+    -- Make this DecoratedFuncDef composed of FuncDef
     = FuncDef {
           funcDefName               :: Ident,
-          functionDefArgs           :: Args,
+          functionDefParams         :: Params,
           functionDefBody           :: [Stmt],
           functionDefDecoratorListt :: [Decorator],
           functionDefReturns        :: Maybe Expr
       }
     | ClassDef {
           classDefName          :: Ident,
-          classDefBases         :: [Expr],
-          classDefKeywords      :: [Keyword],
-          classDefStarArgs      :: Maybe Expr,
-          classDefKwargs        :: Maybe Expr,
+          classDefBases         :: Args,
           classDefBody          :: [Stmt],
           classDefDecoratorList :: [Decorator]
       }
@@ -128,7 +126,7 @@ data Expr
           unaryOperand :: Expr
       }
     | Lambda {
-          lambdaArgs :: Args,
+          lambdaArgs :: Params,
           lambdaBody :: Expr
       
     | IfExp {
@@ -145,16 +143,16 @@ data Expr
       }
     | ListComp {
           listCompElt        :: Expr,
-          listCompGenerators :: [Comprehension]
+          listCompGenerators :: Comprehension
       }
     | SetComp {
           setCompElt        :: Expr,
-          setCompGenerators :: [Comprehension]
+          setCompGenerators :: Comprehension
       }
     | DictComp {
-          dictCompKey        :: [Expr],
-          dictCompValue      :: [Expr],
-          dictCompGenerators :: [Comprehension]
+          dictCompKey        :: Expr,
+          dictCompValue      :: Expr,
+          dictCompGenerators :: Comprehension
       }
     | GeneratorExp {
           generatorExpElt        :: Expr,
@@ -173,10 +171,7 @@ data Expr
       }
     | Call {
           callFunc     :: Expr,
-          callArgs     :: [Expr],
-          callKeywords :: [Keyword],
-          callStarArgs :: Maybe Expr, 
-          callKWArgs   :: Maybe Expr
+          callArgs     :: Args
       }
     | Float {
           floatVal :: Double
@@ -302,22 +297,34 @@ data ExceptHandler
           exceptBody :: [Stmt]
       }
 
-data Args
-    = Args {
-          argsArgs             :: [Arg],
-          argsVarArg           :: Maybe Ident,
-          argsVarArgAnnotation :: Maybe Expr,
-          argsKWOnlyArgs       :: [Arg],
-          argsKWArg            :: Maybe Ident,
-          argsKWArgAnnotation  :: Maybe Expr,
-          argsDefaults         :: [Expr],
-          argsKWDefaults       :: [Expr]
+-- Used for FuncDefs and Lambdas
+data Params
+    = Params  {
+          paramsArgs             :: [Param],
+          paramsVarArg           :: Maybe Ident,
+          paramsVarArgAnnotation :: Maybe Expr,
+          paramsKWOnlyArgs       :: [Param],
+          paramsKWArg            :: Maybe Ident,
+          paramsKWArgAnnotation  :: Maybe Expr,
+          paramsDefaults         :: [Expr],
+          paramsKWDefaults       :: [Expr]
       }
 
-data Arg 
-    = Arg {
-          argArg        :: Ident,
-          argAnnotation :: Maybe Expr
+data Param 
+    = Param {
+          paramParam      :: Ident,
+          paramAnnotation :: Maybe Expr
+      }
+
+
+-- For ClassDef, FuncCall and Decorators
+data Args 
+    = Args {
+       argsArgs      :: [Expr],
+       argsKeywords  :: [Keyword]
+       starArgs      :: Maybe Expr, 
+       kwArgs        :: Maybe Expr
+
       }
 
 -- keyword arguments supplied to call
@@ -332,5 +339,17 @@ data Alias
     = Alias {
           aliasName   :: Ident,
           aliasAsName :: Maybe Ident
+      }
+
+
+data Trailer
+    = TrailerCall { 
+          trailerCall :: Args
+      }
+    | TrailerSubscript {
+          trailerSlice :: Slice 
+      }
+    | TrailerAttribute{
+          trailerAttribute :: Ident
       }
 

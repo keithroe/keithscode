@@ -182,8 +182,8 @@ funcdef
 
 
 
-parameters :: { Args }
-    : '(' opt( typedargslist ) ')'           { makeArgs $1 }
+parameters :: { Params }
+    : '(' opt( typedargslist ) ')'           { makeParams $1 }
 
 
 {--
@@ -449,6 +449,7 @@ not_op { UnaryOp }
 
 comparison :: { Expr }
    : expr zeroOrMore( both( comparison, comp_op expr ) )     { makeCompare $1 $2 }
+
 comp_op :: { CmpOp } : '<'         { Lt    } | '>'         { Gt    }
    | '=='        { Eq    }
    | '>='        { GtE   }
@@ -526,7 +527,7 @@ power :: { Expr }
    | atom trailer power_op factor )       { BinOp $1 $2 }
 
 atom_trailer :: { Expr }
-   : atom trailer*                        { makeAtomTrailer $1, $2 }
+   : atom zeroOrMore( trailer )           { makeAtomTrailer $1, $2 }
 
 
 power_op :: { Op }
@@ -551,28 +552,44 @@ yield_expr_or_testlist_comp :: { Expr }
    | testlist_comp             { $1 }
 
 testlist_comp :: { Expr } 
-   : Either( test, star_expr ) oneOrMore( comp_for )    {  ListComp $1 $2 }
-   | delimListTrailingOpt( either( test, star_expr )    {  List $1        }
+   : Either( test, star_expr ) oneOrMore( comp_for )     {  ListComp $1 $2 }
+   | delimListTrailingOpt( either( test, star_expr ) )   {  List $1        }
 
-trailer :: { Expr }
-   : '(' [arglist] ')'        {
-   | '[' subscriptlist ']' 
-   | '.' ID
+trailer :: { Trailer }
+   : '(' [arglist] ')'        { TrailerCall $2      }
+   | '[' subscriptlist ']'    { TrailerSlice $2     }
+   | '.' ID                   { TrailerAttribute $2 }
 
-subscriptlist: subscript (',' subscript)* [',']
-subscript: test | [test] ':' [test] [sliceop]
-sliceop: ':' [test]
+subscriptlist :: { Slice }
+   : subscript                                        { $1 }
+   | subscript ',' delimListTrailingOpt( subscript )  { Index ( Tuple [$1] ++ $2 ) }
 
-exprlist :: { Expr }   -- Tuple or single expr
-    : (expr|star_expr) (',' (expr|star_expr))* [',']
+subscript ::  {}
+   : test                                       { Index $1 }
+   | opt(test) ':' opt(test) opt( sliceop )     { Slice $1 $3 $4 } 
 
-testlist: test (',' test)* [',']
-dictorsetmaker: ( (test ':' test (comp_for | (',' test ':' test)* [','])) |
-                  (test (comp_for | (',' test)* [','])) )
+sliceop :: { Maybe Expr }
+   : ':' opt( test )     { $2 }
+
+exprlist :: { [ Expr ] }   
+    : delimListTrailingOpt( either( expr, star_expr ), ',' )    { $1 }
+
+testlist :: { Expr } -- Either normal expr or tuple
+    :: delimListTrailingOpt( test, ',' )      { makeTestList $1 }
+
+dictorsetmaker :: { Expr }
+    : dict_item comp_for                      { DictComp (fst $1) (snd $2) $3 }  
+    | delimListTrailingOpt( dict_item, ',' )  { Dict ( fst ( unzip $1 ) snd ( unzip $1 ) ) }
+    | test comp_for                           { SetComp $1 $2 }
+    | delimListTrailingOpt( test, ',' )       { Set $1 }
+
+dict_item { (Expr, Expr) }
+    : test ':' test           { ($1, $2) }
 
 classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
 
-arglist: (argument ',')* (argument [',']
+arglist :: { Args }
+        :(argument ',')* (argument [',']
                          |'*' test (',' argument)* [',' '**' test] 
                          |'**' test)
 # The reason that keywords are test nodes instead of NAME is that using NAME
