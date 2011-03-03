@@ -16,18 +16,13 @@ data Mod = Module {
 
 data Stmt
     -- Make this DecoratedFuncDef composed of FuncDef
-    = FuncDef {
-          funcDefName               :: Ident,
-          functionDefParams         :: Params,
-          functionDefBody           :: [Stmt],
-          functionDefDecoratorListt :: [Decorator],
-          functionDefReturns        :: Maybe Expr
+    = DecoratedFuncDef {
+          decoratedFuncDefDecorators :: [Decorators]
+          decoratedFuncDefFunc       :: FuncDef,
       }
-    | ClassDef {
-          classDefName          :: Ident,
-          classDefBases         :: Args,
-          classDefBody          :: [Stmt],
-          classDefDecoratorList :: [Decorator]
+    | DecoratedClassDef {
+          decoratedclassDefDecorators :: [Decorator]
+          decoratedClassDefFunc       :: ClassDef,
       }
     | Return {
           returnValue :: Maybe expr
@@ -351,5 +346,20 @@ data Trailer
       }
     | TrailerAttribute{
           trailerAttribute :: Ident
+      }
+
+data FuncDef
+    = FuncDef {
+          funcDefName               :: Ident,
+          functionDefParams         :: Params,
+          functionDefReturns        :: Maybe Expr
+          functionDefBody           :: [Stmt],
+      }
+
+data ClassDef {
+    = ClassDef
+          classDefName          :: Ident,
+          classDefBases         :: Args,
+          classDefBody          :: [Stmt],
       }
 
