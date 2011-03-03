@@ -138,6 +138,8 @@ delimList(p,q )            : reverseDelimList( p, q )         { reverse $1 }
 delimListTrailing(p,q )    : delimList( p, q ) q              { $1 } 
 delimListTrailingOpt(p,q ) : delimList( p, q ) opt( q )       { $1 } 
 
+delimListLeading(p,q )     : q delimList( p, q )              { $2 } 
+
 fst(p,q)                   : p q                              { $1 }
 snd(p,q)                   : p q                              { $2 }
 or(p,q)                    : p                                { $1 }                
@@ -174,11 +176,12 @@ decorators :: { [Expr] }
     : oneOrMOre( decorator )                           { makeDecorator $1 }
 
 decorated :: { Expr } 
-decorated: decorators either( classdef, funcdef )      { makeDecorated $1 $2 }
+    : decorators classdef       { DecoratedClassDef $1 $2 }
+    | decorators funcdef        { DecoratedFuncDef  $1 $2 }
 
 funcdef :: { FuncDef } 
 funcdef 
-    : DEF ID parameters opt( right( '->', test ) ) ':' suite     { makeFuncDef $2 $3 $4 $6 }
+    : DEF ID parameters opt( right( '->', test ) ) ':' suite     { FuncDef $2 $3 $4 $6 }
 
 
 
@@ -556,7 +559,7 @@ testlist_comp :: { Expr }
    | delimListTrailingOpt( either( test, star_expr ) )   {  List $1        }
 
 trailer :: { Trailer }
-   : '(' [arglist] ')'        { TrailerCall $2      }
+   : '(' arglist ')'        { TrailerCall $2      }
    | '[' subscriptlist ']'    { TrailerSlice $2     }
    | '.' ID                   { TrailerAttribute $2 }
 
@@ -586,15 +589,49 @@ dictorsetmaker :: { Expr }
 dict_item { (Expr, Expr) }
     : test ':' test           { ($1, $2) }
 
-classdef: 'class' NAME ['(' [arglist] ')'] ':' suite
+classdef :: { Expr }
+    : 'class' ID opt( classbases )  ':' suite  { ClassDef $2 $3 $5 }
 
-arglist :: { Args }
-        :(argument ',')* (argument [',']
-                         |'*' test (',' argument)* [',' '**' test] 
-                         |'**' test)
-# The reason that keywords are test nodes instead of NAME is that using NAME
-# results in an ambiguity. ast.c makes sure it's a NAME.
-argument: test [comp_for] | test '=' test  # Really [keyword '='] test
+classbases :: { Maybe Args }
+    : '(' opt( arglist )  ')'      { $2 }
+
+
+argument_list  :: { Args }
+    : posargs opt_keywords opt( snd( ",", starargs ) ) opt_keywords opt( snd( ",", kwargs ) ) 
+    { Args $1 ($2 ++ $4) $3 $5 }
+    |    keyword_arguments opt( snd( ",", starargs ) ) opt_keywords opt( snd( ",", kwargs ) )
+    { Args [] ($1 ++ $3) $2 $4 }
+    |                                         starargs opt_keywords opt( snd( ",", kwargs ) )
+    { Args [] $2 $1 $3 }
+    |                                                                              kwargs  
+    { Args [] [] Nothing $4 }
+
+posargs { [Expr] }
+    : delimList( test, "," )        { $1 }
+
+keywords { [Keyword] }
+    : delimList( keyword, "," )     { $1 }
+
+keyword { Keyword }
+    : test '=' test                 { Keyword $1 $3 }
+
+opt_keywords :: { [Keywords] }
+    : {- empty -}                   { [] }
+    | ',' keywords                  { $2 }
+
+starargs :: { Expr }
+    : '*' test                      { $2 }
+
+kwargs :: { Expr }
+    : '**' test  { $2 }  
+
+
+-- The reason that keywords are test nodes instead of NAME is that using NAME
+-- results in an ambiguity. ast.c makes sure it's a NAME.
+-- TODO: disallowing generators for now
+argument :: {  }
+    : test
+    | test '=' test                        -- Really [keyword '='] test
 
 comp_for :: { Comprehension }
     : 'for' exprlist 'in' or_test zeroOrMore( comp_if ) { Comprehension $2 $4 $5 }
