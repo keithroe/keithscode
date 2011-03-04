@@ -149,9 +149,9 @@ either(p,q)                : p                                { Left  $1 }
 
 both(p,q)                  : p q                              { ($1,$2) }
 
-oneOrMOre(p)               : reverseList(p)                   { reverse $1 }
+oneOrMore(p)               : reverseList(p)                   { reverse $1 }
 
-zeroOrMOre(p)              : oneOrMOre(p)                     { $1 }
+zeroOrMore(p)              : oneOrMore(p)                     { $1 }
                            |                                  { [] }
 
 
@@ -164,16 +164,14 @@ zeroOrMOre(p)              : oneOrMOre(p)                     { $1 }
 
 file_input :: { Module }
 file_input 
-    : zeroOrMOre( either( stmt, NEWLINE ) ) PEOF {  makeModule ( concat ( lefts $1 ) ) }
-
-
+    : zeroOrMore( either( stmt, NEWLINE ) ) PEOF {  makeModule ( concat ( lefts $1 ) ) }
 
 
 decorator :: { Expr }
     : '@' dotted_name opt( parenarglist ) NEWLINE      { makeCall $1, $2, [], Nothing, Nothing  }
 
 decorators :: { [Expr] } 
-    : oneOrMOre( decorator )                           { makeDecorator $1 }
+    : oneOrMore( decorator )                           { makeDecorator $1 }
 
 decorated :: { Expr } 
     : decorators classdef       { DecoratedClassDef $1 $2 }
@@ -181,12 +179,12 @@ decorated :: { Expr }
 
 funcdef :: { FuncDef } 
 funcdef 
-    : DEF ID parameters opt( right( '->', test ) ) ':' suite     { FuncDef $2 $3 $4 $6 }
+    : DEF ID parameters opt( snd( '->', test ) ) ':' suite     { FuncDef $2 $3 $4 $6 }
 
 
 
 parameters :: { Params }
-    : '(' opt( typedargslist ) ')'           { makeParams $1 }
+    : '(' typedargslist ')'           { $1 }
 
 
 {--
@@ -197,36 +195,44 @@ typedargslist:
              |  '*' [tfpdef] (',' tfpdef ['=' test])* [',' '**' tfpdef] | '**' tfpdef 
       )
 --}
-typedargslist :: {}
+
+typedargslist :: { Params }
 typedargslist 
-    : positional_args non_positional_args 
-    | non_positional_args
+    : positional_args opt( snd( ',',  non_positional_args  ) ) { $1 }
+    | non_positional_args                                      { $1 }
+    | {- empty -}                                              { Params [] Nothing [] Nothing }
 
-non_positional_args :: {}
-non_positional_args
-    : opt( snd( ',' vararg ) zeroOrMore( snd( ',' annot_arg_default) ) ) opt( snd( ',', kw_vararg )
-
-vararg :: {}
-vararg
-    : snd( '*', opt( annot_arg ) )      { $1 }
-
-kw_vararg :: {}
-kw_vararg
-    : snd( '**', annot_arg )     { $1 }
-
-positional_args :: { }
+positional_args :: { [Param] }
 positional_args
      : delimList( annot_arg_default, ',' )   { $1 }
 
-kw_only_args :: {}
-kw_only_args
-     : delimList( annot_arg_default, ',' )   { $1 }
+non_positional_args :: { ( Maybe Param, [Param], Maybe Param ) }
+non_positional_args
+    : {- empty -}
+    { Nothing [] Nothing }
+
+    | vararg  zeroOrMore( snd( ',', annot_arg_default) ) opt( snd( ',', kw_vararg ) ) 
+    { ($1, $2, $3) }
+
+    | kw_vararg                        
+    { Nothing [] $1 }
+
+
+vararg :: { Maybe Param }
+vararg
+    : '*'                 { Nothing }
+    | '*' annot_arg       { Param (fst $1) (snd $1) Nothing }
+
+kw_vararg :: { Maybe Param }
+kw_vararg
+    : '**'                { Nothing }
+    | '**' annot_arg      { Param (fst $1) (snd $1) Nothing }
 
 -- tfpdef
 annot_arg :: { ( Ident, Maybe Expr ) }
     : ID opt( snd( ':', test ) )          { ($1, $2) }
 
-annot_arg_default :: { Ident, Maybe Expr, Maybe Expr }
+annot_arg_default :: { (Ident, Maybe Expr, Maybe Expr) }
     : annot_arg opt( snd( '=', test ) )   { ( fst $1 snd $1 $2 ) }
 
 
@@ -240,9 +246,9 @@ Should be able to refactor and share between varargslist and typedarglist
 using parameterized productions ... for now, just allow annotations
 --}
 
-varargslist :: {}
+varargslist :: { Param }
 varargslist 
-    : typedarglist : { $1 }
+    : typedarglist { $1 }
 
 
 stmt :: { [Stmt] }
@@ -268,14 +274,11 @@ small_stmt
 
 expr_stmt :: { Stmt }
 expr_stmt
-    -- testlist_star_expr (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist_star_expr))*)
-    : testlist_star_expr augassign either( yield_expr, testlist ) 
+    -- testlist(augassign (yield_expr|testlist) | ('=' (yield_expr|testlist))*)
+    : testlist augassign either( yield_expr, testlist ) 
       { makeAugAssign $1 $2 $3 }
-    | testlist_star_expr zeroOrMore( snd( '=',  either( yield_expr, testlist_star_expr ) ) )
+    | testlist zeroOrMore( snd( '=',  either( yield_expr, testlist) ) )
       { makeAssign $1 $2 }
-
-testlist_star_expr :: { Expr }
-    : delimListTrailingOpt( or(test|star_expr), ',' )
 
 augassign :: { Op }
     : '+='    { Add    }
@@ -330,8 +333,8 @@ test_from_test :: { ( Expr, Expr ) }
     | test FROM test       { ( $1, $3 ) }
 
 import_stmt :: { Stmt }
-    : import_name
-    --| import_from
+    : import_name  { $1 } 
+    --| import_from    -- TODO: add this later
 
 import_name :: { Stmt }
     : IMPORT dotted_as_names     { Import $2 } 
@@ -345,7 +348,7 @@ import_name :: { Stmt }
 dotted_as_name :: { Alias }
     : dotted_name opt( snd( 'as', NAME ) )          { Alias $1 $2 }      
 
-dotted_as_names: { [Alias] }
+dotted_as_names :: { [Alias] }
     : delimList( dotted_as_name, ',' )              { $1 }
 
 dotted_name :: { Ident }
@@ -361,7 +364,7 @@ nonlocal_stmt :: { Stmt }
 assert_stmt :: { Stmt }
     : 'assert' test opt( snd( ',', test ) )    { Assert $2  $3 }
 
-compound_stmt ::: { Stmt }
+compound_stmt :: { Stmt }
     : if_stmt        { $1 }
     | while_stmt     { $1 }
     | for_stmt       { $1 }
@@ -392,25 +395,25 @@ for_stmt :: { Stmt }
 
 try_stmt :: { Stmt }
     -- try_stmt: ('try' ':' suite ((except_clause ':' suite)+ ['else' ':' suite] ['finally' ':' suite] | 'finally' ':' suite))
-    : TRY ':' suite oneOrMOre( except_handler ) opt( else ) opt( finally )  { makeTry $2 $3 $4 $5 } 
+    : TRY ':' suite oneOrMore( except_handler ) opt( else ) opt( finally )  { makeTry $2 $3 $4 $5 } 
     | TRY ':' suite finally                                                 { makeTry $2 [] Nothing $3 }
     
 except_handler :: { ExceptHandler }
     : except_clause ':' suite                  { ExceptHandler (fst $1) (snd $1) $3 }
      
 except_clause :: { ( Maybe Expr, Maybe Ident ) }
-    | EXCEPT                                             { ( Nothing, Nothing ) }
-    : EXCEPT both( test,  opt( snd( AS, NAME ) ) )     { $2 }
+    : EXCEPT                                             { ( Nothing, Nothing ) }
+    | EXCEPT both( test,  opt( snd( AS, NAME ) ) )     { $2 }
 
 with_stmt :: { Stmt }
-    : WITH oneOrMOre( with_item ) ':' suite       { makeWith $2 $4 }
+    : WITH oneOrMore( with_item ) ':' suite       { makeWith $2 $4 }
 
 with_item :: { ( Expr, Maybe Expr ) }
     : test opt( snd( 'as', expr ) )     { ( $1 $2 ) }
 
 suite :: { [ Stmt ] }
     : simple_stmt                             { $1 }
-    | NEWLINE INDENT oneOrMOre( stmt ) DEDENT { $3 }
+    | NEWLINE INDENT oneOrMore( stmt ) DEDENT { $3 }
 
 -- test: or_test ['if' or_test 'else' test] | lambdef
 test :: { Expr }
@@ -441,19 +444,22 @@ or_op :: { Op }
 
 and_test :: { Expr }
    : not_test                   { $1 }
-   : and_test and_op not_test   { BinOp $1 $2 $3 }
+   | and_test and_op not_test   { BinOp $1 $2 $3 }
 
 not_test :: { Expr }
    : not_op not_test          { UnaryOp $1 $2 }
    | comparison               { $1 }
 
-not_op { UnaryOp }
+not_op :: { UnaryOp }
    : NOT  { Not }
 
 comparison :: { Expr }
-   : expr zeroOrMore( both( comparison, comp_op expr ) )     { makeCompare $1 $2 }
+   -- comparison: expr (comp_op expr)*
+   : expr zeroOrMore( both( comp_op, expr ) )     { makeCompare $1 $2 }
 
-comp_op :: { CmpOp } : '<'         { Lt    } | '>'         { Gt    }
+comp_op :: { CmpOp } 
+   : '<'         { Lt    }
+   | '>'         { Gt    }
    | '=='        { Eq    }
    | '>='        { GtE   }
    | '<='        { LtE   }
@@ -465,28 +471,28 @@ comp_op :: { CmpOp } : '<'         { Lt    } | '>'         { Gt    }
    | 'is' 'not'  { IsNot }
 
 star_expr :: { Expr }
-   | '*' expr    { Starred $2 }
+   : '*' expr    { Starred $2 }
 
 expr :: { Expr }
    : xor_expr                    { $1 } 
    | expr bit_or_op  xor_expr    { BinOp $1 $2 $3 }
 
-bit_or_op { Op }
+bit_or_op :: { Op }
    : '|'       { BitOr }
 
 
 xor_expr :: { Expr }
    : and_expr                          { $1 }
-   : xor_expr bit_xor_op  and_expr     { BinOp $1 $2 $3 }
+   | xor_expr bit_xor_op  and_expr     { BinOp $1 $2 $3 }
 
-bit_xor_op { Op }
+bit_xor_op :: { Op }
    : '^'       { BitXor }
 
 and_expr :: { Expr }
    : shift_expr                        { $1 }
    | and_expr bit_and_op shift_expr    { BinOp $1 $2 $3 } 
 
-bit_and_op { Op }
+bit_and_op :: { Op }
    : '$'       { BitAnd }
 
 shift_expr :: { Expr }
@@ -510,13 +516,13 @@ term :: { Expr }
    : factor                     { $1 }
    | term term_op factor        { BinOp $1 $2 $3 }     
 
-term_op { Op }
+term_op :: { Op }
    : '*'   { Mult     }
    | '/'   { Div      }
    | '%'   { Mod      }
    | '//'  { FloorDiv }
 
-factor: 
+factor ::  { Expr } 
    : factor_op factor  { UnaryOp $1 $2 }
    | power             { $1 }
 
@@ -527,7 +533,7 @@ factor_op :: { UnaryOp }
 
 power :: { Expr }
    : atom_trailer                         { $1 }
-   | atom trailer power_op factor )       { BinOp $1 $2 }
+   | atom_trailer power_op factor         { BinOp $1 $2 $3 }
 
 atom_trailer :: { Expr }
    : atom zeroOrMore( trailer )           { makeAtomTrailer $1, $2 }
@@ -538,25 +544,26 @@ power_op :: { Op }
 
 atom :: { Expr }
    : '(' yield_expr_or_testlist_comp ')'   { $1 }
-   | '[' [testlist_comp] ']'               { $1 }
-   | '{' [dictorsetmaker] '}'              { $1 } 
+   | '[' testlist_comp ']'                 { $1 }
+   | '{' dictorsetmaker '}'                { $1 } 
    | ID                                    { Ident $1 }
    | INT                                   { Int $1 }
    | FLOAT                                 { Float $1 }
-   | oneOrMOre( STRING )                   { String (concat $1 } 
+   | oneOrMore( STRING )                   { String (concat $1 } 
    | '...'                                 { Ellipsis }
    | 'None'                                { None }
    | 'True'                                { True }
    | 'False'                               { False }
 
 yield_expr_or_testlist_comp :: { Expr }
-   :                           { Tuple [] }
+   : {- empty -}               { Tuple [] }
    | yield_expr                { $1 } 
    | testlist_comp             { $1 }
 
 testlist_comp :: { Expr } 
-   : Either( test, star_expr ) oneOrMore( comp_for )     {  ListComp $1 $2 }
-   | delimListTrailingOpt( either( test, star_expr ) )   {  List $1        }
+   : {- empty -}                                              { List [] }
+   | either( test, star_expr ) oneOrMore( comp_for )          {  ListComp $1 $2 }
+   | delimListTrailingOpt( either( test, star_expr ), ',' )   {  List $1        }
 
 trailer :: { Trailer }
    : '(' arglist ')'        { TrailerCall $2      }
@@ -564,8 +571,8 @@ trailer :: { Trailer }
    | '.' ID                   { TrailerAttribute $2 }
 
 subscriptlist :: { Slice }
-   : subscript                                        { $1 }
-   | subscript ',' delimListTrailingOpt( subscript )  { Index ( Tuple [$1] ++ $2 ) }
+   : subscript                               { $1 }
+   | delimListTrailing( subscript, ',' )     { Index ( Tuple [$1] ++ $2 ) }
 
 subscript ::  {}
    : test                                       { Index $1 }
@@ -578,15 +585,16 @@ exprlist :: { [ Expr ] }
     : delimListTrailingOpt( either( expr, star_expr ), ',' )    { $1 }
 
 testlist :: { Expr } -- Either normal expr or tuple
-    :: delimListTrailingOpt( test, ',' )      { makeTestList $1 }
+    : delimListTrailingOpt( test, ',' )      { makeTestList $1 }
 
 dictorsetmaker :: { Expr }
-    : dict_item comp_for                      { DictComp (fst $1) (snd $2) $3 }  
+    : {- empty -}                             { Dict [] [] }
+    | dict_item comp_for                      { DictComp (fst $1) (snd $2) $3 }  
     | delimListTrailingOpt( dict_item, ',' )  { Dict ( fst ( unzip $1 ) snd ( unzip $1 ) ) }
     | test comp_for                           { SetComp $1 $2 }
     | delimListTrailingOpt( test, ',' )       { Set $1 }
 
-dict_item { (Expr, Expr) }
+dict_item :: { (Expr, Expr) }
     : test ':' test           { ($1, $2) }
 
 classdef :: { Expr }
@@ -606,13 +614,13 @@ argument_list  :: { Args }
     |                                                                              kwargs  
     { Args [] [] Nothing $4 }
 
-posargs { [Expr] }
+posargs :: { [Expr] }
     : delimList( test, "," )        { $1 }
 
-keywords { [Keyword] }
+keywords :: { [Keyword] }
     : delimList( keyword, "," )     { $1 }
 
-keyword { Keyword }
+keyword :: { Keyword }
     : test '=' test                 { Keyword $1 $3 }
 
 opt_keywords :: { [Keywords] }
@@ -629,15 +637,12 @@ kwargs :: { Expr }
 -- The reason that keywords are test nodes instead of NAME is that using NAME
 -- results in an ambiguity. ast.c makes sure it's a NAME.
 -- TODO: disallowing generators for now
-argument :: {  }
-    : test
-    | test '=' test                        -- Really [keyword '='] test
 
 comp_for :: { Comprehension }
     : 'for' exprlist 'in' or_test zeroOrMore( comp_if ) { Comprehension $2 $4 $5 }
 
 comp_if :: { Expr }
-    :: 'if' test_nocond    { $2 }
+    : 'if' test_nocond    { $2 }
 
 yield_expr :: { Expr }
     : YIELD opt( testlist )   { Yield $1 }

@@ -187,27 +187,27 @@ data Expr
     -- the following expression can appear in assignment context
     | Attribute {
           attributeValue :: Expr, 
-          attributeAttr  :: Ident,
+          attributeAttr  :: Ident
           --attributeCtx   :: ExprContext
       }
     | Subscript {
           subscriptValue :: Expr,
-          subscriteSlice :: Slice,
+          subscriteSlice :: Slice
           --subscriptCtx   :: ExprContext
       }
     | Starred {
-          starredValue :: Expr,
+          starredValue :: Expr
           --starredCtx   :: ExprContext
       }
     | Name {
-          nameID  :: Ident,
+          nameID  :: Ident
           --nameCtx :: ExprContext 
       }
     | List {
-          listElts :: [Expr],
+          listElts :: [Expr]
           --listCtx  :: ExprContext
     | Tuple {
-          tupleElts :: [Expr],
+          tupleElts :: [Expr]
           --tupleCtx  :: ExprContext
       }
 
@@ -296,19 +296,16 @@ data ExceptHandler
 data Params
     = Params  {
           paramsArgs             :: [Param],
-          paramsVarArg           :: Maybe Ident,
-          paramsVarArgAnnotation :: Maybe Expr,
+          paramsVarArg           :: Param       -- default will always be Nothing 
           paramsKWOnlyArgs       :: [Param],
-          paramsKWArg            :: Maybe Ident,
-          paramsKWArgAnnotation  :: Maybe Expr,
-          paramsDefaults         :: [Expr],
-          paramsKWDefaults       :: [Expr]
+          paramsKWArg            :: Param       -- default will always be Nothing 
       }
 
 data Param 
     = Param {
           paramParam      :: Ident,
           paramAnnotation :: Maybe Expr
+          paramDefault    :: Maybe Expr
       }
 
 
