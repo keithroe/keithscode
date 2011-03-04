@@ -102,6 +102,8 @@ data Token
     | COMMA      -- ,
     | COLON      -- :
     | DOT        -- .
+    | ELLIPSIS   -- ...
+    | RARROW     -- -> 
     | SEMICOLON  -- ;
     | AT         -- @
     | PEQ         -- =

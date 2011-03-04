@@ -296,9 +296,9 @@ data ExceptHandler
 data Params
     = Params  {
           paramsArgs             :: [Param],
-          paramsVarArg           :: Param       -- default will always be Nothing 
+          paramsVarArg           :: Maybe Param       -- default field will always be Nothing 
           paramsKWOnlyArgs       :: [Param],
-          paramsKWArg            :: Param       -- default will always be Nothing 
+          paramsKWArg            :: Maybe Param       -- default field will always be Nothing 
       }
 
 data Param 
