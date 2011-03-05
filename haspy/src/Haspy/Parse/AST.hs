@@ -5,11 +5,13 @@ module Haspy.Parse.AST where
 -- TODO: reconcile token naming with AST naming (ie, Token.PLUS -> AST.ADD)
 --
 --
-data Ident = Ident {
+data Ident
+    = Ident {
        identName :: String
     }
 
-data Mod = Module {
+data Module
+    = Module {
         modBody :: [ Stmt ] 
     }
 
@@ -17,15 +19,15 @@ data Mod = Module {
 data Stmt
     -- Make this DecoratedFuncDef composed of FuncDef
     = DecoratedFuncDef {
-          decoratedFuncDefDecorators :: [Decorators]
-          decoratedFuncDefFunc       :: FuncDef,
+          decoratedFuncDefDecorators :: [Decorator],
+          decoratedFuncDefFunc       :: FuncDef
       }
     | DecoratedClassDef {
-          decoratedclassDefDecorators :: [Decorator]
-          decoratedClassDefFunc       :: ClassDef,
+          decoratedclassDefDecorators :: [Decorator],
+          decoratedClassDefFunc       :: ClassDef
       }
     | Return {
-          returnValue :: Maybe expr
+          returnValue :: Maybe Expr
       }
     | Delete {
           deleteTargets :: [Expr]
@@ -65,14 +67,11 @@ data Stmt
           raiseExc   :: Maybe Expr,
           raiseCuase :: Maybe Expr
       }
-    | TryExcept {
-          tryExceptBody    :: [Stmt],
-          tryExceptHandler :: [ExceptHandler],
-          tryExceptOrElse  :: [Stmt]
-      }
-    | TryFinally {
-          tryFinallyBody      :: [Stmt],
-          tryFinallyFinalBody :: [Stmt]
+    | Try {
+          tryBody    :: [Stmt],
+          tryHandler :: [ExceptHandler],
+          tryOrElse  :: [Stmt],
+          tryFinal   :: [Stmt]
       }
     | Assert {
           assertTest :: Expr,
@@ -103,13 +102,9 @@ data Stmt
         -- BoolOp() can use left & right?
 data Expr 
     = Test {
-          testIfTrue  :: Expr
-          testCond    :: Expr
+          testIfTrue  :: Expr,
+          testCond    :: Expr,
           testIfFalse :: Expr
-      }
-    | BoolOp { 
-          boolOpOp     :: BoolOp,
-          boolOpValues :: [Expr]
       }
     | BinOp {
           binOpLeft  :: Expr,
@@ -123,6 +118,7 @@ data Expr
     | Lambda {
           lambdaArgs :: Params,
           lambdaBody :: Expr
+      }
       
     | IfExp {
           ifExpTest   :: Expr,
@@ -162,7 +158,7 @@ data Expr
     | Compare {
           compareLeft        :: Expr,
           compareOps         :: [ CmpOp ],
-          compareComparators :: [ expr ]
+          compareComparators :: [ Expr ]
       }
     | Call {
           callFunc     :: Expr,
@@ -180,10 +176,11 @@ data Expr
     | Str {
           strVal :: String
       }
-    | Bytes(string s)
+    | Bytes {
           bytesVal :: String
       }
     | Ellipsis
+
     -- the following expression can appear in assignment context
     | Attribute {
           attributeValue :: Expr, 
@@ -206,6 +203,7 @@ data Expr
     | List {
           listElts :: [Expr]
           --listCtx  :: ExprContext
+      } 
     | Tuple {
           tupleElts :: [Expr]
           --tupleCtx  :: ExprContext
@@ -214,11 +212,12 @@ data Expr
 
 data Decorator
     = Decorator {
-          decoratorName :: Name
-          decoratorArgs :: [Arg]
+          decoratorName :: Ident,
+          decoratorArgs :: Args
       }
 
 -- cannot figure out why we need this
+{-
 data ExprContext 
     = Load
     | Store
@@ -226,12 +225,13 @@ data ExprContext
     | AugLoad
     | AugStore
     | Param
+-}
 
 data Slice 
     = Slice {
           sliceLower :: Maybe Expr,
           sliceUpper :: Maybe Expr,
-          sliceStep  :: Maybe Expr,
+          sliceStep  :: Maybe Expr
       }
     | ExtSlice {
           extSiceDims :: [Slice]
@@ -240,12 +240,10 @@ data Slice
           indexValue :: Expr
       }
 
-data boolop 
+data Op 
     = And 
     | Or 
-
-data Op 
-    = Add 
+    | Add 
     | Sub
     | Mult
     | Div
@@ -258,7 +256,7 @@ data Op
     | BitAnd
     | FloorDiv
 
-data unaryop
+data UnaryOp
     = Invert
     | Not
     | UAdd
@@ -296,7 +294,7 @@ data ExceptHandler
 data Params
     = Params  {
           paramsArgs             :: [Param],
-          paramsVarArg           :: Maybe Param       -- default field will always be Nothing 
+          paramsVarArg           :: Maybe Param,      -- default field will always be Nothing 
           paramsKWOnlyArgs       :: [Param],
           paramsKWArg            :: Maybe Param       -- default field will always be Nothing 
       }
@@ -304,7 +302,7 @@ data Params
 data Param 
     = Param {
           paramParam      :: Ident,
-          paramAnnotation :: Maybe Expr
+          paramAnnotation :: Maybe Expr,
           paramDefault    :: Maybe Expr
       }
 
@@ -313,7 +311,7 @@ data Param
 data Args 
     = Args {
        argsArgs      :: [Expr],
-       argsKeywords  :: [Keyword]
+       argsKeywords  :: [Keyword],
        starArgs      :: Maybe Expr, 
        kwArgs        :: Maybe Expr
 
@@ -349,14 +347,46 @@ data FuncDef
     = FuncDef {
           funcDefName               :: Ident,
           functionDefParams         :: Params,
-          functionDefReturns        :: Maybe Expr
-          functionDefBody           :: [Stmt],
+          functionDefReturns        :: Maybe Expr,
+          functionDefBody           :: [Stmt]
       }
 
-data ClassDef {
-    = ClassDef
+data ClassDef
+    = ClassDef {
           classDefName          :: Ident,
           classDefBases         :: Args,
-          classDefBody          :: [Stmt],
+          classDefBody          :: [Stmt]
       }
+
+
+makeWith :: [ (Expr, Maybe Expr) ] -> [ Stmt ] -> Stmt
+makeWith (x:[]) suite = With (fst x) (snd x) suite
+makeWith (x:xs) suite = With (fst x) (snd x) [ makeWith xs suite ]
+
+
+makeTest :: Expr -> Maybe( Expr, Expr ) -> Expr
+makeTest expr Nothing            = expr
+makeTest expr (Just( test, e  )) = Test expr test e 
+
+
+makeCompare :: Expr -> [ (CmpOp, Expr) ] -> Expr
+makeCompare e1 xs
+    =  Compare e1 ops operators
+       where
+           (ops, operators) = unzip xs
+            
+
+bindTrailer :: Expr -> Trailer -> Expr
+bindTrailer e t 
+    = case t of
+          TrailerCall      args  -> Call e args
+          TrailerSubscript slice -> Subscript e slice
+          TrailerAttribute id    -> Attribute e id
+
+makeAtomTrailer :: Expr -> [ Trailer ] -> Expr
+makeAtomTrailer e (t:[]) =  bindTrailer e t
+makeAtomTrailer e (t:ts) =  bindTrailer ( bindTrailer ts e )  t
+
+
+
 

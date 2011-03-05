@@ -160,7 +160,7 @@ $white_no_nl+         ;
   ","                   { mkL COMMA       } 
   ":"                   { mkL COLON       } 
   "."                   { mkL DOT         } 
-  "..."                 { mkL Ellipsis    } 
+  "..."                 { mkL ELLIPSIS    } 
   "->"                  { mkL RARROW      } 
   ";"                   { mkL SEMICOLON   } 
   "@"                   { mkL AT          } 

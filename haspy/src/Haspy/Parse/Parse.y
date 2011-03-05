@@ -166,17 +166,17 @@ zeroOrMore(p)              : oneOrMore(p)                     { $1 }
 
 file_input :: { Module }
 file_input 
-    : zeroOrMore( either( stmt, NEWLINE ) ) PEOF {  makeModule ( concat ( lefts $1 ) ) }
+    : zeroOrMore( either( stmt, NEWLINE ) ) PEOF {  Module ( concat $1 ) }
 
 
 decorator :: { Expr }
-    : '@' dotted_name parenarglist NEWLINE      { makeCall $1, $2, [], Nothing, Nothing  }
+    : '@' dotted_name parenarglist NEWLINE      { Call $1, $2 }
 
 parenarglist :: { Maybe Args }
     : '(' opt( argument_list ) ')'      { $2 }
 
 decorators :: { [Expr] } 
-    : oneOrMore( decorator )                           { makeDecorator $1 }
+    : oneOrMore( decorator )                           { $1 }
 
 decorated :: { Expr } 
     : decorators classdef       { DecoratedClassDef $1 $2 }
@@ -279,13 +279,18 @@ small_stmt
 
 expr_stmt :: { Stmt }
 expr_stmt
-    -- testlist(augassign (yield_expr|testlist) | ('=' (yield_expr|testlist))*)
-    : testlist augassign either( yield_expr, testlist ) 
-      { makeAugAssign $1 $2 $3 }
-    | testlist zeroOrMore( snd( '=',  either( yield_expr, testlist) ) )
-      { makeAssign $1 $2 }
+    -- testlist (augassign (yield_expr|testlist) | ('=' (yield_expr|testlist))*)
+    : testlist
+      { Expression $1 }
 
-augassign :: { Op }
+    | testlist augassign_op either( yield_expr, testlist ) 
+      { AugAssign $1 $2 $3 }
+
+    | delimList( testlist, '=' )
+      { Assign (init $1) (last $1) }
+
+
+augassign_op :: { Op }
     : '+='    { Add    }
     | '-='    { Sub    }
     | '*='    { Mult   }
@@ -297,7 +302,7 @@ augassign :: { Op }
     | '<<='   { LShift }
     | '>>='   { RShift }
     | '**='   { Pow    }
-    | '//='   { Floor  }
+    | '//='   { FloorDiv  }
 
 del_stmt :: { Stmt }  
 del_stmt
@@ -321,7 +326,7 @@ break_stmt :: { Stmt }
     : BREAK { Break } 
 
 continue_stmt :: { Stmt }
-    : CONTINUE { Continute } 
+    : CONTINUE { Continue } 
 
 return_stmt :: { Stmt }
     : RETURN opt( testlist )   { Return $2 }
@@ -381,16 +386,19 @@ compound_stmt :: { Stmt }
 
 if_stmt :: { Stmt }
     -- if' test ':' suite ('elif' test ':' suite)* ['else' ':' suite]
-    : IF test ':' suite zeroOrMore( elif ) opt( else )   { makeIfStmt( $2, $4, $5, $6 ) }  
+    : IF test ':' suite elif_else 
+      { If $2, $4, $5 }  
+   
+elif_else :: { [Stmt] }
+   : {- empty -}               { [] }
+   | elif elif_else            { If (fst $1) (snd $1) $2  }
+   | ELSE                      { $1 }
 
 elif :: { ( Expr, [Stmt ] ) }
     : ELIF test ':' suite   { ( $2, $4 ) }
     
-else ::  { [Statement] }
+else ::  { [Stmt] }
     : ELSE ':' suite        { $3 }
-
-finally ::  { [Statement] }
-    : FINALLY ':' suite        { $3 }
 
 while_stmt :: { Stmt }
     : WHILE test ':' suite opt( else )      { While $2 $4 $5 }
@@ -400,18 +408,25 @@ for_stmt :: { Stmt }
 
 try_stmt :: { Stmt }
     -- try_stmt: ('try' ':' suite ((except_clause ':' suite)+ ['else' ':' suite] ['finally' ':' suite] | 'finally' ':' suite))
-    : TRY ':' suite oneOrMore( except_handler ) opt( else ) opt( finally )  { makeTry $2 $3 $4 $5 } 
-    | TRY ':' suite finally                                                 { makeTry $2 [] Nothing $3 }
-    
+    : TRY ':' suite zeroOrMore( except_handler ) try_else try_finally  { Try $3 $4 $5 $6 } 
+
+try_else :: { [Stmt] }
+    : {- empty -}              { [] }
+    | ELSE ':' suite           { $3 }
+
+try_finally ::  { [Stmt] }
+    : {- empty -}              { [] }
+    | FINALLY ':' suite        { $3 }
+
 except_handler :: { ExceptHandler }
     : except_clause ':' suite                  { ExceptHandler (fst $1) (snd $1) $3 }
      
 except_clause :: { ( Maybe Expr, Maybe Ident ) }
-    : EXCEPT                                             { ( Nothing, Nothing ) }
+    : EXCEPT                                         { ( Nothing, Nothing ) }
     | EXCEPT both( test,  opt( snd( AS, ID ) ) )     { $2 }
 
 with_stmt :: { Stmt }
-    : WITH oneOrMore( with_item ) ':' suite       { makeWith $2 $4 }
+    : WITH delimList( with_item, ',' ) ':' suite     { makeWith $2 $3 }
 
 with_item :: { ( Expr, Maybe Expr ) }
     : test opt( snd( AS, expr ) )     { ( $1 $2 ) }
@@ -542,7 +557,7 @@ power :: { Expr }
    | atom_trailer power_op factor         { BinOp $1 $2 $3 }
 
 atom_trailer :: { Expr }
-   : atom zeroOrMore( trailer )           { makeAtomTrailer $1, $2 }
+   : atom zeroOrMore( trailer )           { makeAtomTrailer $1 $2 }
 
 
 power_op :: { Op }
@@ -555,7 +570,7 @@ atom :: { Expr }
    | ID                                    { Ident $1 }
    | INT                                   { Int $1 }
    | FLOAT                                 { Float $1 }
-   | oneOrMore( STRING )                   { String (concat $1 } 
+   | oneOrMore( STRING )                   { String (concat $1 ) } 
    | '...'                                 { Ellipsis }
    | NONE                                  { None }
    | TRUE                                  { True }
@@ -629,7 +644,7 @@ keywords :: { [Keyword] }
 keyword :: { Keyword }
     : test '=' test                 { Keyword $1 $3 }
 
-opt_keywords :: { [Keywords] }
+opt_keywords :: { [Keyword] }
     : {- empty -}                   { [] }
     | ',' keywords                  { $2 }
 
