@@ -208,6 +208,7 @@ data Expr
           tupleElts :: [Expr]
           --tupleCtx  :: ExprContext
       }
+    | None   -- Not sure how python treats this
 
 
 data Decorator
@@ -376,6 +377,7 @@ makeCompare e1 xs
            (ops, operators) = unzip xs
             
 
+
 bindTrailer :: Expr -> Trailer -> Expr
 bindTrailer e t 
     = case t of
@@ -385,8 +387,11 @@ bindTrailer e t
 
 makeAtomTrailer :: Expr -> [ Trailer ] -> Expr
 makeAtomTrailer e (t:[]) =  bindTrailer e t
-makeAtomTrailer e (t:ts) =  bindTrailer ( bindTrailer ts e )  t
+makeAtomTrailer e (t:ts) =  bindTrailer ( makeAtomTrailer e ts )  t
 
 
+makeTestList :: [Expr] -> Expr
+makeTestList (x:[]) = x
+makeTestList xs     = Tuple xs
 
 

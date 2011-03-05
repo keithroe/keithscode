@@ -570,7 +570,7 @@ atom :: { Expr }
    | ID                                    { Ident $1 }
    | INT                                   { Int $1 }
    | FLOAT                                 { Float $1 }
-   | oneOrMore( STRING )                   { String (concat $1 ) } 
+   | oneOrMore( STRING )                   { Str (concat $1 ) } 
    | '...'                                 { Ellipsis }
    | NONE                                  { None }
    | TRUE                                  { True }
@@ -587,8 +587,8 @@ testlist_comp :: { Expr }
    | delimListTrailingOpt( either( test, star_expr ), ',' )   {  List $1        }
 
 trailer :: { Trailer }
-   : '(' argument_list ')'    { TrailerCall $2      }
-   | '[' subscriptlist ']'    { TrailerSlice $2     }
+   : '(' argument_list ')'    { TrailerCall      $2 }
+   | '[' subscriptlist ']'    { TrailerSubscript $2 }
    | '.' ID                   { TrailerAttribute $2 }
 
 subscriptlist :: { Slice }
