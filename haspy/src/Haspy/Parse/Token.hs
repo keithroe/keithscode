@@ -15,7 +15,7 @@ module Haspy.Parse.Token
     )
     where
 
-import Haspy.Parse.Util
+-- import Haspy.Parse.Util
 
 
 data Token
@@ -31,10 +31,10 @@ data Token
     | ID        String
 
     -- literals
-    | STRING    String
-    | INT       Int
-    | FLOAT     Double
-    | IMAG      Double
+    | STRING  { stringValue :: !String  }
+    | INT     { intValue    :: !Int     }
+    | FLOAT   { floatValue  :: !Double  }
+    | IMAG    { imagValue   :: !Double  }
 
     -- KeywordS
     | FALSE
@@ -234,3 +234,6 @@ renderClass  CARETEQ       = "(PUNCT \"^=\")"
 renderClass  RSHIFTEQ      = "(PUNCT \">>=\")"
 renderClass  LSHIFTEQ      = "(PUNCT \"<<=\")"
 renderClass  STARSTAREQ    = "(PUNCT \"**=\")"
+renderClass  ELLIPSIS      = "(ELLIPSIS)"
+renderClass  RARROW        = "(RARROW)"
+
