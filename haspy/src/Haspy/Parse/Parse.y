@@ -618,18 +618,6 @@ power_op
 
 atom :: { Expr }
 atom
-   : '(' yield_expr_or_testlist_comp ')'   { Int 1 }
-   | '[' testlist_comp ']'                 { Int 1 }
-   | '{' dictorsetmaker '}'                { Int 1 } 
-   | NAME                                  { Int 1 }
-   | INT                                   { Int 1 }
-   | FLOAT                                 { Int 1 }
-   | oneOrMore( STRING )                   { Int 1 } 
-   | '...'                                 { Int 1 }
-   | NONE                                  { Int 1 }
-   | TRUE                                  { Int 1 }
-   | FALSE                                 { Int 1 }
-   {-
    : '(' yield_expr_or_testlist_comp ')'   { $2           }
    | '[' testlist_comp ']'                 { $2           }
    | '{' dictorsetmaker '}'                { $2           } 
@@ -641,7 +629,6 @@ atom
    | NONE                                  { AST.NoneVal  }
    | TRUE                                  { AST.TrueVal  }
    | FALSE                                 { AST.FalseVal }
-   -}
 
 yield_expr_or_testlist_comp :: { Expr }
 yield_expr_or_testlist_comp
