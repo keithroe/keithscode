@@ -20,11 +20,22 @@ data Stmt
     -- Make this DecoratedFuncDef composed of FuncDef
     = DecoratedFuncDef {
           decoratedFuncDefDecorators :: [Decorator],
-          decoratedFuncDefFunc       :: FuncDef
+          decoratedFuncDefFunc       :: Stmt 
+      }
+    | FuncDef {
+          funcDefName               :: Ident,
+          functionDefParams         :: Params,
+          functionDefReturns        :: Maybe Expr,
+          functionDefBody           :: [Stmt]
       }
     | DecoratedClassDef {
           decoratedclassDefDecorators :: [Decorator],
-          decoratedClassDefFunc       :: ClassDef
+          decoratedClassDefClass      :: Stmt 
+      }
+    | ClassDef {
+          classDefName          :: Ident,
+          classDefBases         :: Args,
+          classDefBody          :: [Stmt]
       }
     | Return {
           returnValue :: Maybe Expr
@@ -42,7 +53,7 @@ data Stmt
           augAssignValue  :: Expr
       }
     | For {
-          forTarget :: Expr,
+          forTarget :: [Expr],  -- Should this be scalar expr?  using tuple?
           forIter   :: Expr,
           forBody   :: [Stmt],
           forOrElse :: [Stmt]
@@ -112,7 +123,7 @@ data Expr
           binOpRight :: Expr
       }
     | UnaryOp {
-          unaryOpOp     :: Op,
+          unaryOpOp    :: UnaryOp,
           unaryOperand :: Expr
       }
     | Lambda {
@@ -168,7 +179,7 @@ data Expr
           floatVal :: Double
       }
     | Int {
-          intVal :: Integer 
+          intVal :: Int
       }
     | Imag {
           imageVal :: Double 
@@ -208,13 +219,15 @@ data Expr
           tupleElts :: [Expr]
           --tupleCtx  :: ExprContext
       }
-    | None   -- Not sure how python treats this
+    | NoneVal   -- Not sure how python treats this
+    | TrueVal   -- Not sure how python treats this
+    | FalseVal  -- Not sure how python treats this
 
 
 data Decorator
     = Decorator {
           decoratorName :: Ident,
-          decoratorArgs :: Args
+          decoratorArgs :: Maybe Args
       }
 
 -- cannot figure out why we need this
@@ -344,21 +357,6 @@ data Trailer
           trailerAttribute :: Ident
       }
 
-data FuncDef
-    = FuncDef {
-          funcDefName               :: Ident,
-          functionDefParams         :: Params,
-          functionDefReturns        :: Maybe Expr,
-          functionDefBody           :: [Stmt]
-      }
-
-data ClassDef
-    = ClassDef {
-          classDefName          :: Ident,
-          classDefBases         :: Args,
-          classDefBody          :: [Stmt]
-      }
-
 
 makeWith :: [ (Expr, Maybe Expr) ] -> [ Stmt ] -> Stmt
 makeWith (x:[]) suite = With (fst x) (snd x) suite
@@ -394,4 +392,7 @@ makeTestList :: [Expr] -> Expr
 makeTestList (x:[]) = x
 makeTestList xs     = Tuple xs
 
+
+makeParams :: [Param] -> ( Maybe Param, [Param], Maybe Param ) -> Params
+makeParams args (vararg, kwonlyargs, kwarg) = Params args vararg kwonlyargs kwarg
 
