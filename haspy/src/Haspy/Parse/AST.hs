@@ -34,7 +34,7 @@ data Stmt
       }
     | ClassDef {
           classDefName          :: Ident,
-          classDefBases         :: Args,
+          classDefBases         :: Maybe Args,
           classDefBody          :: [Stmt]
       }
     | Return {
@@ -393,6 +393,7 @@ makeTestList (x:[]) = x
 makeTestList xs     = Tuple xs
 
 
-makeParams :: [Param] -> ( Maybe Param, [Param], Maybe Param ) -> Params
-makeParams args (vararg, kwonlyargs, kwarg) = Params args vararg kwonlyargs kwarg
+makeParams :: [Param] -> Maybe ( Maybe Param, [Param], Maybe Param ) -> Params
+makeParams args Nothing = Params args Nothing [] Nothing 
+makeParams args (Just (vararg, kwonlyargs, kwarg)) = Params args vararg kwonlyargs kwarg
 
