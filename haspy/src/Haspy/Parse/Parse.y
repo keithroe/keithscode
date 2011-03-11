@@ -14,7 +14,7 @@ import Data.Either
 
 }
 
-%name parse
+%name parse file_input
 %error     { parseError }
 %tokentype { Token }
 
@@ -166,14 +166,14 @@ zeroOrMore(p)              : oneOrMore(p)                     { $1 }
 --------------------------------------------------------------------------------
 
 
-NAME :: { Ident }
-NAME 
-   : ID { Ident $1 }
-
 
 file_input :: { Module }
 file_input 
     : zeroOrMore( either( stmt, NEWLINE ) ) PEOF {  Module ( concat (lefts $1) ) }
+
+NAME :: { Ident }
+NAME 
+   : ID { Ident $1 }
 
 decorator :: { Decorator }
 decorator
@@ -214,7 +214,7 @@ typedargslist :: { Params }
 typedargslist 
     : positional_args opt( snd( ',',  non_positional_args  ) ) { makeParams $1 $2 }
     | non_positional_args                                      { makeParams [] (Just $1) }
-    | {- empty -}                                              { Params [] Nothing [] Nothing }
+    |                                                          { Params [] Nothing [] Nothing }
 
 positional_args :: { [Param] }
 positional_args
@@ -416,7 +416,7 @@ if_stmt :: { Stmt }
    
 elif_else :: { [Stmt] }
 elif_else
-   : {- empty -}               { [] }
+   :                           { [] }
    | elif elif_else            { [ If (fst $1) (snd $1) $2 ] }
    | else                      { $1 }
 
@@ -476,9 +476,8 @@ with_item
 
 suite :: { [ Stmt ] }
 suite
-    --: simple_stmt                             { $1 }
-    --| NEWLINE INDENT oneOrMore( stmt ) DEDENT { $3 }
-    : { [Pass] }
+    : simple_stmt                             { $1 }
+    | NEWLINE INDENT oneOrMore( stmt ) DEDENT { concat $3 }
 
 -- test: or_test ['if' or_test 'else' test] | lambdef
 test :: { Expr }
@@ -704,7 +703,7 @@ testlist
 
 dictorsetmaker :: { Expr }
 dictorsetmaker
-    : {- empty -}                             { Dict [] []                                     }
+    :                                         { Dict [] []                                     }
     | delimListTrailingOpt( dict_item, ',' )  { Dict ( fst ( unzip $1 ) ) ( snd ( unzip $1 ) ) }
     | dict_item comp_for                      { DictComp (fst $1) (snd $1) $2                  }
     | delimListTrailingOpt( test, ',' )       { Set $1                                         }
@@ -750,7 +749,7 @@ keyword
 
 opt_keywords :: { [Keyword] }
 opt_keywords
-    : {- empty -}                   { [] }
+    :                               { [] }
     | ',' keywords                  { $2 }
 
 starargs :: { Expr }
@@ -777,7 +776,6 @@ comp_if
 yield_expr :: { Expr }
 yield_expr
     : YIELD opt( testlist )   { Yield $2 }
-
 
 
 {-

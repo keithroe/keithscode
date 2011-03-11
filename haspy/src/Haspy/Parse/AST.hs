@@ -9,11 +9,13 @@ data Ident
     = Ident {
        identName :: String
     }
+    deriving ( Show )
 
 data Module
     = Module {
         modBody :: [ Stmt ] 
     }
+    deriving ( Show )
 
 
 data Stmt
@@ -109,6 +111,7 @@ data Stmt
     | Pass 
     | Break 
     | Continue
+    deriving ( Show )
 
         -- BoolOp() can use left & right?
 data Expr 
@@ -222,6 +225,7 @@ data Expr
     | NoneVal   -- Not sure how python treats this
     | TrueVal   -- Not sure how python treats this
     | FalseVal  -- Not sure how python treats this
+    deriving ( Show )
 
 
 data Decorator
@@ -229,6 +233,7 @@ data Decorator
           decoratorName :: Ident,
           decoratorArgs :: Maybe Args
       }
+    deriving ( Show )
 
 -- cannot figure out why we need this
 {-
@@ -253,6 +258,7 @@ data Slice
     | Index {
           indexValue :: Expr
       }
+    deriving ( Show )
 
 data Op 
     = And 
@@ -269,12 +275,14 @@ data Op
     | BitXor
     | BitAnd
     | FloorDiv
+    deriving ( Show )
 
 data UnaryOp
     = Invert
     | Not
     | UAdd
     | USub
+    deriving ( Show )
 
 data CmpOp
     = Eq
@@ -287,6 +295,7 @@ data CmpOp
     | IsNot
     | In
     | NotIn
+    deriving ( Show )
 
 data Comprehension
     = Comprehension {
@@ -294,6 +303,7 @@ data Comprehension
           comprehensionIter   :: Expr,
           comprehensionIfs    :: [Expr]
       }
+    deriving ( Show )
 
 
 -- not sure what to call the first argument for raise and except
@@ -303,6 +313,7 @@ data ExceptHandler
           exceptName :: Maybe Ident,
           exceptBody :: [Stmt]
       }
+    deriving ( Show )
 
 -- Used for FuncDefs and Lambdas
 data Params
@@ -312,6 +323,7 @@ data Params
           paramsKWOnlyArgs       :: [Param],
           paramsKWArg            :: Maybe Param       -- default field will always be Nothing 
       }
+    deriving ( Show )
 
 data Param 
     = Param {
@@ -319,7 +331,7 @@ data Param
           paramAnnotation :: Maybe Expr,
           paramDefault    :: Maybe Expr
       }
-
+    deriving ( Show )
 
 -- For ClassDef, FuncCall and Decorators
 data Args 
@@ -330,6 +342,7 @@ data Args
        kwArgs        :: Maybe Expr
 
       }
+    deriving ( Show )
 
 -- keyword arguments supplied to call
 data Keyword 
@@ -337,6 +350,7 @@ data Keyword
           keywordArg   :: Ident,
           keywordValue :: Expr
       }
+    deriving ( Show )
 
 -- import name with optional 'as' alias.
 data Alias
@@ -344,6 +358,7 @@ data Alias
           aliasName   :: Ident,
           aliasAsName :: Maybe Ident
       }
+    deriving ( Show )
 
 
 data Trailer
@@ -356,6 +371,7 @@ data Trailer
     | TrailerAttribute{
           trailerAttribute :: Ident
       }
+    deriving ( Show )
 
 
 makeWith :: [ (Expr, Maybe Expr) ] -> [ Stmt ] -> Stmt
@@ -384,6 +400,7 @@ bindTrailer e t
           TrailerAttribute id    -> Attribute e id
 
 makeAtomTrailer :: Expr -> [ Trailer ] -> Expr
+makeAtomTrailer e (  []) =  e 
 makeAtomTrailer e (t:[]) =  bindTrailer e t
 makeAtomTrailer e (t:ts) =  bindTrailer ( makeAtomTrailer e ts )  t
 
