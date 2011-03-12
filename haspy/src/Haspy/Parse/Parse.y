@@ -25,7 +25,6 @@ import Data.Either
   INDENT        { INDENT    $$ }
   DEDENT        { DEDENT    $$ }
   PEOF          { PEOF      $$ }
-  ERROR         { ERROR     $$ }
 
   -- Identifier
   ID            { ID        $$ }
@@ -214,7 +213,6 @@ typedargslist :: { Params }
 typedargslist 
     : positional_args opt( snd( ',',  non_positional_args  ) ) { makeParams $1 $2 }
     | non_positional_args                                      { makeParams [] (Just $1) }
-    |                                                          { Params [] Nothing [] Nothing }
 
 positional_args :: { [Param] }
 positional_args
@@ -295,8 +293,8 @@ expr_stmt
     | testlist augassign_op yield_expr_or_testlist
       { AugAssign $1 $2 $3 }
 
-    | delimList( testlist, '=' )
-      { Assign (init $1) (last $1) }
+    | testlist '=' delimList( testlist, '=' )
+      { Assign  ($1:(init $3)) (last $3)  }
 
 yield_expr_or_testlist :: { Expr }
     : yield_expr    { $1 }
@@ -636,23 +634,23 @@ power_op
 
 atom :: { Expr }
 atom
-    : '(' yield_expr_or_testlist_comp ')'   { $2           }
+    : '(' tuplemaker ')'                    { $2           }
     | '[' testlist_comp ']'                 { $2           }
     | '{' dictorsetmaker '}'                { $2           } 
     | NAME                                  { Name      $1 }
     | INT                                   { AST.Int   $1 }
     | FLOAT                                 { AST.Float $1 }
+    | IMAG                                  { AST.Imag  $1 }
     | oneOrMore( STRING )                   { AST.Str   (concat $1) } 
     | '...'                                 { Ellipsis     }
     | NONE                                  { AST.NoneVal  }
     | TRUE                                  { AST.TrueVal  }
     | FALSE                                 { AST.FalseVal }
 
-yield_expr_or_testlist_comp :: { Expr }
-yield_expr_or_testlist_comp
-    : {- empty -}               { Tuple [] }
-    | yield_expr                { $1 } 
-    | testlist_comp             { $1 }
+tuplemaker :: { Expr }
+tuplemaker
+    : {- empty -}                            { Tuple [] }
+    | delimListTrailingOpt( test, ',' )      { Tuple $1 }
 
 testlist_comp :: { Expr } 
 testlist_comp
@@ -679,8 +677,7 @@ subscriptlist
 
 subscript ::  { Slice }
 subscript
-    : test                                       { Index $1       }
-    | opt(test) ':' opt(test) sliceop            { Slice $1 $3 $4 } 
+    : opt(test) ':' opt(test) sliceop            { Slice $1 $3 $4 } 
 
 sliceop :: { Maybe Expr }
 sliceop
