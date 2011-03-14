@@ -138,9 +138,8 @@ reverseDelimList(p,q )     : p                                { [$1] }
 
 delimList(p,q )            : reverseDelimList( p, q )         { reverse $1 } 
 
-delimListTrailingOpt(p,q ) : reverseDelimList( p, q ) opt(q)  { reverse $1 } 
-
-delimListLeading(p,q )     : q delimList( p, q )              { $2 } 
+delimListTrailingOpt(p,q ) : reverseDelimList( p, q )         { reverse $1 } 
+                           | reverseDelimList( p, q ) q       { reverse $1 } 
 
 fst(p,q)                   : p q                              { $1 }
 snd(p,q)                   : p q                              { $2 }
@@ -194,7 +193,7 @@ funcdef :: { Stmt }
 funcdef 
     : DEF NAME parameters opt( snd( '->', test ) ) ':' suite     { FuncDef $2 $3 $4 $6 }
 
-parameters :: { Params }
+parameters :: { [Param] }
 parameters
     : '(' typedargslist ')'           { $2 }
 
@@ -208,56 +207,34 @@ typedargslist:
       )
 -}
 
-typedargslist :: { Params }
+typedargslist :: { [ Param ] }
 typedargslist 
-    : positional_args opt( snd( ',',  non_positional_args  ) )
-      { makeParams $1 $2 }
+     : delimListTrailingOpt( param, ',' ) { $1 }
 
-    | non_positional_args
-      { makeParams [] (Just $1) }
+param :: { Param }
+    : arg                  { $1 }
+    | vararg               { $1 }
+    | kw_vararg            { $1 }
 
-positional_args :: { [Param] }
-positional_args
-     : delimList( annot_arg_default, ',' )   { $1 }
+arg :: { Param }
+arg
+    : annot_arg opt( snd( '=', test ) )   { Param (fst $1) (snd $1) $2 } 
 
-non_positional_args :: { ( Maybe Param, [Param], Maybe Param ) }
-non_positional_args
-    :
-      { (Nothing, [], Nothing) }
-
-    | vararg
-      { ($1, [], Nothing) }
-
-    | kw_vararg                        
-      { (Nothing, [], $1) }
-
---    | vararg ',' delimList( annot_arg_default, ',' )
---      { ($1, $3 , Nothing) }
-
-    | vararg ',' kw_vararg
-      { ($1, [], $3) }
-
-    | vararg ',' delimList( annot_arg_default, ',' ) ',' kw_vararg
-      { ($1, $3, $5) }
-
-vararg :: { Maybe Param }
+vararg :: { Param }
 vararg
-    : '*'                 { Nothing }
-    | '*' annot_arg       { Just $2 }
+    : '*'                  { VarParam Nothing Nothing   }
+    | '*' annot_arg        { VarParam ( Just (fst $2) ) (snd $2) }
 
-kw_vararg :: { Maybe Param }
+kw_vararg :: { Param }
 kw_vararg
-    : '**'                { Nothing }
-    | '**' annot_arg      { Just $2 } 
+    : '**'                 { KeywordVarParam Nothing Nothing   }
+    | '**' annot_arg       { KeywordVarParam ( Just(fst $2) ) (snd $2) }
 
 -- tfpdef
-annot_arg :: { Param }
+annot_arg :: { ( Ident, Maybe Expr ) }
 annot_arg
-    : NAME opt( snd( ':', test ) )        { Param $1 $2 Nothing }
+    : NAME opt( snd( ':', test ) )        { ($1, $2) }
 
-annot_arg_default :: { Param }
-annot_arg_default
-    : annot_arg opt( snd( '=', test ) )   { $1 { paramDefault = $2 } } 
 
 -- varargslist: (vfpdef ['=' test] (',' vfpdef ['=' test])* [','
 --      ['*' [vfpdef] (',' vfpdef ['=' test])* [',' '**' vfpdef] | '**' vfpdef]]
@@ -265,7 +242,7 @@ annot_arg_default
 --
 -- Should be able to refactor and share between varargslist and typedargslist
 -- using parameterized productions ... for now, Just allow annotations
-varargslist :: { Params }
+varargslist :: { [Param] }
 varargslist 
     : typedargslist { $1 }
 

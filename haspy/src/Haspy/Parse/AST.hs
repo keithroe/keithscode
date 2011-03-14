@@ -26,7 +26,7 @@ data Stmt
       }
     | FuncDef {
           funcDefName               :: Ident,
-          functionDefParams         :: Params,
+          functionDefParams         :: [Param],
           functionDefReturns        :: Maybe Expr,
           functionDefBody           :: [Stmt]
       }
@@ -130,7 +130,7 @@ data Expr
           unaryOperand :: Expr
       }
     | Lambda {
-          lambdaArgs :: Params,
+          lambdaArgs :: [Param],
           lambdaBody :: Expr
       }
       
@@ -316,22 +316,23 @@ data ExceptHandler
     deriving ( Show )
 
 -- Used for FuncDefs and Lambdas
-data Params
-    = Params  {
-          paramsArgs             :: [Param],
-          paramsVarArg           :: Maybe Param,      -- default field will always be Nothing 
-          paramsKWOnlyArgs       :: [Param],
-          paramsKWArg            :: Maybe Param       -- default field will always be Nothing 
-      }
-    deriving ( Show )
-
 data Param 
     = Param {
-          paramParam      :: Ident,
+          paramName       :: Ident,
           paramAnnotation :: Maybe Expr,
           paramDefault    :: Maybe Expr
       }
+    | VarParam {
+          varParamName           :: Maybe Ident,
+          varParamAnnotation     :: Maybe Expr
+      }
+    | KeywordVarParam {
+          keywordVarParamName         :: Maybe Ident,
+          keywordVarParamAnnotation   :: Maybe Expr
+      }
+ 
     deriving ( Show )
+
 
 -- For ClassDef, FuncCall and Decorators
 data Args 
@@ -410,7 +411,7 @@ makeTestList (x:[]) = x
 makeTestList xs     = Tuple xs
 
 
-makeParams :: [Param] -> Maybe ( Maybe Param, [Param], Maybe Param ) -> Params
-makeParams args Nothing = Params args Nothing [] Nothing 
-makeParams args (Just (vararg, kwonlyargs, kwarg)) = Params args vararg kwonlyargs kwarg
+--makeParams :: [Param] -> Maybe ( Maybe Param, [Param], Maybe Param ) -> Params
+--makeParams args Nothing = Params args Nothing [] Nothing 
+--makeParams args (Just (vararg, kwonlyargs, kwarg)) = Params args vararg kwonlyargs kwarg
 
