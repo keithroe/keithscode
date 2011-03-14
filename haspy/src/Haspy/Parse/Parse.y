@@ -138,8 +138,7 @@ reverseDelimList(p,q )     : p                                { [$1] }
 
 delimList(p,q )            : reverseDelimList( p, q )         { reverse $1 } 
 
-delimListTrailing(p,q )    : delimList( p, q ) q              { $1 } 
-delimListTrailingOpt(p,q ) : delimList( p, q ) opt( q )       { $1 } 
+delimListTrailingOpt(p,q ) : reverseDelimList( p, q ) opt(q)  { reverse $1 } 
 
 delimListLeading(p,q )     : q delimList( p, q )              { $2 } 
 
@@ -211,8 +210,11 @@ typedargslist:
 
 typedargslist :: { Params }
 typedargslist 
-    : positional_args opt( snd( ',',  non_positional_args  ) ) { makeParams $1 $2 }
-    | non_positional_args                                      { makeParams [] (Just $1) }
+    : positional_args opt( snd( ',',  non_positional_args  ) )
+      { makeParams $1 $2 }
+
+    | non_positional_args
+      { makeParams [] (Just $1) }
 
 positional_args :: { [Param] }
 positional_args
@@ -221,16 +223,22 @@ positional_args
 non_positional_args :: { ( Maybe Param, [Param], Maybe Param ) }
 non_positional_args
     :
-    { (Nothing, [], Nothing) }
+      { (Nothing, [], Nothing) }
 
-    | vararg  zeroOrMore( snd( ',', annot_arg_default) ) ',' kw_vararg
-    { ($1, $2, $4) }
-    
-    | vararg  zeroOrMore( snd( ',', annot_arg_default) )  
-    { ($1, $2, Nothing) }
+    | vararg
+      { ($1, [], Nothing) }
 
     | kw_vararg                        
-    { (Nothing, [], $1) }
+      { (Nothing, [], $1) }
+
+--    | vararg ',' delimList( annot_arg_default, ',' )
+--      { ($1, $3 , Nothing) }
+
+    | vararg ',' kw_vararg
+      { ($1, [], $3) }
+
+    | vararg ',' delimList( annot_arg_default, ',' ) ',' kw_vararg
+      { ($1, $3, $5) }
 
 vararg :: { Maybe Param }
 vararg
@@ -251,14 +259,12 @@ annot_arg_default :: { Param }
 annot_arg_default
     : annot_arg opt( snd( '=', test ) )   { $1 { paramDefault = $2 } } 
 
-{-  
-varargslist: (vfpdef ['=' test] (',' vfpdef ['=' test])* [','
-       ['*' [vfpdef] (',' vfpdef ['=' test])* [',' '**' vfpdef] | '**' vfpdef]]
-     |  '*' [vfpdef] (',' vfpdef ['=' test])* [',' '**' vfpdef] | '**' vfpdef)
-
-Should be able to refactor and share between varargslist and typedargslist
-using parameterized productions ... for now, Just allow annotations
--}
+-- varargslist: (vfpdef ['=' test] (',' vfpdef ['=' test])* [','
+--      ['*' [vfpdef] (',' vfpdef ['=' test])* [',' '**' vfpdef] | '**' vfpdef]]
+--    |  '*' [vfpdef] (',' vfpdef ['=' test])* [',' '**' vfpdef] | '**' vfpdef)
+--
+-- Should be able to refactor and share between varargslist and typedargslist
+-- using parameterized productions ... for now, Just allow annotations
 varargslist :: { Params }
 varargslist 
     : typedargslist { $1 }
