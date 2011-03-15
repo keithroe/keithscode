@@ -176,9 +176,9 @@ decorator :: { Decorator }
 decorator
     : '@' dotted_name parenarglist NEWLINE      { Decorator $2 $3 }
 
-parenarglist :: { Maybe Args }
+parenarglist :: { [Argument] }
 parenarglist
-    : '(' opt( argument_list ) ')'      { $2 }
+    : '('  argument_list ')'      { $2 }
 
 decorators :: { [Decorator] } 
 decorators
@@ -212,12 +212,12 @@ typedargslist
      : delimListTrailingOpt( param, ',' ) { $1 }
 
 param :: { Param }
-    : arg                  { $1 }
+    : arg_default          { $1 }
     | vararg               { $1 }
     | kw_vararg            { $1 }
 
-arg :: { Param }
-arg
+arg_default :: { Param }
+arg_default
     : annot_arg opt( snd( '=', test ) )   { Param (fst $1) (snd $1) $2 } 
 
 vararg :: { Param }
@@ -697,48 +697,42 @@ classdef :: { Stmt }
 classdef
     : CLASS NAME classbases ':' suite  { ClassDef $2 $3 $5 }
 
-classbases :: { Maybe Args }
+classbases :: { [Argument] }
 classbases
-    :                                   { Nothing }
-    | '(' ')'                           { Nothing }
-    | '(' argument_list ')'             { Just $2 }
+    :                                   { [] }
+    | '(' argument_list ')'             { $2 }
 
 
-argument_list :: { Args }
+-- arglist: ( argument  ',')* 
+--          ( argument [',']                            |
+--            '*'  test (',' argument)* [',' '**' test] |
+--            '**' test)
+
+argument_list :: { [ Argument ] }
 argument_list 
-    : posargs opt_keywords opt( snd( ',', starargs ) ) opt_keywords opt( snd( ',', kwargs ) ) 
-    { Args $1 ($2 ++ $4) $3 $5 }
-    |             keywords opt( snd( ',', starargs ) ) opt_keywords opt( snd( ',', kwargs ) )
-    { Args [] ($1 ++ $3) $2 $4 }
-    |                                         starargs opt_keywords opt( snd( ',', kwargs ) )
-    { Args [] $2 (Just $1) $3 }
-    |                                                                              kwargs  
-    { Args [] [] Nothing (Just $1) }
+    :                                           { [] }
+    | delimListTrailingOpt( argument, ',' )     { $1 }
 
-posargs :: { [Expr] }
-posargs
-    : delimList( test, ',' )        { $1 }
+argument :: { Argument }
+    : positional                    { $1 }
+    | keyword                       { $1 }
+    | starargs                      { $1 }
+    | kwargs                        { $1 }
+ 
+positional :: { Argument }
+    : test                          { Positional $1 }
 
-keywords :: { [Keyword] }
-keywords
-    : delimList( keyword, ',' )     { $1 }
-
-keyword :: { Keyword }
+keyword :: { Argument }
 keyword
     : NAME '=' test                 { Keyword $1 $3 }
 
-opt_keywords :: { [Keyword] }
-opt_keywords
-    :                               { [] }
-    | ',' keywords                  { $2 }
-
-starargs :: { Expr }
+starargs :: { Argument }
 starargs
-    : '*' test                      { $2 }
+    : '*' test                      { StarArgs $2 }
 
-kwargs :: { Expr }
+kwargs :: { Argument }
 kwargs
-    : '**' test  { $2 }  
+    : '**' test                     { KWArgs $2 }  
 
 
 -- The reason that keywords are test nodes instead of ID is that using ID

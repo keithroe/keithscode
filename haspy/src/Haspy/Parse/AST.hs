@@ -36,7 +36,7 @@ data Stmt
       }
     | ClassDef {
           classDefName          :: Ident,
-          classDefBases         :: Maybe Args,
+          classDefBases         :: [ Argument ],
           classDefBody          :: [Stmt]
       }
     | Return {
@@ -176,7 +176,7 @@ data Expr
       }
     | Call {
           callFunc     :: Expr,
-          callArgs     :: Args
+          callArgs     :: [ Argument ]
       }
     | Float {
           floatVal :: Double
@@ -231,7 +231,7 @@ data Expr
 data Decorator
     = Decorator {
           decoratorName :: Ident,
-          decoratorArgs :: Maybe Args
+          decoratorArgs :: [ Argument ]
       }
     deriving ( Show )
 
@@ -335,22 +335,33 @@ data Param
 
 
 -- For ClassDef, FuncCall and Decorators
+{-
 data Args 
     = Args {
-       argsArgs      :: [Expr],
-       argsKeywords  :: [Keyword],
+       argsArgs      :: [Argument],
+       argsKeywords  :: [Argument],
        starArgs      :: Maybe Expr, 
        kwArgs        :: Maybe Expr
 
       }
     deriving ( Show )
+    -}
 
--- keyword arguments supplied to call
-data Keyword 
-    = Keyword {
-          keywordArg   :: Ident,
-          keywordValue :: Expr
+data Argument 
+    = Positional {
+          positionalValue :: Expr
       }
+    | Keyword {
+          keywordName     :: Ident,
+          keywordValue    :: Expr
+      }
+    | StarArgs {
+          starArgsValue   :: Expr 
+      }
+    | KWArgs {
+          kwArgsValue     :: Expr
+      }
+ 
     deriving ( Show )
 
 -- import name with optional 'as' alias.
@@ -364,7 +375,7 @@ data Alias
 
 data Trailer
     = TrailerCall { 
-          trailerCall :: Args
+          trailerCall :: [Argument] 
       }
     | TrailerSubscript {
           trailerSlice :: Slice 
