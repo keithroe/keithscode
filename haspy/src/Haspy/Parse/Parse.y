@@ -695,9 +695,7 @@ dict_item
 
 classdef :: { Stmt }
 classdef
---    : CLASS NAME classbases ':' NEWLINE INDENT pass_stmt NEWLINE
---      { ClassDef $2 $3 [$7] }
-    : CLASS NAME classbases ':' suite  { ClassDef $2 $3 $5 }
+  : CLASS NAME classbases ':' suite  { ClassDef $2 $3 $5 }
 
 classbases :: { [Argument] }
 classbases
