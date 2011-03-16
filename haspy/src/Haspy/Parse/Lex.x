@@ -355,13 +355,14 @@ handleNewline input len =
 -- Public lexer interface 
 -- 
 -------------------------------------------------------------------------------
+--processToken (PEOF i) = return ( (take i (repeat DEDENT ) ++ [(PEOF i)] )
 
 tokens :: String -> [ Token ]
 tokens str = toTokens $ runAlex str $ do
     let loop = do ( Lexeme _ cl _) <- alexMonadScan;
                   processToken cl
                   where
-                      processToken (PEOF i) = return [(PEOF i)]
+                      processToken (PEOF i) = return ( (take i (repeat (DEDENT 0))) ++ [(PEOF i)] )
                       processToken cl = do toks <- loop
                                            return (cl:toks)
     loop
