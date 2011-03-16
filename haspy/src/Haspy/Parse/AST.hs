@@ -397,8 +397,9 @@ makeTest expr (Just( test, e  )) = Test expr test e
 
 
 makeCompare :: Expr -> [ (CmpOp, Expr) ] -> Expr
-makeCompare e1 xs
-    =  Compare e1 ops operators
+makeCompare e [] = e
+makeCompare e xs
+    =  Compare e ops operators
        where
            (ops, operators) = unzip xs
             
