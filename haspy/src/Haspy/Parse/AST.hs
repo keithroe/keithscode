@@ -147,11 +147,11 @@ data Expr
           setElts :: [Expr]
       }
     | ListComp {
-          listCompElt        :: Expr,
+          listCompElts       :: Expr,
           listCompGenerators :: Comprehension
       }
     | SetComp {
-          setCompElt        :: Expr,
+          setCompElts       :: Expr,
           setCompGenerators :: Comprehension
       }
     | DictComp {
@@ -160,7 +160,7 @@ data Expr
           dictCompGenerators :: Comprehension
       }
     | GeneratorExp {
-          generatorExpElt        :: Expr,
+          generatorExpElts       :: Expr,
           generatorExpGenerators :: [Comprehension]
       }
     -- the grammar constrains where yield expressions can occur
