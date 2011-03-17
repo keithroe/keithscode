@@ -1,3 +1,3 @@
 
-def a( 1, b=1, *, c ):
+def a( q, b=1, *, c ):
   pass

@@ -1,3 +1,3 @@
 
-def a( *, b, ** ):
+def a( *, b, **c  ):
   pass
