@@ -290,7 +290,7 @@ augassign_op
     | '*='    { Mult   }
     | '/='    { Div    }
     | '%='    { Mod    }
-    | '&='    { Pow    }
+    | '&='    { BitAnd }
     | '|='    { BitOr  }
     | '^='    { BitXor }
     | '<<='   { LShift }
