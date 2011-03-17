@@ -1,3 +1,3 @@
 
-def a():
+def a(  ):
   pass
