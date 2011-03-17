@@ -174,7 +174,8 @@ NAME
 
 decorator :: { Decorator }
 decorator
-    : '@' dotted_name parenarglist NEWLINE      { Decorator $2 $3 }
+    : '@' dotted_name              NEWLINE      { Decorator $2 [] }
+    | '@' dotted_name parenarglist NEWLINE      { Decorator $2 $3 }
 
 parenarglist :: { [Argument] }
 parenarglist
