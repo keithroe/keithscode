@@ -249,8 +249,8 @@ mkError (posn,_,str) len =
 --------------------------------------------------------------------------------
 
 data UserState = UserState {
-    delimDepth    :: Int,      -- Current depth of opening delims (eg, '(', '[' ) 
-    indentStack   :: [Int]     -- Stack of indentation levels (in spaces)
+    delimDepth    :: Int,    -- Current depth of opening delims (eg, '(', '[' ) 
+    indentStack   :: [Int]    -- Stack of indentation levels (in spaces)
 } deriving( Show )
 
 
