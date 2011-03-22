@@ -79,13 +79,13 @@ unescapeNumeric :: Int -> String -> (String -> Int) -> String -> String
 unescapeNumeric numdigits numericDigits readNumeric str
    = loop numdigits [] str
    where
-   loop _ acc []   = [numericToChar acc]
-   loop 0 acc rest = numericToChar acc : unescapeString rest
-   loop n acc (x:xs)
-      | x `elem` numericDigits = loop (n-1) (x:acc) xs
-      | otherwise = numericToChar acc : unescapeString (x:xs)
-   numericToChar :: String -> Char
-   numericToChar = toEnum . readNumeric . reverse
+       loop _ acc []   = [numericToChar acc]
+       loop 0 acc rest = numericToChar acc : unescapeString rest
+       loop n acc (x:xs)
+          | x `elem` numericDigits = loop (n-1) (x:acc) xs
+          | otherwise = numericToChar acc : unescapeString (x:xs)
+       numericToChar :: String -> Char
+       numericToChar = toEnum . readNumeric . reverse
 
 octaldigits :: String
 octaldigits = "01234567"
