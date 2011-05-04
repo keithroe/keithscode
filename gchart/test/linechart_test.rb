@@ -32,6 +32,5 @@ chart.addAxis( 'x' ) do |axis|
   axis.setLabels( "test1", "test2", "test3" )
 end
 
-puts chart.url
 chart.png( $dir + "/pngs/test1.png" )
 
