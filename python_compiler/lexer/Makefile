@@ -1,7 +1,7 @@
 
 all: pylex test
 
-PyToken.o: PyToken.hs
+PyToken.o: PyToken.hs PyLexUtil.o
 	ghc -c PyToken.hs
 
 PyLex.hs: PyLex.x
