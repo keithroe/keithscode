@@ -19,6 +19,8 @@ double RI_vdC(uint bits, uint r = 0)
     bits ^= r;
     return (double) bits / (double) 0x100000000LL;
 }
+
+
 double RI_S(uint i, uint r = 0)
 {
     for(uint v = 1<<31; i; i >>= 1, v ^= v>>1)
@@ -26,12 +28,14 @@ double RI_S(uint i, uint r = 0)
     return (double) r / (double) 0x100000000LL;
 }
 
+
 double RI_LP(uint i, uint r = 0)
 {
     for(uint v = 1<<31; i; i >>= 1, v |= v>>1)
         if(i & 1) r ^= v;
     return (double) r / (double) 0x100000000LL;
 }
+
 
 int main(int argc, char** argv )
 {
