@@ -7,7 +7,7 @@
 #include <cmath>
 #include <string>
 #include <vector>
-#include <queue>
+#include <set>
 #include <stack>
 
 #include "Timer.h"
@@ -30,6 +30,7 @@ class State
 public:
     typedef Square**                           Grid;
     typedef std::vector< Location >            Locations;
+    //typedef std::Set< Location >               LocationSet;
 
     State();
     ~State();
@@ -83,6 +84,8 @@ private:
     Locations                 m_my_hills;
     Locations                 m_enemy_hills;
     Locations                 m_food;
+
+    //LocationSet               m_destinations;
 
     Bug                       m_debug;
     Timer                     m_timer;

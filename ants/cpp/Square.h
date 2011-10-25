@@ -38,30 +38,36 @@ struct Square
     Content content;           ///< What does this square contain 
 
     bool isVisible;            ///< Is this square visible to any ants?
-    int  ant;                  ///< Ant player id, -1 if none present
-    int  hill;                 ///< Hill player id, -1 if none present
+    bool isAvailable;          ///< Is available to move to
+    int  ant;                  ///< Start of turn ant player id, -1 if none
+    int  newAnt;               ///< End of turn ant player id, -1 if none
+    int  hill;                 ///< Hill player id, -1 if none
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
 
 };
 
     
-Square::Square()
+inline Square::Square()
     : content( EMPTY ),
       isVisible( false ),
+      isAvailable( true ),
       ant( -1 ),
+      newAnt( -1 ),
       hill( -1 )
 {
 }
 
 
-void Square::reset()
+inline void Square::reset()
 {
     if( content != WATER ) content = EMPTY;
 
-    isVisible  =  0;
-    ant        = -1;
-    hill       = -1;
+    isVisible   = false;
+    isAvailable = true;
+    ant         = -1;
+    newAnt      = -1;
+    hill        = -1;
 
     deadAnts.clear();
 };

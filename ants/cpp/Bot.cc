@@ -57,7 +57,9 @@ void Bot::makeMove( const Location& cur_location )
     {
         Location loc = m_state.getLocation( cur_location, d );
 
-        if(  m_state.grid()[loc.row][loc.col].content != Square::WATER )
+        // Add helper for checking destinations
+        if( m_state.grid()[loc.row][loc.col].content != Square::WATER &&
+            m_state.grid()[loc.row][loc.col].newAnt == -1 ) 
         {
             m_state.makeMove( cur_location, d );
             break;
