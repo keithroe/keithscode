@@ -44,8 +44,8 @@ int main(int argc, char** argv )
     for( int i = 0; i < sqrt_samples*sqrt_samples; ++i )
     {
         //std::cout << RI_vdC(i, 139398356) << " " << RI_S(i, 99883923) << " ";
-        //std::cout << drand48() << " " << drand48() << " ";
-        std::cout << static_cast<float>(i) / (sqrt_samples*sqrt_samples) << " " << RI_LP(i, scramble ) << " ";
+        std::cout << drand48() << " " << drand48() << " ";
+        //std::cout << static_cast<float>(i) / (sqrt_samples*sqrt_samples) << " " << RI_LP(i, scramble ) << " ";
     }
     std::cout << std::endl;
 }
