@@ -18,9 +18,18 @@
 /*
     constants
 */
-const int  TDIRECTIONS      = 4;
-const char CDIRECTIONS[4]   = {'N', 'E', 'S', 'W'};
-const int  DIRECTIONS[4][2] = { {-1, 0}, {0, 1}, {1, 0}, {0, -1} };      //{N, E, S, W}
+
+enum Direction
+{
+    NORTH=0,
+    EAST,
+    SOUTH,
+    WEST,
+    NUM_DIRECTIONS
+};
+
+const char DIRECTION_CHAR[NUM_DIRECTIONS] = { 'N', 'E', 'S', 'W' };
+const int  DIRECTION_OFFSET[4][2]         = { {-1,0}, {0,1}, {1,0}, {0,-1} };
 
 /*
     struct to store current state information
@@ -38,7 +47,7 @@ public:
     void setup();
     void reset();
 
-    void makeMove(const Location &loc, int direction);
+    void makeMove(const Location &loc, Direction direction);
     
     void updateVisionInformation();
 
@@ -56,7 +65,7 @@ public:
     void               endTurn()                { ++m_turn; }
     
 
-    Location getLocation(const Location &startLoc, int direction)const;
+    Location getLocation(const Location &startLoc, Direction direction)const;
 
     double   getDistance(const Location &loc1, const Location &loc2)const;
 

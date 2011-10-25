@@ -1,9 +1,9 @@
 CC=g++
-CFLAGS=-O3 -funroll-loops -c -DDEBUG
+CFLAGS=-O3 -funroll-loops -c -DDEBUG -I.
 LDFLAGS=-O2 -lm
-HEADERS= Bot.h Location.h State.h Bug.h Square.h Timer.h
+HEADERS= Bot.h Location.h State.h Bug.h Square.h Timer.h PathFinder.h
 
-SOURCES=Bot.cc MyBot.cc State.cc
+SOURCES=Bot.cc MyBot.cc PathFinder.cc State.cc
 OBJECTS=$(SOURCES:.cc=.o)
 EXECUTABLE=MyBot
 

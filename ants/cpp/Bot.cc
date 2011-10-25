@@ -53,15 +53,15 @@ void Bot::endTurn()
 
 void Bot::makeMove( const Location& cur_location )
 {
-    for(int d=0; d<TDIRECTIONS; d++)
+    for( int d = 0; d < NUM_DIRECTIONS; ++d )
     {
-        Location loc = m_state.getLocation( cur_location, d );
+        Location loc = m_state.getLocation( cur_location, static_cast<Direction>( d ) );
 
         // Add helper for checking destinations
         if( m_state.grid()[loc.row][loc.col].content != Square::WATER &&
             m_state.grid()[loc.row][loc.col].newAnt == -1 ) 
         {
-            m_state.makeMove( cur_location, d );
+            m_state.makeMove( cur_location, static_cast<Direction>( d ) );
             break;
         }
     }

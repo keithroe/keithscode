@@ -45,9 +45,9 @@ void State::reset()
 };
 
 //outputs move information to the engine
-void State::makeMove(const Location &loc, int direction)
+void State::makeMove(const Location &loc, Direction direction)
 {
-    cout << "o " << loc.row << " " << loc.col << " " << CDIRECTIONS[direction] << endl;
+    cout << "o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << endl;
 
     Location new_loc = getLocation( loc, direction );
     m_grid[ new_loc.row ][ new_loc.col ].newAnt = m_grid[loc.row][loc.col].ant;
@@ -65,11 +65,11 @@ double State::getDistance(const Location &loc1, const Location &loc2)const
 };
 
 //returns the new location from moving in a given direction with the edges wrapped
-Location State::getLocation(const Location &loc, int direction)const
+Location State::getLocation(const Location &loc, Direction direction)const
 {
-    return Location( (loc.row + DIRECTIONS[direction][0] + m_rows) % m_rows,
-                     (loc.col + DIRECTIONS[direction][1] + m_cols) % m_cols );
+    return wrap( offset( loc, DIRECTION_OFFSET[direction] ), m_rows, m_cols );
 };
+
 
 /*
     This function will update update the lastSeen value for any squares currently
@@ -99,9 +99,9 @@ void State::updateVisionInformation()
             cLoc = locQueue.front();
             locQueue.pop();
 
-            for(int d=0; d<TDIRECTIONS; d++)
+            for( int d = 0; d< NUM_DIRECTIONS; ++d )
             {
-                nLoc = getLocation(cLoc, d);
+                nLoc = getLocation( cLoc, static_cast<Direction>( d ) );
 
                 if(!visited[nLoc.row][nLoc.col] && getDistance(sLoc, nLoc) <= m_view_radius)
                 {
