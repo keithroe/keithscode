@@ -12,8 +12,8 @@ LIBS      = -lm
 #CFLAGS    = -O3 -DNDEBUG -g -Wall -I./src 
 CXXFLAGS  = -g -Wall -I./src 
 CFLAGS    = -g -Wall -I./src 
-#GLLIBS    = -framework GLUT -framework OpenGL -framework Foundation
-GLLIBS    = -lglut -lGL -lGLU -lX11
+GLLIBS    = -framework GLUT -framework OpenGL -framework Foundation
+#GLLIBS    = -lglut -lGL -lGLU -lX11
 LDFLAGS   =  
 LEXLIB    = 
 

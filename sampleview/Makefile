@@ -1,5 +1,6 @@
 
-CXX_FLAGS = -lGL -lglut
+#CXX_FLAGS = -lGL -lglut
+CXX_FLAGS = -framework OpenGL -framework glut
 
 all: sampleview samplegenerate
 sampleview: sampleview.cpp

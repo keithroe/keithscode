@@ -1,5 +1,6 @@
 
-#include <GL/glut.h>
+//#include <GL/glut.h>
+#include <GLUT/glut.h>
 #include <iostream>
 #include <vector>
 //#include <sstream>
