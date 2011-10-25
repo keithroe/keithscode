@@ -1,4 +1,6 @@
+
 #include "State.h"
+#include <queue>
 
 using namespace std;
 
@@ -47,9 +49,9 @@ void State::makeMove(const Location &loc, int direction)
 {
     cout << "o " << loc.row << " " << loc.col << " " << CDIRECTIONS[direction] << endl;
 
-    Location nLoc = getLocation(loc, direction);
-    m_grid[nLoc.row][nLoc.col].ant = m_grid[loc.row][loc.col].ant;
-    m_grid[loc.row][loc.col].ant = -1;
+    Location new_loc = getLocation( loc, direction );
+    m_grid[ new_loc.row ][ new_loc.col ].newAnt = m_grid[loc.row][loc.col].ant;
+    //m_grid[ loc.row     ][ loc.col     ].ant     = -1;
 };
 
 //returns the euclidean distance between two locations with the edges wrapped
