@@ -1,5 +1,6 @@
 
 #include "AStar.h"
+#include "Path.h"
 #include <algorithm>
 
 AStar::AStar( const Map& map, const Location& goal, const Location& start )
@@ -8,7 +9,7 @@ AStar::AStar( const Map& map, const Location& goal, const Location& start )
       m_cur_depth( 0 ),
       m_max_depth( 1000 )
 {
-    m_open.push_back( new Node( start, 0, m_map.manhattanDistance( start, goal ), 0 ) );
+    m_open.push_back( new Node( start, NONE, 0, m_map.manhattanDistance( start, goal ), 0 ) );
 }
 
 
@@ -19,7 +20,7 @@ AStar::AStar( const Map& map, const Location& goal, const std::vector<Location>&
       m_max_depth( 1000 )
 {
     for( std::vector<Location>::const_iterator it = starts.begin(); it != starts.end(); ++it )
-        m_open.push_back( new Node( *it, 0, m_map.manhattanDistance( *it, goal ), 0 ) );
+        m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, goal ), 0 ) );
 
     std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
 }
@@ -49,9 +50,12 @@ bool AStar::step()
         m_path.reserve( m_cur_depth );
         while( current->child != 0 ) 
         {
-            m_path.push_back( current->loc );
+            m_path.push_back( current->dir );
             current = current->child;
         }
+        m_origin = current->child ? current->child->loc : current->loc;
+
+        std::reverse( m_path.begin(), m_path.end() );
         
         // Clean up
         for( NodeVec::const_iterator it = m_open.begin(); it != m_open.end(); ++it )
@@ -96,6 +100,7 @@ bool AStar::step()
                 // We have found a better path to this location.  update heap
                 open_node->g     = current->g + 1;
                 open_node->child = current;
+                open_node->dir   = static_cast<Direction>( i );
                 std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
             }
             continue;
@@ -112,6 +117,7 @@ bool AStar::step()
 
         // We need to add a new node to our open list
         Node* neighbor_node = new Node( neighbor_loc,
+                                        static_cast<Direction>( i ),
                                         current->g+1,
                                         m_map.manhattanDistance( neighbor_loc, m_goal ),
                                         current ); 
@@ -126,6 +132,8 @@ bool AStar::step()
 }
 
 
-bool AStar::getPath( std::vector<Location>& path )const
+void AStar::getPath( Path& path )const
 {
+  
+  path.assign( m_origin, m_goal, m_path.begin(), m_path.end() ); 
 }

@@ -1,6 +1,7 @@
 
 #include "Map.h"
 #include "Location.h"
+#include <cstdlib>
     
 Map::Map()
     : m_height( 0u ),

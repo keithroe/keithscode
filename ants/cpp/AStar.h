@@ -25,25 +25,30 @@
 //
 
 
-#include "Map.h"
+#include "Direction.h"
 #include "Location.h"
-#include <vector>
 #include <set>
+#include <vector>
+
+class Map;
+class Path;
 
 class AStar
 {
 public:
+
     struct Node
     {
         Node() 
-            :  g( 0 ), h( 0 ), child( 0 ) {}
+            : dir( NONE ), g( 0 ), h( 0 ), child( 0 ) {}
 
-        Node( const Location& loc, int g, int h, Node* child ) 
-            : loc( loc ), g( g ), h( h ), child( child ) {}
+        Node( const Location& loc, Direction dir, int g, int h, Node* child ) 
+            : loc( loc ), dir( dir ), g( g ), h( h ), child( child ) {}
 
         int f()const { return g+h; }
 
         Location loc;
+        Direction dir;
         int g;
         int h;
         Node* child;
@@ -64,20 +69,22 @@ public:
 
     bool step();
 
-    bool getPath( std::vector<Location>& path )const;
+    void getPath( Path& path )const;
 
 private:
 
-    typedef std::vector<Node*>    NodeVec;
-    typedef std::vector<Location> LocationVec;
+    typedef std::vector<Direction> DirectionVec;
+    typedef std::vector<Node*>     NodeVec;
+    typedef std::vector<Location>  LocationVec;
 
     NodeVec               m_open;
     NodeVec               m_closed;
 
-    LocationVec           m_path;
+    DirectionVec          m_path;
     
     const Map&            m_map;
     const Location        m_goal; 
+    Location              m_origin; 
 
     unsigned              m_cur_depth;
     unsigned              m_max_depth;

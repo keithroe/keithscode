@@ -2,11 +2,10 @@
 #include "Path.h"
 
 
-Path::Path( const Location& origin, const Location& destination, Direction next_step, int distance )
-    : m_origin( origin ),
-      m_destination( destination ),
-      m_next_step( next_step ),
-      m_distance( distance )
-{
-}
 
+Direction Path::nextStep()
+{ 
+    Direction dir = m_steps.front();
+    m_steps.pop_front();
+    return dir;     
+}

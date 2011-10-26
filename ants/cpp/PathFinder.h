@@ -13,7 +13,7 @@ class PathFinder
 public:
     PathFinder( const Map& map );
 
-    Path getPath( const Location& origin, const Location& destination )const;
+    void getPath( const Location& origin, const Location& destination, Path& path )const;
     
 private:
     const Map& m_map;
