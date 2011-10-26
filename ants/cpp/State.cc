@@ -1,34 +1,27 @@
 
 #include "State.h"
+#include <cmath>
 #include <queue>
 
 using namespace std;
 
-//constructor
 State::State()
     : m_game_over( 0 ),
       m_turn( 0 ),
-      m_debug( "./debug.txt" )
+      //m_debug( "./debug.txt" )
+      m_debug()
 {
 };
 
-//deconstructor
+
 State::~State()
 {
     m_debug.close();
-    
-    for( int i = 0; i < m_rows; ++i )
-        delete [] m_grid[i];
-    delete m_grid;
-    m_grid = 0u;
 };
 
-//sets the state up
+
 void State::setup()
 {
-    m_grid = new Square*[ m_rows ];
-    for( int i = 0; i < m_rows; ++i )
-        m_grid[ i ] = new Square[ m_cols ];
 };
 
 //resets all non-water squares to land and clears the bots ant vector
@@ -39,19 +32,15 @@ void State::reset()
     m_my_hills.clear();
     m_enemy_hills.clear();
     m_food.clear();
-    for( int row=0; row < m_rows; row++ )
-        for( int col=0; col<m_cols; col++ )
-            m_grid[ row ][ col ].reset();
+    m_map.reset();
 };
 
 //outputs move information to the engine
 void State::makeMove(const Location &loc, Direction direction)
 {
+    m_debug << "<<o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << ">> " << endl;
     cout << "o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << endl;
-
-    Location new_loc = getLocation( loc, direction );
-    m_grid[ new_loc.row ][ new_loc.col ].newAnt = m_grid[loc.row][loc.col].ant;
-    //m_grid[ loc.row     ][ loc.col     ].ant     = -1;
+    m_map.makeMove( loc, direction );
 };
 
 //returns the euclidean distance between two locations with the edges wrapped
@@ -62,12 +51,6 @@ double State::getDistance(const Location &loc1, const Location &loc2)const
         dr = min(d1, m_rows-d1),
         dc = min(d2, m_cols-d2);
     return sqrt(dr*dr + dc*dc);
-};
-
-//returns the new location from moving in a given direction with the edges wrapped
-Location State::getLocation(const Location &loc, Direction direction)const
-{
-    return wrap( offset( loc, DIRECTION_OFFSET[direction] ), m_rows, m_cols );
 };
 
 
@@ -91,7 +74,7 @@ void State::updateVisionInformation()
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(m_rows, std::vector<bool>(m_cols, 0));
-        m_grid[sLoc.row][sLoc.col].isVisible = 1;
+        m_map( sLoc.row, sLoc.col ).isVisible = 1;
         visited[sLoc.row][sLoc.col] = 1;
 
         while(!locQueue.empty())
@@ -101,11 +84,11 @@ void State::updateVisionInformation()
 
             for( int d = 0; d< NUM_DIRECTIONS; ++d )
             {
-                nLoc = getLocation( cLoc, static_cast<Direction>( d ) );
+                nLoc = m_map.getLocation( cLoc, static_cast<Direction>( d ) );
 
                 if(!visited[nLoc.row][nLoc.col] && getDistance(sLoc, nLoc) <= m_view_radius)
                 {
-                    m_grid[nLoc.row][nLoc.col].isVisible = 1;
+                    m_map( nLoc.row, nLoc.col ).isVisible = 1;
                     locQueue.push(nLoc);
                 }
                 visited[nLoc.row][nLoc.col] = 1;
@@ -126,7 +109,7 @@ ostream& operator<<(ostream &os, const State &state)
     {
         for(int col=0; col<state.m_cols; col++)
         {
-            const Square& square = state.grid()[row][col];
+            const Square& square = state.m_map( row, col );
             os << ' ';
             switch( square.content )
             {
@@ -149,7 +132,7 @@ ostream& operator<<(ostream &os, const State &state)
                 {
                     if( square.ant >= 0 )
                     {
-                        os << static_cast<char>( 'a' + state.grid()[row][col].ant );
+                        os << static_cast<char>( 'a' + state.map()( row, col ).ant );
                         break;
                     }
 
@@ -203,6 +186,10 @@ istream& operator>>(istream &is, State &state)
                 is >> state.m_cols;
             else if(inputType == "turns")
                 is >> state.m_turns;
+            else if(inputType == "turns")
+                is >> state.m_seed;
+            else if(inputType == "player_seed")
+                is >> state.m_seed;
             else if(inputType == "viewradius2")
             {
                 is >> state.m_view_radius;
@@ -226,6 +213,7 @@ istream& operator>>(istream &is, State &state)
             else    //unknown line
                 getline(is, junk);
         }
+        state.m_map.resize( state.m_rows, state.m_cols );
     }
     else
     {
@@ -235,18 +223,18 @@ istream& operator>>(istream &is, State &state)
             if(inputType == "w") //water square
             {
                 is >> row >> col;
-                state.m_grid[row][col].content = Square::WATER;
+                state.m_map( row, col ).content = Square::WATER;
             }
             else if(inputType == "f") //m_food square
             {
                 is >> row >> col;
-                state.m_grid[row][col].content = Square::FOOD;
+                state.m_map( row, col ).content = Square::FOOD;
                 state.m_food.push_back( Location(row, col) );
             }
             else if(inputType == "a") //live ant square
             {
                 is >> row >> col >> player;
-                state.m_grid[row][col].ant = player;
+                state.m_map( row, col ).ant = player;
                 if(player == 0)
                     state.m_my_ants.push_back(Location(row, col));
                 else
@@ -256,13 +244,13 @@ istream& operator>>(istream &is, State &state)
             else if(inputType == "d") //dead ant square
             {
                 is >> row >> col >> player;
-                state.m_grid[row][col].deadAnts.push_back(player);
+                state.m_map( row, col ).deadAnts.push_back(player);
             }
             else if(inputType == "h")
             {
                 is >> row >> col >> player;
-                state.m_grid[row][col].content = Square::HILL;
-                state.m_grid[row][col].hill    = player;
+                state.m_map( row, col ).content = Square::HILL;
+                state.m_map( row, col ).hill    = player;
                 if(player == 0)
                     state.m_my_hills.push_back(Location(row, col));
                 else

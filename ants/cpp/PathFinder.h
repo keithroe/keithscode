@@ -2,20 +2,21 @@
 #ifndef PATH_FINDER_H_
 #define PATH_FINDER_H_
 
-#include <State.h>
+#include "State.h"
+#include "Location.h"
 
-class Grid;
-class Location;
+class Map;
+class Path;
 
 class PathFinder
 {
 public:
-    PathFinder( const Grid& grid );
+    PathFinder( const Map& map );
 
-    Direction getDirection( const Location& origin, const Location& destination )const;
-
+    Path getPath( const Location& origin, const Location& destination )const;
+    
 private:
-    const Grid& m_grid;
+    const Map& m_map;
 };
 
 #endif // PATH_FINDER_H_

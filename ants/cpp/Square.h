@@ -30,6 +30,7 @@ struct Square
     /// Resets the information for the square except water information
     void reset();
 
+    bool isAvailable()const;
 
     //
     // Members
@@ -38,7 +39,6 @@ struct Square
     Content content;           ///< What does this square contain 
 
     bool isVisible;            ///< Is this square visible to any ants?
-    bool isAvailable;          ///< Is available to move to
     int  ant;                  ///< Start of turn ant player id, -1 if none
     int  newAnt;               ///< End of turn ant player id, -1 if none
     int  hill;                 ///< Hill player id, -1 if none
@@ -51,7 +51,6 @@ struct Square
 inline Square::Square()
     : content( EMPTY ),
       isVisible( false ),
-      isAvailable( true ),
       ant( -1 ),
       newAnt( -1 ),
       hill( -1 )
@@ -64,12 +63,16 @@ inline void Square::reset()
     if( content != WATER ) content = EMPTY;
 
     isVisible   = false;
-    isAvailable = true;
     ant         = -1;
     newAnt      = -1;
     hill        = -1;
 
     deadAnts.clear();
 };
+
+inline bool Square::isAvailable()const
+{
+    return newAnt < 0 && hill != 0 && content != WATER; 
+}
 
 #endif //SQUARE_H_
