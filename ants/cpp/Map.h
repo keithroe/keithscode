@@ -32,6 +32,9 @@ public:
     Square& operator()( const Location& loc )
     { rangeCheck( loc.row, loc.col ); return m_grid[loc.row][loc.col]; }
 
+    const Square& operator()( const Location& loc )const
+    { rangeCheck( loc.row, loc.col ); return m_grid[loc.row][loc.col]; }
+
     Square& operator()( unsigned row, unsigned col )
     { rangeCheck( row, col ); return m_grid[row][col]; }
 
