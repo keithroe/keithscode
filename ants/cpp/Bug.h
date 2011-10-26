@@ -4,7 +4,7 @@
 #include <fstream>
 
 #ifndef DEBUG
-    //#define DEBUG
+    #define DEBUG
 #endif
 
 /*
@@ -20,7 +20,31 @@
 */
 struct Bug
 {
+// #define PRINT_TO_STDERR 
+#ifdef PRINT_TO_STDERR
+    std::ostream file;
+
+    Bug()
+        : file( std::cerr.rdbuf() )
+    {
+    }
+    
+    inline void open(const std::string &filename)
+    {
+    };
+
+    //closes the ofstream
+    inline void close()
+    {
+    };
+
+#else
     std::ofstream file;
+    
+    Bug()
+    {
+        open( "./debug.txt" );
+    };
 
     Bug( const std::string& filename )
     {
@@ -42,6 +66,7 @@ struct Bug
             file.close();
         #endif
     };
+#endif
 };
 
 //output function for endl

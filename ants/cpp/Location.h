@@ -36,6 +36,9 @@ struct Location
 
     void offset( const int direction[ 2 ] );
     void wrap( int max_row, int max_col );
+
+    bool operator==(const Location& other )
+    { return row == other.row && col == other.col; }
 };
 
 
