@@ -40,5 +40,10 @@ clean:
 	-rm -f ${EXECUTABLE} ${OBJECTS} *.d
 	-rm -f debug.txt
 
-.PHONY: all clean
+zip:
+	-make clean
+	-rm ~/Desktop/cpp.zip
+	-zip -r ~/Desktop/cpp.zip ../cpp -x .svn
+
+.PHONY: all clean zip
 

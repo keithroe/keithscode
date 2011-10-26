@@ -36,17 +36,16 @@ public:
     struct Node
     {
         Node() 
-            :  g( 0 ), h( 0 ), parent( 0 ), child( 0 ) {}
+            :  g( 0 ), h( 0 ), child( 0 ) {}
 
-        Node( const Location& l, int h ) 
-            : loc( l ), g( 0 ), h( h ), parent( 0 ), child( 0 ) {}
+        Node( const Location& loc, int g, int h, Node* child ) 
+            : loc( loc ), g( g ), h( h ), child( child ) {}
 
         int f()const { return g+h; }
 
         Location loc;
         int g;
         int h;
-        Node* parent;
         Node* child;
     };
 
@@ -69,13 +68,13 @@ public:
 
 private:
 
-    typedef std::vector<Node*> NodeHeap;
-    typedef std::set<Node*>    NodeSet;
+    typedef std::vector<Node*>    NodeVec;
+    typedef std::vector<Location> LocationVec;
 
-    NodeHeap              m_open;
-    NodeSet               m_closed;
+    NodeVec               m_open;
+    NodeVec               m_closed;
 
-    std::vector<Location> m_path;
+    LocationVec           m_path;
     
     const Map&            m_map;
     const Location        m_goal; 
