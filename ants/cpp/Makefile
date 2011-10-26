@@ -42,8 +42,9 @@ clean:
 
 zip:
 	-make clean
-	-rm ~/Desktop/cpp.zip
-	-zip -r ~/Desktop/cpp.zip ../cpp -x .svn
+	-rm -rf ~/Desktop/cpp/
+	-rm -f ~/Desktop/cpp.zip
+	-cp -r ../cpp ~/Desktop
 
 .PHONY: all clean zip
 

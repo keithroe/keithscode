@@ -4,23 +4,51 @@
 
 #include "Location.h"
 #include "State.h"
+#include <list>
 
 class Path
 {
 public:
-    Path( const Location& origin, const Location& destination, Direction next_step, int distance );
+    Path() {}
 
-    const Location origin()             { return m_origin;          }
-    const Location destination()        { return m_destination;     }
-    const Direction nextStep()          { return m_next_step;       }
-    int distance()                      { return m_distance;        }
+    template <class Iter>
+    Path( const Location& origin, const Location& destination, Iter begins, Iter ends );
+    /*
+        : m_origin( origin ),
+          m_destination( destination )
+    {
+        m_steps.assign( begins, ends );
+    }
+    */
+
+    template <class Iter>
+    void assign( const Location& origin, const Location& destination, Iter begins, Iter ends );
+
+    Location origin()const             { return m_origin;          }
+    Location destination()const        { return m_destination;     }
+    Direction nextStep();
 
 private:
-    Location  m_origin;
-    Location  m_destination;
-    Direction m_next_step;
-    int       m_distance;
+    Location               m_origin;
+    Location               m_destination;
+    std::list<Direction>   m_steps;
 };
+    
 
+template <class Iter>
+Path::Path( const Location& origin, const Location& destination, Iter begins, Iter ends )
+    : m_origin( origin ),
+      m_destination( destination )
+{
+    m_steps.assign( begins, ends );
+}
+
+template <class Iter>
+void Path::assign( const Location& origin, const Location& destination, Iter begins, Iter ends )
+{
+    m_origin      = origin;
+    m_destination = destination;
+    m_steps.assign( begins, ends );
+}
 
 #endif // PATH_H_

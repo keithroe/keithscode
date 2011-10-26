@@ -1,4 +1,5 @@
 
+#include "AStar.h"
 #include "Path.h"
 #include "PathFinder.h"
 
@@ -8,13 +9,15 @@ PathFinder::PathFinder( const Map& map )
 }
 
 
-Path PathFinder::getPath( const Location& origin,
-                          const Location& destination )const
+void PathFinder::getPath( const Location& origin,
+                          const Location& destination,
+                          Path& path )const
 {
-    // TODO: For now just minimize manhattan distance.  Switch to A* soon
-    float dx = static_cast<float>( destination.col - origin.col );
-    float dy = static_cast<float>( destination.row - origin.row );
-
+    AStar astar( m_map, origin, destination ); 
+    astar.getPath( path );
+    
+    /*
+    
     for( int d = 0; d < NUM_DIRECTIONS; ++d )
     {
         Location loc = m_map.getLocation( origin, static_cast<Direction>( d ) );
@@ -27,4 +30,5 @@ Path PathFinder::getPath( const Location& origin,
         }
     }
     return  Path( origin, destination, NONE, 10 ); 
+    */
 }
