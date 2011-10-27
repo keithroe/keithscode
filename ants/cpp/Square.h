@@ -17,7 +17,8 @@ struct Square
         WATER=0,
         HILL,
         FOOD,
-        EMPTY 
+        EMPTY,
+        UNKNOWN
     };
     
 
@@ -29,6 +30,8 @@ struct Square
 
     /// Resets the information for the square except water information
     void reset();
+
+    void setVisible();
 
     bool isAvailable()const;
 
@@ -49,7 +52,7 @@ struct Square
 
     
 inline Square::Square()
-    : content( EMPTY ),
+    : content( UNKNOWN ),
       isVisible( false ),
       ant( -1 ),
       newAnt( -1 ),
@@ -60,7 +63,7 @@ inline Square::Square()
 
 inline void Square::reset()
 {
-    if( content != WATER ) content = EMPTY;
+    if( content != WATER && content != UNKNOWN ) content = EMPTY;
 
     isVisible   = false;
     ant         = -1;
@@ -69,6 +72,14 @@ inline void Square::reset()
 
     deadAnts.clear();
 };
+
+
+inline void Square::setVisible()
+{
+  isVisible = 1;
+  if( content == UNKNOWN ) content = EMPTY;
+}
+
 
 inline bool Square::isAvailable()const
 {
