@@ -2,6 +2,9 @@
 #define BOT_H_
 
 #include "State.h"
+#include <vector>
+
+class Location;
 
 ///
 /// This struct represents your bot in the game of Ants
@@ -21,10 +24,12 @@ public:
     void endTurn();
 
 private:
-
     void makeMove( const Location& cur_location );
+
+    void chooseDestination( const Location& cur_location );
     
     State m_state;
+    std::vector< Location >  m_taken;
 };
 
 #endif //BOT_H_

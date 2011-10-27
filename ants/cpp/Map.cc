@@ -2,6 +2,7 @@
 #include "Map.h"
 #include "Location.h"
 #include <cstdlib>
+#include <cmath>
     
 Map::Map()
     : m_height( 0u ),
@@ -60,9 +61,9 @@ Location Map::getLocation( const Location &loc, Direction direction )const
 {
     return wrap( offset( loc, DIRECTION_OFFSET[direction] ), m_height, m_width );
 }
-    
+   
 
-int Map::manhattanDistance( const Location& loc0, const Location& loc1 )const
+void Map::getDxDy( const Location& loc0, const Location& loc1, int& dx, int& dy )const
 {
 
     int direct_dist_x = abs( loc0.col - loc1.col );
@@ -71,7 +72,42 @@ int Map::manhattanDistance( const Location& loc0, const Location& loc1 )const
     int wrap_dist_x = m_width  - direct_dist_x;
     int wrap_dist_y = m_height - direct_dist_y;
 
-    return std::min( direct_dist_x, wrap_dist_x ) + std::min( direct_dist_y, wrap_dist_y );
+    dx = std::min( direct_dist_x, wrap_dist_x );
+    dy = std::min( direct_dist_y, wrap_dist_y );
+}
+
+
+int Map::manhattanDistance( const Location& loc0, const Location& loc1 )const
+{
+    int dx, dy;
+    getDxDy( loc0, loc1, dx, dy );
+    return dx + dy; 
+}
+
+
+float Map::distance( const Location& loc0, const Location& loc1 )const
+{
+    int dx, dy;
+    getDxDy( loc0, loc1, dx, dy );
+
+    return sqrtf( static_cast<float>( dx*dx ) + static_cast<float>( dy*dy ) );
+}
+
+
+void Map::prioritize()
+{
+    /// Assumes that all squares start with zero priority
+    for( unsigned i = 0u; i < m_height; ++i )
+        for( unsigned j = 0u; j < m_width; ++j )
+        {
+           
+            // TODO: put this prioritization code into into separate code logic
+            Square& square = m_grid[ i ][ j ];
+            if( square.hill > 0                                      ) square.priority += 20;
+            if( square.content == Square::FOOD                       ) square.priority += 10;
+            if( square.content == Square::UNKNOWN                    ) square.priority += 5;
+            if( square.content != Square::WATER && !square.isVisible ) square.priority += 1;
+        }
 }
 
 
