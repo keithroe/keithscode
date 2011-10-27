@@ -25,7 +25,10 @@ public:
     // Get the location arrived at by moving in a given direction with edge wrapping
     Location getLocation( const Location &loc, Direction direction )const;
 
-    int manhattanDistance( const Location& loc0, const Location& loc1 )const;
+    int   manhattanDistance( const Location& loc0, const Location& loc1 )const;
+    float distance         ( const Location& loc0, const Location& loc1 )const;
+
+    void prioritize();
 
     void makeMove( const Location &loc, Direction direction );
 
@@ -46,6 +49,8 @@ public:
 
 
 private:
+    void getDxDy( const Location& loc0, const Location& loc1, int& dx, int& dy )const;
+
     unsigned m_height;
     unsigned m_width;
     Square** m_grid;

@@ -44,13 +44,13 @@ void State::makeMove(const Location &loc, Direction direction)
 };
 
 //returns the euclidean distance between two locations with the edges wrapped
-double State::getDistance(const Location &loc1, const Location &loc2)const
+float State::getDistance(const Location &loc1, const Location &loc2)const
 {
     int d1 = abs(loc1.row-loc2.row),
         d2 = abs(loc1.col-loc2.col),
         dr = min(d1, m_rows-d1),
         dc = min(d2, m_cols-d2);
-    return sqrt(dr*dr + dc*dc);
+    return sqrtf(dr*dr + dc*dc);
 };
 
 
@@ -105,6 +105,7 @@ void State::updateVisionInformation()
 */
 ostream& operator<<(ostream &os, const State &state)
 {
+    os << "------------------------------------------------------------------" << std::endl;
     for(int row=0; row<state.m_rows; row++)
     {
         for(int col=0; col<state.m_cols; col++)
@@ -151,9 +152,20 @@ ostream& operator<<(ostream &os, const State &state)
         }
         os << endl;
     }
+    os << "------------------------------------------------------------------" << std::endl;
+    
+    for(int row=0; row<state.m_rows; row++)
+    {
+        for(int col=0; col<state.m_cols; col++)
+        {
+            os << " " << state.m_map( row, col ).priority; 
+        }
+        os << endl;
+    }
 
+    os << "------------------------------------------------------------------" << std::endl;
     return os;
-};
+}
 
 //input function
 istream& operator>>(istream &is, State &state)
@@ -200,17 +212,17 @@ istream& operator>>(istream &is, State &state)
             else if(inputType == "viewradius2")
             {
                 is >> state.m_view_radius;
-                state.m_view_radius = sqrt(state.m_view_radius);
+                state.m_view_radius = sqrtf(state.m_view_radius);
             }
             else if(inputType == "attackradius2")
             {
                 is >> state.m_attack_radius;
-                state.m_attack_radius = sqrt(state.m_attack_radius);
+                state.m_attack_radius = sqrtf(state.m_attack_radius);
             }
             else if(inputType == "spawnradius2")
             {
                 is >> state.m_spawn_radius;
-                state.m_spawn_radius = sqrt(state.m_spawn_radius);
+                state.m_spawn_radius = sqrtf(state.m_spawn_radius);
             }
             else if(inputType == "ready") //end of parameter input
             {

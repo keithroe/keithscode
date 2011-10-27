@@ -41,13 +41,18 @@ public:
     const Locations&   enemyHills()const        { return m_enemy_hills;   }
     const Locations&   food()const              { return m_food;          }
     int                turn() const             { return m_turn;          }
+    float              attackRadius()           { return m_attack_radius; }
+    float              spawnRadius()            { return m_spawn_radius;  }
+    float              viewRadius()             { return m_view_radius;   }
 
     void               endTurn()                { ++m_turn;               }
+
+    void               prioritizeMap()          { m_map.prioritize();     }
     
 
     Location getLocation(const Location &startLoc, Direction direction)const;
 
-    double   getDistance(const Location &loc1, const Location &loc2)const;
+    float    getDistance(const Location &loc1, const Location &loc2)const;
 
     friend std::ostream& operator<<(std::ostream &os, const State &state);
     friend std::istream& operator>>(std::istream &is, State &state);
@@ -58,15 +63,15 @@ private:
     int                       m_turn;
     int                       m_turns;
     int                       m_num_players;
-    double                    m_attack_radius;
-    double                    m_spawn_radius;
-    double                    m_view_radius;
-    double                    m_load_time;
-    double                    m_turn_time;
+    float                     m_attack_radius;
+    float                     m_spawn_radius;
+    float                     m_view_radius;
+    float                     m_load_time;
+    float                     m_turn_time;
     bool                      m_game_over;
     int64_t                   m_seed;
 
-    std::vector<double>       m_scores;
+    std::vector<float>        m_scores;
 
     Map                       m_map;
     Locations                 m_my_ants;

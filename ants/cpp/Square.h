@@ -45,6 +45,7 @@ struct Square
     int  ant;                  ///< Start of turn ant player id, -1 if none
     int  newAnt;               ///< End of turn ant player id, -1 if none
     int  hill;                 ///< Hill player id, -1 if none
+    int  priority;             ///< Priority for nearby ants
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
 
@@ -56,7 +57,8 @@ inline Square::Square()
       isVisible( false ),
       ant( -1 ),
       newAnt( -1 ),
-      hill( -1 )
+      hill( -1 ),
+      priority( 0 )
 {
 }
 
@@ -69,6 +71,7 @@ inline void Square::reset()
     ant         = -1;
     newAnt      = -1;
     hill        = -1;
+    priority    =  0;
 
     deadAnts.clear();
 };
