@@ -74,7 +74,7 @@ void State::updateVisionInformation()
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(m_rows, std::vector<bool>(m_cols, 0));
-        m_map( sLoc.row, sLoc.col ).isVisible = 1;
+        m_map( sLoc.row, sLoc.col ).setVisible();
         visited[sLoc.row][sLoc.col] = 1;
 
         while(!locQueue.empty())
@@ -88,7 +88,7 @@ void State::updateVisionInformation()
 
                 if(!visited[nLoc.row][nLoc.col] && getDistance(sLoc, nLoc) <= m_view_radius)
                 {
-                    m_map( nLoc.row, nLoc.col ).isVisible = 1;
+                    m_map( nLoc.row, nLoc.col ).setVisible();
                     locQueue.push(nLoc);
                 }
                 visited[nLoc.row][nLoc.col] = 1;
@@ -133,10 +133,17 @@ ostream& operator<<(ostream &os, const State &state)
                     if( square.ant >= 0 )
                     {
                         os << static_cast<char>( 'a' + state.map()( row, col ).ant );
-                        break;
                     }
+                    else 
+                    {
+                      os << (square.isVisible ? ' ' : '.');
+                    }
+                    break;
 
-                    os << (square.isVisible ? ' ' : '?');
+                }
+                case Square::UNKNOWN:
+                {
+                    os << '?';
                     break;
                 }
 

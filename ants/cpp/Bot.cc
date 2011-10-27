@@ -64,6 +64,7 @@ void Bot::endTurn()
 
 void Bot::makeMove( const Location& cur_location )
 {
+  /*
     PathFinder path_finder( m_state.map() );
     Path path;
     path_finder.getPath( cur_location, cur_location, path ); //// TODO: find destination
@@ -72,8 +73,8 @@ void Bot::makeMove( const Location& cur_location )
     if( d != NONE )
         m_state.makeMove( cur_location, d );
 
-    /*
-    for( int d = 0; d < NUM_DIRECTIONS; ++d )
+        */
+    for( int d = 1; d < NUM_DIRECTIONS; ++d )
     {
         Location loc = m_state.map().getLocation( cur_location, static_cast<Direction>( d ) );
 
@@ -84,5 +85,4 @@ void Bot::makeMove( const Location& cur_location )
             break;
         }
     }
-    */
 }
