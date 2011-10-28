@@ -14,6 +14,7 @@ void PathFinder::getPath( const Location& origin,
                           Path& path )const
 {
     AStar astar( m_map, origin, destination ); 
+    astar.search();
     astar.getPath( path );
     
     /*

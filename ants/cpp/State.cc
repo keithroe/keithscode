@@ -86,20 +86,49 @@ void State::updateVisionInformation()
             {
                 nLoc = m_map.getLocation( cLoc, static_cast<Direction>( d ) );
 
-                if(!visited[nLoc.row][nLoc.col] && getDistance(sLoc, nLoc) <= m_view_radius)
+                if(!visited[nLoc.row][nLoc.col] )
                 {
-                    m_map( nLoc.row, nLoc.col ).setVisible();
-                    locQueue.push(nLoc);
+                    if( getDistance(sLoc, nLoc) <= m_view_radius )
+                    {
+                        m_map( nLoc ).setVisible();
+                        locQueue.push(nLoc);
+                        m_frontier.erase( nLoc );
+                    }
+                    else
+                    {
+                        if( m_map( nLoc ).content == Square::UNKNOWN )
+                        {
+                            m_frontier.insert( nLoc );
+                        }
+                    }
                 }
                 visited[nLoc.row][nLoc.col] = 1;
             }
         }
     }
+  
 };
 
 
 ostream& operator<<(ostream &os, const State &state)
 {
+    /*
+    // Print out frontier map
+    std::cerr "============================" << std::endl;
+    for( int i = 0; i < state.m_rows; ++i )
+    {
+        for( int j = 0; j < state.m_cols; ++j )
+        {
+            if( state.m_frontier.find( Location( i, j ) ) != state.m_frontier.end() )
+                os << "* ";
+
+            else
+                os << "  ";
+        }
+        os << std::endl;
+    }
+    std::cerr "============================" << std::endl;
+    */
     os << state.m_map << std::endl;
     return os;
 }

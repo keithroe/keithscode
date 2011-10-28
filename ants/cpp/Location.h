@@ -18,6 +18,7 @@ struct Location;
 Location offset( const Location& loc, const int direction[ 2 ] );
 Location wrap( const Location& loc, int max_row, int max_col );
 std::ostream& operator<<( std::ostream& out, const Location& loc );
+bool operator<( const Location& loc0, const Location& loc1 );
 
 //
 // Location class
@@ -39,6 +40,8 @@ struct Location
 
     void offset( const int direction[ 2 ] );
     void wrap( int max_row, int max_col );
+
+    int  hash()const { return ( row << 16  ) + col; }
 
     bool operator==(const Location& other )
     { return row == other.row && col == other.col; }
@@ -74,5 +77,9 @@ inline Location wrap( const Location& loc, int max_row, int max_col )
     return temp;
 }
 
+inline bool operator<( const Location& loc0, const Location& loc1 )
+{
+    return loc0.hash() < loc1.hash();
+}
 
 #endif //LOCATION_H_

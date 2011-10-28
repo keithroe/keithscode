@@ -42,7 +42,7 @@ int main( int argc, char** argv )
     while( path.nextStep() != NONE )
     {
        Direction d = path.popNextStep();
-       std::cerr << " TAking step " << i++ << ":" << DIRECTION_CHAR[ d ] << std::endl;
+       std::cerr << " Step " << i++ << ": in direction '" << DIRECTION_CHAR[ d ] << "'" << std::endl;
        orig = map.getLocation( orig, d );
        map( orig ).ant = 0;
        std::cout << map << std::endl;
