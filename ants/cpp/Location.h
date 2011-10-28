@@ -1,3 +1,4 @@
+
 #ifndef LOCATION_H_
 #define LOCATION_H_
 
@@ -7,6 +8,7 @@
 //
 //------------------------------------------------------------------------------
 
+#include <ostream>
 
 struct Location;
 
@@ -15,6 +17,7 @@ struct Location;
 //
 Location offset( const Location& loc, const int direction[ 2 ] );
 Location wrap( const Location& loc, int max_row, int max_col );
+std::ostream& operator<<( std::ostream& out, const Location& loc );
 
 //
 // Location class

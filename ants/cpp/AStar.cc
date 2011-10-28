@@ -29,8 +29,14 @@ AStar::AStar( const Map& map, const Location& goal, const std::vector<Location>&
 bool AStar::search()
 {
 
-    while( m_cur_depth++ > m_max_depth && m_open.size() > 0 )
+    std::cerr << " searching ...." << std::endl;
+
+    while( m_open.size() > 0 )
+    {
+      std::cerr << "   stepping...." << std::endl;
+        
         if( step() ) return true;
+    }
 
     return false;
 }
@@ -40,6 +46,10 @@ bool AStar::step()
 {
     Node* current = m_open.front();
 
+    //std::cerr << "checking: " << current->loc << std::endl;
+    Location f;
+    //std::cerr << current->loc;
+    std::cerr << f; 
     //
     // Check to see if we have reached our goal
     //
@@ -47,7 +57,6 @@ bool AStar::step()
     {
         // Backtrack to create path
         m_path.clear();
-        m_path.reserve( m_cur_depth );
         while( current->child != 0 ) 
         {
             m_path.push_back( current->dir );
@@ -116,13 +125,16 @@ bool AStar::step()
             continue;
 
         // We need to add a new node to our open list
-        Node* neighbor_node = new Node( neighbor_loc,
-                                        static_cast<Direction>( i ),
-                                        current->g+1,
-                                        m_map.manhattanDistance( neighbor_loc, m_goal ),
-                                        current ); 
-        m_open.push_back( neighbor_node );
-        std::push_heap( m_open.begin(), m_open.end(), NodeCompare() );
+        if( current->g+1 < m_max_depth )
+        {
+            Node* neighbor_node = new Node( neighbor_loc,
+                                            static_cast<Direction>( i ),
+                                            current->g+1,
+                                            m_map.manhattanDistance( neighbor_loc, m_goal ),
+                                            current ); 
+            m_open.push_back( neighbor_node );
+            std::push_heap( m_open.begin(), m_open.end(), NodeCompare() );
+        }
     }
 
     //

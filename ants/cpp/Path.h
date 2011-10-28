@@ -24,9 +24,11 @@ public:
     template <class Iter>
     void assign( const Location& origin, const Location& destination, Iter begins, Iter ends );
 
-    Location origin()const             { return m_origin;          }
-    Location destination()const        { return m_destination;     }
+    Location  origin()const             { return m_origin;          }
+    Location  destination()const        { return m_destination;     }
+    unsigned  size()const               { return m_steps.size();    }
     Direction nextStep();
+    Direction popNextStep();
 
 private:
     Location               m_origin;
