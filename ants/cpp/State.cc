@@ -97,77 +97,14 @@ void State::updateVisionInformation()
     }
 };
 
-/*
-    This is the output function for a state. It will add a char map
-    representation of the state to the output stream passed to it.
 
-    For example, you might call "cout << state << endl;"
-*/
 ostream& operator<<(ostream &os, const State &state)
 {
-    os << "------------------------------------------------------------------" << std::endl;
-    for(int row=0; row<state.m_rows; row++)
-    {
-        for(int col=0; col<state.m_cols; col++)
-        {
-            const Square& square = state.m_map( row, col );
-            os << ' ';
-            switch( square.content )
-            {
-                case Square::WATER:
-                {
-                    os << 'w';
-                    break;
-                }
-                case Square::FOOD:
-                {
-                    os << 'f';
-                    break;
-                }
-                case Square::HILL:
-                {
-                    os << static_cast<char>( 'A' + square.hill );
-                    break;
-                }
-                case Square::EMPTY:
-                {
-                    if( square.ant >= 0 )
-                    {
-                        os << static_cast<char>( 'a' + state.map()( row, col ).ant );
-                    }
-                    else 
-                    {
-                      os << (square.isVisible ? ' ' : '.');
-                    }
-                    break;
-
-                }
-                case Square::UNKNOWN:
-                {
-                    os << '?';
-                    break;
-                }
-
-            }
-        }
-        os << endl;
-    }
-    os << "------------------------------------------------------------------" << std::endl;
-    
-    for(int row=0; row<state.m_rows; row++)
-    {
-        for(int col=0; col<state.m_cols; col++)
-        {
-            os << " " << state.m_map( row, col ).priority; 
-        }
-        os << endl;
-    }
-
-    os << "------------------------------------------------------------------" << std::endl;
+    os << state.m_map << std::endl;
     return os;
 }
 
-//input function
+
 istream& operator>>(istream &is, State &state)
 {
     int row, col, player;

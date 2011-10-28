@@ -2,6 +2,7 @@
 #include "Map.h"
 #include "Location.h"
 #include <cstdlib>
+#include <ostream>
 #include <cmath>
     
 Map::Map()
@@ -117,3 +118,67 @@ void Map::makeMove( const Location &loc, Direction direction )
     m_grid[ new_loc.row ][ new_loc.col ].newAnt = m_grid[loc.row][loc.col].ant;
 }
 
+
+
+std::ostream& operator<<( std::ostream &os, const Map& map )
+{
+    os << "------------------------------------------------------------------" << std::endl;
+    for( unsigned i = 0u; i < map.m_height; ++i )
+    {
+        for( unsigned j = 0u; j < map.m_width; ++j )
+        {
+            const Square& square = map.m_grid[ i ][ j ];
+            os << ' ';
+            switch( square.content )
+            {
+                case Square::WATER:
+                {
+                    os << 'w';
+                    break;
+                }
+                case Square::FOOD:
+                {
+                    os << 'f';
+                    break;
+                }
+                case Square::HILL:
+                {
+                    os << static_cast<char>( 'A' + square.hill );
+                    break;
+                }
+                case Square::EMPTY:
+                {
+                    if( square.ant >= 0 )
+                    {
+                        os << static_cast<char>( 'a' + square.ant );
+                    }
+                    else 
+                    {
+                      os << (square.isVisible ? ' ' : '.');
+                    }
+                    break;
+
+                }
+                case Square::UNKNOWN:
+                {
+                    os << '?';
+                    break;
+                }
+            }
+        }
+        os << std::endl;
+    }
+    os << "------------------------------------------------------------------" << std::endl;
+    
+    for( unsigned i = 0u; i < map.m_height; ++i )
+    {
+        for( unsigned j = 0u; j < map.m_width; ++j )
+        {
+            os << " " << map.m_grid[ i ][ j ].priority; 
+        }
+        os << std::endl;
+    }
+
+    os << "------------------------------------------------------------------" << std::endl;
+    return os;
+}
