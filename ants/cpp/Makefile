@@ -17,27 +17,30 @@ HEADERS= AStar.h \
 SOURCES= AStar.cc \
 		 Bot.cc \
 		 Map.cc \
-         MyBot.cc \
          Path.cc \
          PathFinder.cc \
          State.cc
 
 OBJECTS=$(SOURCES:.cc=.o)
-EXECUTABLE=MyBot
+MYBOT=MyBot
+ASTARTEST=astartest
 
 #Uncomment the following to enable debugging
 #CFLAGS+=-g -DDEBUG
 
-all: $(OBJECTS) $(EXECUTABLE)
+all: $(OBJECTS) $(MYBOT) $(ASTARTEST)
 
-$(EXECUTABLE): $(OBJECTS) $(HEADERS) 
-	$(CC) $(LDFLAGS) $(OBJECTS) -o $@
+$(MYBOT): MyBot.o $(OBJECTS)  $(HEADERS) 
+	$(CC) $(LDFLAGS) MyBot.o $(OBJECTS) -o $@
+
+$(ASTARTEST): AStarTest.o $(OBJECTS) $(HEADERS) 
+	$(CC) $(LDFLAGS) AStarTest.o $(OBJECTS) -o $@
 
 %.o : %.cc $(HEADERS) 
 	$(CC) $(CFLAGS) $< -o $@
 
 clean: 
-	-rm -f ${EXECUTABLE} ${OBJECTS} *.d
+	-rm -f ${EXECUTABLE} AStarTest.o MyBot.o ${OBJECTS} *.d
 	-rm -f debug.txt
 
 zip:

@@ -47,6 +47,8 @@ public:
     void rangeCheck( unsigned row, unsigned col )const
     { assert( row < m_height &&  col < m_width ); }
 
+    
+    friend std::ostream& operator<<(std::ostream &os, const Map& map);
 
 private:
     void getDxDy( const Location& loc0, const Location& loc1, int& dx, int& dy )const;
