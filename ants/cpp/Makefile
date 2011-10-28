@@ -40,7 +40,7 @@ $(ASTARTEST): AStarTest.o $(OBJECTS) $(HEADERS)
 	$(CC) $(CFLAGS) $< -o $@
 
 clean: 
-	-rm -f ${EXECUTABLE} AStarTest.o MyBot.o ${OBJECTS} *.d
+	-rm -f ${EXECUTABLE} MyBot astartest AStarTest.o MyBot.o ${OBJECTS} *.d
 	-rm -f debug.txt
 
 zip:
