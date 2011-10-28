@@ -45,7 +45,7 @@ void Bot::makeMoves()
     m_taken.clear();
     m_state.prioritizeMap();
 
-    m_state.debug() << m_state << std::endl;
+    m_state.debug() << m_state.map() << std::endl;
 
     //picks out moves for each ant
     for( int ant = 0; ant < m_state.myAnts().size(); ++ant )

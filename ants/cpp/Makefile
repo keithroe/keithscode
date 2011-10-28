@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS=-O3 -funroll-loops -c 
+CFLAGS=-O3 -funroll-loops -c  -DDEBUG
 LDFLAGS=-O2 -lm
 
 HEADERS= AStar.h \

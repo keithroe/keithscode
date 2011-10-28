@@ -112,6 +112,18 @@ void State::updateVisionInformation()
 
 ostream& operator<<(ostream &os, const State &state)
 {
+    os << "Game state:\n"
+       << "  Map dim     : " << state.m_rows << "x" << state.m_cols << std::endl
+       << "  Max turns   : " << state.m_turns << std::endl
+       << "  Num players : " << state.m_num_players << std::endl
+       << "  Attack rad  : " << state.m_attack_radius << std::endl
+       << "  Spawn rad   : " << state.m_spawn_radius << std::endl
+       << "  View rad    : " << state.m_view_radius << std::endl
+       << "  Load time   : " << state.m_load_time << std::endl
+       << "  Turn time   : " << state.m_turn_time << std::endl;
+
+    os << state.m_map << std::endl;
+    
     /*
     // Print out frontier map
     std::cerr "============================" << std::endl;
@@ -129,7 +141,6 @@ ostream& operator<<(ostream &os, const State &state)
     }
     std::cerr "============================" << std::endl;
     */
-    os << state.m_map << std::endl;
     return os;
 }
 
