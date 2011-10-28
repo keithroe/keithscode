@@ -3,11 +3,11 @@ CFLAGS=-O3 -funroll-loops -c -DDEBUG
 LDFLAGS=-O2 -lm
 
 HEADERS= AStar.h \
-		 Bot.h \
+         Bot.h \
          Bug.h \
-		 Direction.h \
+         Direction.h \
          Location.h \
-		 Map.h \
+         Map.h \
          Path.h \
          PathFinder.h \
          Square.h \
@@ -15,8 +15,9 @@ HEADERS= AStar.h \
          Timer.h
 
 SOURCES= AStar.cc \
-		 Bot.cc \
-		 Map.cc \
+         Bot.cc \
+         Location.cc \
+         Map.cc \
          Path.cc \
          PathFinder.cc \
          State.cc

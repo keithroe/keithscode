@@ -6,6 +6,7 @@
 #include "Square.h"
 #include "Location.h"
 #include <cassert>
+#include <ostream>
 
 
 
@@ -48,7 +49,7 @@ public:
     { assert( row < m_height &&  col < m_width ); }
 
     
-    friend std::ostream& operator<<(std::ostream &os, const Map& map);
+    friend std::ostream& operator<<(std::ostream& os, const Map& map);
 
 private:
     void getDxDy( const Location& loc0, const Location& loc1, int& dx, int& dy )const;
