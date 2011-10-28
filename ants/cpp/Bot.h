@@ -30,6 +30,7 @@ private:
     
     State m_state;
     std::vector< Location >  m_taken;
+
 };
 
 #endif //BOT_H_

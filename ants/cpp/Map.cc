@@ -169,6 +169,7 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
         os << std::endl;
     }
     os << "------------------------------------------------------------------" << std::endl;
+    /*
     
     for( unsigned i = 0u; i < map.m_height; ++i )
     {
@@ -180,5 +181,6 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
     }
 
     os << "------------------------------------------------------------------" << std::endl;
+    */
     return os;
 }

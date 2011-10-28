@@ -60,8 +60,8 @@ public:
         { return n0->f() > n1->f(); }
     };
 
-    AStar( const Map& map, const Location& goal_loc, const Location& start_loc );
-    AStar( const Map& map, const Location& goal_loc, const std::vector<Location>& start_locs );
+    AStar( const Map& map, const Location& start_loc, const Location& goal_loc );
+    AStar( const Map& map, const std::vector<Location>& start_locs, const Location& goal_loc );
 
     void setMaxDepth( unsigned max_depth )   { m_max_depth = max_depth; }
 

@@ -2,6 +2,7 @@
 #define SQUARE_H_
 
 #include <vector>
+#include <string>
 
 /*
     struct for representing a square in the grid.
@@ -34,6 +35,8 @@ struct Square
     void setVisible();
 
     bool isAvailable()const;
+
+    static std::string contentString( Content c );
 
     //
     // Members
@@ -87,6 +90,12 @@ inline void Square::setVisible()
 inline bool Square::isAvailable()const
 {
     return newAnt < 0 && hill != 0 && content != WATER; 
+}
+
+inline std::string Square::contentString( Content c )
+{
+    static const char* lookup[5] = { "WATER", "HILL", "FOOD", "EMPTY", "UNKNOWN" };
+    return lookup[ c ]; 
 }
 
 #endif //SQUARE_H_

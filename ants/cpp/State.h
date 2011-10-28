@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <stdint.h>
+#include <set>
 
 #include "Timer.h"
 #include "Bug.h"
@@ -19,7 +20,7 @@ class State
 {
 public:
     typedef std::vector< Location >            Locations;
-    //typedef std::Set< Location >               LocationSet;
+    typedef std::set< Location >               LocationSet;
 
     State();
     ~State();
@@ -40,6 +41,7 @@ public:
     const Locations&   myHills()const           { return m_my_hills;      }
     const Locations&   enemyHills()const        { return m_enemy_hills;   }
     const Locations&   food()const              { return m_food;          }
+    const LocationSet& frontier()const          { return m_frontier;      }
     int                turn() const             { return m_turn;          }
     float              attackRadius()           { return m_attack_radius; }
     float              spawnRadius()            { return m_spawn_radius;  }
@@ -79,6 +81,7 @@ private:
     Locations                 m_my_hills;
     Locations                 m_enemy_hills;
     Locations                 m_food;
+    LocationSet               m_frontier;
 
     //LocationSet               m_destinations;
 

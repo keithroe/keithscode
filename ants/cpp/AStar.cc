@@ -3,7 +3,7 @@
 #include "Path.h"
 #include <algorithm>
 
-AStar::AStar( const Map& map, const Location& goal, const Location& start )
+AStar::AStar( const Map& map, const Location& start, const Location& goal )
     : m_map( map ),
       m_goal( goal ),
       m_cur_depth( 0 ),
@@ -13,7 +13,7 @@ AStar::AStar( const Map& map, const Location& goal, const Location& start )
 }
 
 
-AStar::AStar( const Map& map, const Location& goal, const std::vector<Location>& starts )
+AStar::AStar( const Map& map, const std::vector<Location>& starts, const Location& goal )
     : m_map( map ),
       m_goal( goal ),
       m_cur_depth( 0 ),
@@ -29,12 +29,10 @@ AStar::AStar( const Map& map, const Location& goal, const std::vector<Location>&
 bool AStar::search()
 {
 
-    std::cerr << " searching ...." << std::endl;
+    std::cerr << " searching for route from " << m_open.front()->loc << " to " << m_goal << " ...." << std::endl;
 
     while( m_open.size() > 0 )
     {
-      std::cerr << "   stepping...." << std::endl;
-        
         if( step() ) return true;
     }
 
@@ -45,11 +43,8 @@ bool AStar::search()
 bool AStar::step()
 {
     Node* current = m_open.front();
-
     //std::cerr << "checking: " << current->loc << std::endl;
-    Location f;
-    //std::cerr << current->loc;
-    std::cerr << f; 
+
     //
     // Check to see if we have reached our goal
     //
@@ -92,8 +87,19 @@ bool AStar::step()
     for( int i = 0; i < NUM_DIRECTIONS; ++i )
     {
         Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
+        //std::cerr << "        neighbor " << neighbor_loc << std::endl;
 
-        if( !m_map( neighbor_loc ).isAvailable() ) continue;
+        if( !m_map( neighbor_loc ).isAvailable() ) 
+        { 
+          /*
+            const Square& square = m_map( neighbor_loc );
+            std::cerr << "             not avail" << std::endl;
+            std::cerr << "             ant  " << square.newAnt  << std::endl;
+            std::cerr << "             hill " << square.hill    << std::endl;
+            std::cerr << "             cont " << Square::contentString( square.content )<< std::endl;
+            */
+            continue;
+        }
 
         NodeVec::iterator it = m_open.begin();
         for( ; it != m_open.end(); ++it )
@@ -103,6 +109,7 @@ bool AStar::step()
         // Search through open list for this neighbor
         if( it != m_open.end() )
         {
+            //std::cerr << "             in open already" << std::endl;
             Node* open_node = *it;
             if( current->g + 1 < open_node->g )
             {
@@ -127,6 +134,7 @@ bool AStar::step()
         // We need to add a new node to our open list
         if( current->g+1 < m_max_depth )
         {
+            //std::cerr << "     pushing " << neighbor_loc << std::endl;
             Node* neighbor_node = new Node( neighbor_loc,
                                             static_cast<Direction>( i ),
                                             current->g+1,

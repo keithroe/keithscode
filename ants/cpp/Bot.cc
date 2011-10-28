@@ -82,7 +82,16 @@ void Bot::makeMove( const Location& cur_location )
 
     std::vector<Candidate> candidates; 
 
-    // Look for local food first
+    // Hills 
+    const State::Locations& hills = m_state.enemyHills();
+    for( State::Locations::const_iterator it = hills.begin(); it != hills.end(); ++it )
+    {
+        //float dist = m_state.map().distance( cur_location, *it );
+        //if( dist <= m_state.viewRadius() )
+          candidates.push_back( std::make_pair( 30 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
+    }
+
+    // Food 
     const State::Locations& food = m_state.food();
     for( State::Locations::const_iterator it = food.begin(); it != food.end(); ++it )
     {
@@ -91,9 +100,17 @@ void Bot::makeMove( const Location& cur_location )
           candidates.push_back( std::make_pair( 10 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
     }
 
+    // Unexplored areas
+    const State::LocationSet frontier = m_state.frontier();
+    for( State::LocationSet::iterator it = frontier.begin(); it != frontier.end(); ++it )
+    {
+        candidates.push_back( std::make_pair( 0 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
+    }
+
+
     if( candidates.empty() ) 
     {
-      for( int d = 1; d < NUM_DIRECTIONS; ++d )
+      for( int d = 0; d < NUM_DIRECTIONS; ++d )
       {
         Location loc = m_state.map().getLocation( cur_location, static_cast<Direction>( d ) );
 
