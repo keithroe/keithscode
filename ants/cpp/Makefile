@@ -1,9 +1,11 @@
 CC=g++
-CFLAGS=-O3 -funroll-loops -c  -DDEBUG
+#CFLAGS=-O3 -funroll-loops -c  -DDEBUG
+CFLAGS=-g -funroll-loops -c  -DDEBUG
 LDFLAGS=-O2 -lm
 
 HEADERS= Ant.h \
-		 AStar.h \
+         AStar.h \
+         BFS.h \
          Bot.h \
          Debug.h \
          Direction.h \
@@ -16,6 +18,7 @@ HEADERS= Ant.h \
          Timer.h
 
 SOURCES= AStar.cc \
+         BFS.cc \
          Bot.cc \
          Location.cc \
          Map.cc \

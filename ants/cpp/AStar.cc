@@ -15,18 +15,6 @@ AStar::AStar( const Map& map, const Location& start, const Location& goal )
 }
 
 
-AStar::AStar( const Map& map, const std::vector<Location>& starts, const Location& goal )
-    : m_map( map ),
-      m_goal( goal ),
-      m_max_depth( 20 )
-{
-    for( std::vector<Location>::const_iterator it = starts.begin(); it != starts.end(); ++it )
-        m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, goal ), 0 ) );
-
-    std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
-}
-
-
 bool AStar::search()
 {
 
@@ -67,8 +55,8 @@ bool AStar::step()
             delete *it;
         m_open.clear();
 
-        for( NodeVec::const_iterator it = m_closed.begin(); it != m_closed.end(); ++it )
-            delete *it;
+        for( LocationToNode::const_iterator it = m_closed.begin(); it != m_closed.end(); ++it )
+            delete (it->second);
         m_closed.clear();
 
         // Indicate search completion
@@ -80,7 +68,7 @@ bool AStar::step()
     //
     std::pop_heap( m_open.begin(), m_open.end(), NodeCompare() );
     m_open.pop_back();
-    m_closed.push_back( current );
+    m_closed.insert( std::make_pair( current->loc, current ) );
 
     //
     // Process all neighbors
@@ -123,17 +111,9 @@ bool AStar::step()
             continue;
         }
 
-        // Search through closed list for this neighbor
-        it = m_closed.begin();
-        for( ; it != m_closed.end(); ++it )
-            if( (*it)->loc == neighbor_loc )
-                break;
-
-        if( it != m_closed.end() )
-        {
-            // Debug::stream() << "        in closed already" << std::endl;
+        // Check to see if this neighbor is in closed set 
+        if( m_closed.find( neighbor_loc ) != m_closed.end() )
             continue;
-        }
 
         // We need to add a new node to our open list
         if( current->g+1 < m_max_depth )
@@ -148,7 +128,6 @@ bool AStar::step()
             std::push_heap( m_open.begin(), m_open.end(), NodeCompare() );
             continue;
         }
-
         //Debug::stream() << "        max_depth reached" << std::endl;
     }
 
