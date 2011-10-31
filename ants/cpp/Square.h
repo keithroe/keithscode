@@ -46,7 +46,6 @@ struct Square
 
     bool isVisible;            ///< Is this square visible to any ants?
     int  ant;                  ///< Start of turn ant player id, -1 if none
-    int  newAnt;               ///< End of turn ant player id, -1 if none
     int  hill;                 ///< Hill player id, -1 if none
     int  priority;             ///< Priority for nearby ants
 
@@ -59,7 +58,6 @@ inline Square::Square()
     : content( UNKNOWN ),
       isVisible( false ),
       ant( -1 ),
-      newAnt( -1 ),
       hill( -1 ),
       priority( 0 )
 {
@@ -72,7 +70,6 @@ inline void Square::reset()
 
     isVisible   = false;
     ant         = -1;
-    newAnt      = -1;
     hill        = -1;
     priority    =  0;
 
@@ -89,7 +86,7 @@ inline void Square::setVisible()
 
 inline bool Square::isAvailable()const
 {
-    return newAnt < 0 && hill != 0 && content != WATER; 
+    return ant < 0 && hill != 0 && content != WATER; 
 }
 
 inline std::string Square::contentString( Content c )

@@ -7,24 +7,21 @@ using namespace std;
 
 State::State()
     : m_game_over( 0 ),
-      m_turn( 0 ),
-      //m_debug( "./debug.txt" )
-      m_debug()
+      m_turn( 0 )
 {
-};
+}
 
 
 State::~State()
 {
-    m_debug.close();
-};
+}
 
 
 void State::setup()
 {
-};
+}
 
-//resets all non-water squares to land and clears the bots ant vector
+
 void State::reset()
 {
     m_my_ants.clear();
@@ -33,17 +30,16 @@ void State::reset()
     m_enemy_hills.clear();
     m_food.clear();
     m_map.reset();
-};
+}
 
-//outputs move information to the engine
+
 void State::makeMove(const Location &loc, Direction direction)
 {
-    m_debug << "<<o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << ">> " << endl;
     cout << "o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << endl;
     m_map.makeMove( loc, direction );
-};
+}
 
-//returns the euclidean distance between two locations with the edges wrapped
+
 float State::getDistance(const Location &loc1, const Location &loc2)const
 {
     int d1 = abs(loc1.row-loc2.row),
@@ -51,26 +47,25 @@ float State::getDistance(const Location &loc1, const Location &loc2)const
         dr = min(d1, m_rows-d1),
         dc = min(d2, m_cols-d2);
     return sqrtf(dr*dr + dc*dc);
-};
+}
 
 
-/*
-    This function will update update the lastSeen value for any squares currently
-    visible by one of your live ants.
-
-    BE VERY CAREFUL IF YOU ARE GOING TO TRY AND MAKE THIS FUNCTION MORE EFFICIENT,
-    THE OBVIOUS WAY OF TRYING TO IMPROVE IT BREAKS USING THE EUCLIDEAN METRIC, FOR
-    A CORRECT MORE EFFICIENT IMPLEMENTATION, TAKE A LOOK AT THE GET_VISION FUNCTION
-    IN ANTS.PY ON THE CONTESTS GITHUB PAGE.
-*/
 void State::updateVisionInformation()
 {
+    // This function will update update the lastSeen value for any squares currently
+    // visible by one of your live ants.
+
+    // BE VERY CAREFUL IF YOU ARE GOING TO TRY AND MAKE THIS FUNCTION MORE EFFICIENT,
+    // THE OBVIOUS WAY OF TRYING TO IMPROVE IT BREAKS USING THE EUCLIDEAN METRIC, FOR
+    // A CORRECT MORE EFFICIENT IMPLEMENTATION, TAKE A LOOK AT THE GET_VISION FUNCTION
+    // IN ANTS.PY ON THE CONTESTS GITHUB PAGE.
+    
     std::queue<Location> locQueue;
     Location sLoc, cLoc, nLoc;
 
     for(int a=0; a<(int) m_my_ants.size(); a++)
     {
-        sLoc = m_my_ants[a];
+        sLoc = m_my_ants[a].location;
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(m_rows, std::vector<bool>(m_cols, 0));
@@ -107,7 +102,7 @@ void State::updateVisionInformation()
         }
     }
   
-};
+}
 
 
 ostream& operator<<(ostream &os, const State &state)
@@ -126,7 +121,7 @@ ostream& operator<<(ostream &os, const State &state)
     
     /*
     // Print out frontier map
-    std::cerr "============================" << std::endl;
+    os << "============================" << std::endl;
     for( int i = 0; i < state.m_rows; ++i )
     {
         for( int j = 0; j < state.m_cols; ++j )
@@ -139,7 +134,7 @@ ostream& operator<<(ostream &os, const State &state)
         }
         os << std::endl;
     }
-    std::cerr "============================" << std::endl;
+    os << "============================" << std::endl;
     */
     return os;
 }
@@ -232,10 +227,20 @@ istream& operator>>(istream &is, State &state)
                 is >> row >> col >> player;
                 state.m_map( row, col ).ant = player;
                 if(player == 0)
-                    state.m_my_ants.push_back(Location(row, col));
+                {
+                    // TODO:
+                    // TODO: optimize pls
+                    // TODO:
+                    State::AntHash::iterator prev_ant =  state.m_my_prev_ants.find( Location( row, col ) );
+                    if(  prev_ant == state.m_my_prev_ants.end() )
+                        state.m_my_ants.push_back( Ant( Location(row, col ) ) );
+                    else
+                        state.m_my_ants.push_back( prev_ant->second );
+                }
                 else
-                    // TODO: need to embed enemy id (needed for intelligent battle)
+                {
                     state.m_enemy_ants.push_back(Location(row, col)); 
+                }
             }
             else if(inputType == "d") //dead ant square
             {
@@ -273,6 +278,8 @@ istream& operator>>(istream &is, State &state)
                 getline(is, junk);
         }
     }
+
+    state.m_my_prev_ants.clear();
 
     return is;
 };

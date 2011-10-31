@@ -20,6 +20,7 @@ Location wrap( const Location& loc, int max_row, int max_col );
 std::ostream& operator<<( std::ostream& out, const Location& loc );
 bool operator<( const Location& loc0, const Location& loc1 );
 
+
 //
 // Location class
 //
