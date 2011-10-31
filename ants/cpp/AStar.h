@@ -25,22 +25,46 @@
 //
 
 //
-// TODO: Better handling of path finding failures
+// TODO: Better handling of path finding failures.
+// TODO: Make sure handle calling search multiple times for single instance
 //
 //
 
 #include "Direction.h"
 #include "Location.h"
-#include <set>
+#include "Map.h"
+
+#include <algorithm>
+#include <map>
 #include <vector>
 
-class Map;
+
 class Path;
 
 class AStar
 {
 public:
+    AStar( const Map& map, const Location& start_loc, const Location& goal_loc );
 
+    template<class Iter>
+    AStar( const Map& map, Iter begins, Iter ends, const Location& goal );
+
+    void setMaxDepth( unsigned max_depth )   { m_max_depth = max_depth; }
+
+    bool search();
+
+    void getPath( Path& path )const;
+
+private:
+    //
+    // Uncopyable
+    //
+    AStar( const AStar& );
+    AStar& operator=( const AStar& );
+
+    // 
+    // A candidate node in the search.
+    //
     struct Node
     {
         Node() : dir( NONE ), g( 0 ), h( 0 ), child( 0 ) {}
@@ -56,8 +80,8 @@ public:
         int h;
         Node* child;
     };
-
-
+    
+    /// For heap sorting our open set
     struct NodeCompare
     {
         bool operator()( const Node* n0, const Node* n1 )
@@ -65,25 +89,14 @@ public:
     };
 
 
-    AStar( const Map& map, const Location& start_loc, const Location& goal_loc );
-    AStar( const Map& map, const std::vector<Location>& start_locs, const Location& goal_loc );
-
-    void setMaxDepth( unsigned max_depth )   { m_max_depth = max_depth; }
-
-    bool search();
-
-
-    void getPath( Path& path )const;
-
-private:
     bool step();
 
-    typedef std::vector<Direction> DirectionVec;
-    typedef std::vector<Node*>     NodeVec;
-    typedef std::vector<Location>  LocationVec;
+    typedef std::vector<Direction>   DirectionVec;
+    typedef std::vector<Node*>       NodeVec;
+    typedef std::map<Location,Node*> LocationToNode;
 
     NodeVec               m_open;      ///< Heapified list of candidate nodes
-    NodeVec               m_closed;    ///< Processed nodes
+    LocationToNode        m_closed;    ///< Processed nodes
 
     DirectionVec          m_path;      ///< Results of search
     Location              m_origin;    ///< Starting node of path
@@ -95,6 +108,17 @@ private:
 };
 
 
+
+template<class Iter>
+AStar::AStar( const Map& map, Iter begins, Iter ends, const Location& goal )
+    : m_map( map ),
+      m_goal( goal ),
+      m_max_depth( 20 )
+{
+    for( Iter it = begins; it != ends; ++it )
+        m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, goal ), 0 ) );
+    std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
+}
 
 
 #endif // ASTAR_H_
