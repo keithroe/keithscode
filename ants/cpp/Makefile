@@ -1,7 +1,6 @@
 CC=g++
-#CFLAGS=-O3 -funroll-loops -c  -DDEBUG
-CFLAGS=-g -funroll-loops -c  -DDEBUG
-LDFLAGS=-O2 -lm
+CFLAGS= -O3 -funroll-loops
+LDFLAGS= -lm
 
 HEADERS= Ant.h \
          AStar.h \
@@ -31,18 +30,18 @@ MYBOT=MyBot
 ASTARTEST=astartest
 
 #Uncomment the following to enable debugging
-#CFLAGS+=-g -DDEBUG
+CFLAGS += -g -DDEBUG
 
 all: $(OBJECTS) $(MYBOT) $(ASTARTEST)
 
 $(MYBOT): MyBot.o $(OBJECTS)  $(HEADERS) 
-	$(CC) $(LDFLAGS) MyBot.o $(OBJECTS) -o $@
+	$(CC)  $(CFLAGS) $(LDFLAGS) MyBot.o $(OBJECTS) -o $@
 
 $(ASTARTEST): AStarTest.o $(OBJECTS) $(HEADERS) 
 	$(CC) $(LDFLAGS) AStarTest.o $(OBJECTS) -o $@
 
 %.o : %.cc $(HEADERS) 
-	$(CC) $(CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $< -o $@
 
 clean: 
 	-rm -f ${EXECUTABLE} MyBot astartest AStarTest.o MyBot.o ${OBJECTS} *.d
