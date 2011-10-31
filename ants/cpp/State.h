@@ -1,17 +1,19 @@
 #ifndef STATE_H_
 #define STATE_H_
 
-#include <iostream>
-#include <vector>
-#include <stdint.h>
-#include <set>
 
-#include "Timer.h"
-#include "Bug.h"
+#include "Ant.h"
+#include "Direction.h"
+#include "Location.h"
 #include "Map.h"
 #include "Square.h"
-#include "Location.h"
-#include "Direction.h"
+#include "Timer.h"
+
+#include <iostream>
+#include <set>
+#include <map>
+#include <stdint.h>
+#include <vector>
 
 /*
     struct to store current state information
@@ -19,8 +21,10 @@
 class State
 {
 public:
-    typedef std::vector< Location >            Locations;
-    typedef std::set< Location >               LocationSet;
+    typedef std::vector<Location>       Locations;
+    typedef std::set<Location>          LocationSet;
+    typedef std::vector<Ant>            Ants;
+    typedef std::map<Location, Ant>     AntHash;
 
     State();
     ~State();
@@ -32,11 +36,10 @@ public:
     
     void updateVisionInformation();
 
-    Bug&               debug()                  { return m_debug;         }
     Timer&             timer()                  { return m_timer;         }
 
     const Map&         map() const              { return m_map;           }
-    const Locations&   myAnts()const            { return m_my_ants;       }
+    const Ants&        myAnts()const            { return m_my_ants;       }
     const Locations&   enemyAnts()const         { return m_enemy_ants;    }
     const Locations&   myHills()const           { return m_my_hills;      }
     const Locations&   enemyHills()const        { return m_enemy_hills;   }
@@ -76,7 +79,8 @@ private:
     std::vector<float>        m_scores;
 
     Map                       m_map;
-    Locations                 m_my_ants;
+    Ants                      m_my_ants;
+    AntHash                   m_my_prev_ants;
     Locations                 m_enemy_ants;
     Locations                 m_my_hills;
     Locations                 m_enemy_hills;
@@ -85,7 +89,6 @@ private:
 
     //LocationSet               m_destinations;
 
-    Bug                       m_debug;
     Timer                     m_timer;
 
 

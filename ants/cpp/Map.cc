@@ -12,6 +12,7 @@ Map::Map()
 {
 }
 
+
 Map::Map( unsigned height, unsigned width)
     : m_height( height ),
       m_width( width )
@@ -54,7 +55,6 @@ void Map::reset()
     for( unsigned i = 0u; i < m_height; ++i )
         for( unsigned j = 0u; j < m_width; ++j )
             m_grid[ i ][ j ].reset();
-
 }
 
 
@@ -101,7 +101,6 @@ void Map::prioritize()
     for( unsigned i = 0u; i < m_height; ++i )
         for( unsigned j = 0u; j < m_width; ++j )
         {
-           
             // TODO: put this prioritization code into into separate code logic
             Square& square = m_grid[ i ][ j ];
             if( square.hill > 0                                      ) square.priority += 20;
@@ -115,7 +114,8 @@ void Map::prioritize()
 void Map::makeMove( const Location &loc, Direction direction )
 {
     Location new_loc = getLocation( loc, direction );
-    m_grid[ new_loc.row ][ new_loc.col ].newAnt = m_grid[loc.row][loc.col].ant;
+    m_grid[ new_loc.row ][ new_loc.col ].ant = m_grid[loc.row][loc.col].ant;
+    m_grid[ loc.row     ][ loc.col     ].ant = -1;
 }
 
 

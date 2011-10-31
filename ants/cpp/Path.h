@@ -2,8 +2,9 @@
 #ifndef PATH_H_
 #define PATH_H_
 
+#include "Direction.h"
 #include "Location.h"
-#include "State.h"
+
 #include <list>
 
 class Path
@@ -13,13 +14,6 @@ public:
 
     template <class Iter>
     Path( const Location& origin, const Location& destination, Iter begins, Iter ends );
-    /*
-        : m_origin( origin ),
-          m_destination( destination )
-    {
-        m_steps.assign( begins, ends );
-    }
-    */
 
     template <class Iter>
     void assign( const Location& origin, const Location& destination, Iter begins, Iter ends );

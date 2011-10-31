@@ -13,6 +13,8 @@ class Bot
 {
 public:
     Bot();
+    
+    ~Bot();
 
     /// plays a single game of Ants
     void playGame();
@@ -24,13 +26,13 @@ public:
     void endTurn();
 
 private:
-    void makeMove( const Location& cur_location );
+    void makeMove( const Ant& ant  );
 
     void chooseDestination( const Location& cur_location );
     
-    State m_state;
-    std::vector< Location >  m_taken;
 
+    float m_max_time;
+    State m_state;
 };
 
 #endif //BOT_H_

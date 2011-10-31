@@ -2,9 +2,10 @@ CC=g++
 CFLAGS=-O3 -funroll-loops -c  -DDEBUG
 LDFLAGS=-O2 -lm
 
-HEADERS= AStar.h \
+HEADERS= Ant.h \
+		 AStar.h \
          Bot.h \
-         Bug.h \
+         Debug.h \
          Direction.h \
          Location.h \
          Map.h \
