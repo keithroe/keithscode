@@ -24,6 +24,10 @@
 // by following parent pointers
 //
 
+//
+// TODO: Better handling of path finding failures
+//
+//
 
 #include "Direction.h"
 #include "Location.h"
@@ -68,11 +72,11 @@ public:
 
     bool search();
 
-    bool step();
 
     void getPath( Path& path )const;
 
 private:
+    bool step();
 
     typedef std::vector<Direction> DirectionVec;
     typedef std::vector<Node*>     NodeVec;
