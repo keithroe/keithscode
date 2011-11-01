@@ -18,7 +18,7 @@ AStar::AStar( const Map& map, const Location& start, const Location& goal )
 bool AStar::search()
 {
 
-    Debug::stream() << " searching for route from " << m_open.front()->loc << " to " << m_goal << " ...." << std::endl;
+    Debug::stream() << " A* searching for " << m_open.front()->loc << " to " << m_goal << " ...." << std::endl;
 
     while( m_open.size() > 0 )
     {
