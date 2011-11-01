@@ -28,7 +28,7 @@ int main( int argc, char** argv )
 
     std::cout << map << std::endl;
 
-    AStar astar( map, dest, orig );
+    AStar astar( map, orig, dest );
     if( !astar.search() ) std::cerr << "No path found!!!!!!" << std::endl;
     else                  std::cerr << "Path found" << std::endl;  
 

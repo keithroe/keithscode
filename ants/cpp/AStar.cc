@@ -6,19 +6,29 @@
 
 #include <algorithm>
 
-AStar::AStar( const Map& map, const Location& start, const Location& goal )
-    : m_map( map ),
-      m_goal( goal ),
-      m_max_depth( 20 )
+
+//
+//  Helpers
+//
+namespace
 {
-    m_open.push_back( new Node( start, NONE, 0, m_map.manhattanDistance( start, goal ), 0 ) );
+}
+
+
+
+AStar::AStar( const Map& map, const Location& start, const Location& destination )
+    : m_map( map ),
+      m_destination( destination ),
+      m_max_depth( 25 )
+{
+    m_open.push_back( new Node( start, NONE, 0, m_map.manhattanDistance( start, destination ), 0 ) );
 }
 
 
 bool AStar::search()
 {
 
-    Debug::stream() << " A* searching for " << m_open.front()->loc << " to " << m_goal << " ...." << std::endl;
+    Debug::stream() << " A* searching for " << m_open.front()->loc << " to " << m_destination << " ...." << std::endl;
 
     while( m_open.size() > 0 )
     {
@@ -32,12 +42,12 @@ bool AStar::search()
 bool AStar::step()
 {
     Node* current = m_open.front();
-    //Debug::stream() << "checking: " << current->loc << std::endl;
+    Debug::stream() << "checking: " << current->loc << std::endl;
 
     //
-    // Check to see if we have reached our goal
+    // Check to see if we have reached our destination
     //
-    if( current->loc == m_goal )
+    if( current->loc == m_destination )
     {
         // Backtrack to create path
         m_path.clear();
@@ -73,62 +83,55 @@ bool AStar::step()
     //
     // Process all neighbors
     //
-    for( int i = 0; i < NUM_DIRECTIONS; ++i )
+    if( current->g+1 < m_max_depth )
     {
-        Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
-        //Debug::stream() << "    neighbor " << neighbor_loc << std::endl;
-
-        if( !m_map( neighbor_loc ).isAvailable() ) 
-        { 
-            /*
-            const Square& square = m_map( neighbor_loc );
-            Debug::stream() << "       not avail" << std::endl;
-            Debug::stream() << "       ant  " << square.newAnt  << std::endl;
-            Debug::stream() << "       hill " << square.hill    << std::endl;
-            Debug::stream() << "       cont " << Square::contentString( square.content )<< std::endl;
-            */
-            continue;
-        }
-
-        NodeVec::iterator it = m_open.begin();
-        for( ; it != m_open.end(); ++it )
-            if( (*it)->loc == neighbor_loc )
-                break;
-
-        // Search through open list for this neighbor
-        if( it != m_open.end() )
+        for( int i = 0; i < NUM_DIRECTIONS; ++i )
         {
-            //Debug::stream() << "       in open already" << std::endl;
-            Node* open_node = *it;
-            if( current->g + 1 < open_node->g )
+            Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
+            Debug::stream() << "  neighbor : " << neighbor_loc << std::endl;
+
+            // Check to see if this neigbor is traversable
+            if( !m_map( neighbor_loc ).isAvailable() ) 
             {
-                // We have found a better path to this location.  update heap
-                open_node->g     = current->g+1;
-                open_node->child = current;
-                open_node->dir   = static_cast<Direction>( i );
-                std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
+                Debug::stream() << "    not available " << m_map( neighbor_loc ) << std::endl;
+                continue;
             }
-            continue;
-        }
+            
+            // Check to see if this neighbor is in closed set 
+            if( m_closed.find( neighbor_loc ) != m_closed.end() )
+            {
+                Debug::stream() << "    in closed" << std::endl;
+                continue;
+            }
 
-        // Check to see if this neighbor is in closed set 
-        if( m_closed.find( neighbor_loc ) != m_closed.end() )
-            continue;
+            // Search through open list for this neighbor
+            NodeVec::iterator it = std::find_if( m_open.begin(), m_open.end(), HasLocation( neighbor_loc ) );
+            if( it != m_open.end() )
+            {
+                Debug::stream() << "    in open" << std::endl;
+                Node* open_node = *it;
+                if( current->g+1 < open_node->g )
+                {
+                    // We have found a better path to this location.  update heap
+                    open_node->g     = current->g+1;
+                    open_node->child = current;
+                    open_node->dir   = static_cast<Direction>( i );
+                    std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
+                }
+                continue;
+            }
 
-        // We need to add a new node to our open list
-        if( current->g+1 < m_max_depth )
-        {
-            //Debug::stream() << "     pushing " << neighbor_loc << std::endl;
+            Debug::stream() << "    pushing" << std::endl;
+            // We need to add a new node to our open list
             Node* neighbor_node = new Node( neighbor_loc,
                                             static_cast<Direction>( i ),
                                             current->g+1,
-                                            m_map.manhattanDistance( neighbor_loc, m_goal ),
+                                            m_map.manhattanDistance( neighbor_loc, m_destination ),
                                             current ); 
             m_open.push_back( neighbor_node );
             std::push_heap( m_open.begin(), m_open.end(), NodeCompare() );
-            continue;
+            //Debug::stream() << "        max_depth reached" << std::endl;
         }
-        //Debug::stream() << "        max_depth reached" << std::endl;
     }
 
     //
@@ -140,6 +143,5 @@ bool AStar::step()
 
 void AStar::getPath( Path& path )const
 {
-  
-  path.assign( m_origin, m_goal, m_path.begin(), m_path.end() ); 
+    path.assign( m_origin, m_destination, m_path.begin(), m_path.end() ); 
 }
