@@ -20,7 +20,7 @@
 //       set priority queue rank to g(neighbor) + h(neighbor)
 //       set neighbor's parent to current
 // 
-// reconstruct reverse path from goal to start
+// reconstruct reverse path from destination to start
 // by following parent pointers
 //
 
@@ -44,10 +44,10 @@ class Path;
 class AStar
 {
 public:
-    AStar( const Map& map, const Location& start_loc, const Location& goal_loc );
+    AStar( const Map& map, const Location& start_loc, const Location& destination_loc );
 
     template<class Iter>
-    AStar( const Map& map, Iter begins, Iter ends, const Location& goal );
+    AStar( const Map& map, Iter begins, Iter ends, const Location& destination );
 
     void setMaxDepth( unsigned max_depth )   { m_max_depth = max_depth; }
 
@@ -88,6 +88,13 @@ private:
         { return n0->f() > n1->f(); }
     };
 
+    /// For searching stl containers for node with a given location
+    struct HasLocation
+    {
+        HasLocation( const Location& location ) : location( location ) {}
+        bool operator()( Node* node )const { return node->loc == location; }
+        Location location;
+    };
 
     bool step();
 
@@ -95,28 +102,28 @@ private:
     typedef std::vector<Node*>       NodeVec;
     typedef std::map<Location,Node*> LocationToNode;
 
-    NodeVec               m_open;      ///< Heapified list of candidate nodes
-    LocationToNode        m_closed;    ///< Processed nodes
+    NodeVec               m_open;         ///< Heapified list of candidate nodes
+    LocationToNode        m_closed;       ///< Processed nodes
 
-    DirectionVec          m_path;      ///< Results of search
-    Location              m_origin;    ///< Starting node of path
+    DirectionVec          m_path;         ///< Results of search
     
-    const Map&            m_map;       ///< Map to be searched
-    const Location        m_goal;      ///< Goal locations
+    const Map&            m_map;          ///< Map to be searched
+    Location              m_origin;       ///< Starting node of path
+    const Location        m_destination;  ///< Goal location
 
-    unsigned              m_max_depth; ///< Max depth on this search
+    unsigned              m_max_depth;    ///< Max depth on this search
 };
 
 
 
 template<class Iter>
-AStar::AStar( const Map& map, Iter begins, Iter ends, const Location& goal )
+AStar::AStar( const Map& map, Iter begins, Iter ends, const Location& destination )
     : m_map( map ),
-      m_goal( goal ),
-      m_max_depth( 20 )
+      m_destination( destination ),
+      m_max_depth( 25 )
 {
     for( Iter it = begins; it != ends; ++it )
-        m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, goal ), 0 ) );
+        m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, destination ), 0 ) );
     std::make_heap( m_open.begin(), m_open.end(), NodeCompare() );
 }
 

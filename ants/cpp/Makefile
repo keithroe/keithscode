@@ -1,5 +1,6 @@
 CC=g++
-CFLAGS= -O3 -funroll-loops
+#CFLAGS= -O3 -funroll-loops
+CFLAGS= 
 LDFLAGS= -lm
 
 HEADERS= Ant.h \
@@ -28,17 +29,21 @@ SOURCES= AStar.cc \
 OBJECTS=$(SOURCES:.cc=.o)
 MYBOT=MyBot
 ASTARTEST=astartest
+BFSTEST=bfstest
 
 #Uncomment the following to enable debugging
 CFLAGS += -g -DDEBUG
 
-all: $(OBJECTS) $(MYBOT) $(ASTARTEST)
+all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST)
 
 $(MYBOT): MyBot.o $(OBJECTS)  $(HEADERS) 
 	$(CC)  $(CFLAGS) $(LDFLAGS) MyBot.o $(OBJECTS) -o $@
 
 $(ASTARTEST): AStarTest.o $(OBJECTS) $(HEADERS) 
 	$(CC) $(LDFLAGS) AStarTest.o $(OBJECTS) -o $@
+
+$(BFSTEST): BFSTest.o $(OBJECTS) $(HEADERS) 
+	$(CC) $(LDFLAGS) BFSTest.o $(OBJECTS) -o $@
 
 %.o : %.cc $(HEADERS) 
 	$(CC) -c $(CFLAGS) $< -o $@

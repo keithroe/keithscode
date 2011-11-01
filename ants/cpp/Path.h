@@ -7,6 +7,7 @@
 
 #include <list>
 
+/// TODO: need a way to represent other types of 'paths' such as 'walk in this general direction'
 class Path
 {
 public:

@@ -3,10 +3,16 @@
 
 #include <vector>
 #include <string>
+#include <ostream>
 
 /*
     struct for representing a square in the grid.
 */
+
+struct Square;
+
+std::ostream& operator<<( std::ostream& os, const Square& s );
+
 struct Square
 {
 
@@ -89,10 +95,20 @@ inline bool Square::isAvailable()const
     return ant < 0 && hill != 0 && content != WATER; 
 }
 
+
 inline std::string Square::contentString( Content c )
 {
     static const char* lookup[5] = { "WATER", "HILL", "FOOD", "EMPTY", "UNKNOWN" };
     return lookup[ c ]; 
 }
+
+
+inline std::ostream& operator<<( std::ostream& os, const Square& s )
+{
+    os << "isVisible:" << s.isVisible << " ant:" << s.ant << " hill:" << s.hill; 
+    return os;
+}
+
+
 
 #endif //SQUARE_H_
