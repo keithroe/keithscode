@@ -56,21 +56,24 @@ private:
     typedef std::map<Location, Node*>    LocationToNode;
 
     const Map&       m_map;
-    NodeVec          m_open;
+    LocationToNode   m_open;
     LocationToNode   m_closed;
 
-    Predicate        m_predicate;
+    unsigned         m_cur_depth;
     unsigned         m_max_depth;
+    Predicate        m_predicate;
 };
 
 
 template<class Iter>
 BFS::BFS( const Map& map, Iter begins, Iter ends, Predicate predicate )
     : m_map( map ),
+      m_cur_depth( 0u ),
+      m_max_depth( 20u ),
       m_predicate( predicate )
 {
     for( Iter it = begins; it != ends; ++it )
-        m_open.push_back( new Node( *it ) );
+        m_open.insert( std::make_pair( *it, new Node( *it ) ) );
 }
 
 
