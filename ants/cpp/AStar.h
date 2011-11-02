@@ -25,8 +25,9 @@
 //
 
 //
-// TODO: Better handling of path finding failures.
+// TODO: Better handling of path finding failures. 
 // TODO: Make sure handle calling search multiple times for single instance
+//       (maybe make each instance only searchable once)
 //
 //
 
@@ -120,7 +121,7 @@ template<class Iter>
 AStar::AStar( const Map& map, Iter begins, Iter ends, const Location& destination )
     : m_map( map ),
       m_destination( destination ),
-      m_max_depth( 25 )
+      m_max_depth( 20 )
 {
     for( Iter it = begins; it != ends; ++it )
         m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, destination ), 0 ) );
