@@ -22,7 +22,7 @@ public:
     Location  origin()const             { return m_origin;          }
     Location  destination()const        { return m_destination;     }
     unsigned  size()const               { return m_steps.size();    }
-    Direction nextStep();
+    Direction nextStep()const;
     Direction popNextStep();
 
 private:

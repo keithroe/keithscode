@@ -49,7 +49,7 @@ $(BFSTEST): BFSTest.o $(OBJECTS) $(HEADERS)
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean: 
-	-rm -f ${EXECUTABLE} MyBot astartest AStarTest.o MyBot.o ${OBJECTS} *.d
+	-rm -f ${EXECUTABLE} MyBot astartest bfstest AStarTest.o MyBot.o ${OBJECTS} *.d
 	-rm -f debug.txt
 
 zip:
