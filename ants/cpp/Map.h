@@ -29,8 +29,6 @@ public:
     int   manhattanDistance( const Location& loc0, const Location& loc1 )const;
     float distance         ( const Location& loc0, const Location& loc1 )const;
 
-    void prioritize();
-
     void makeMove( const Location &loc, Direction direction );
 
     Square& operator()( const Location& loc )

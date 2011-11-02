@@ -41,6 +41,7 @@ public:
     Timer&             timer()                  { return m_timer;         }
 
     const Map&            map() const              { return m_map;           }
+          Map&            map()                    { return m_map;           }
     const Ants&           myAnts()const            { return m_my_ants;       }
     const Locations&      enemyAnts()const         { return m_enemy_ants;    }
     const Locations&      myHills()const           { return m_my_hills;      }
@@ -53,9 +54,6 @@ public:
     float                 viewRadius()             { return m_view_radius;   }
 
     void                  endTurn()                { ++m_turn;               }
-
-    void                  prioritizeMap()          { m_map.prioritize();     }
-    
 
     Location              getLocation(const Location &startLoc, Direction direction)const;
 

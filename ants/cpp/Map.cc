@@ -95,27 +95,13 @@ float Map::distance( const Location& loc0, const Location& loc1 )const
 }
 
 
-void Map::prioritize()
-{
-    /// Assumes that all squares start with zero priority
-    for( unsigned i = 0u; i < m_height; ++i )
-        for( unsigned j = 0u; j < m_width; ++j )
-        {
-            // TODO: put this prioritization code into into separate code logic
-            Square& square = m_grid[ i ][ j ];
-            if( square.hill > 0                                      ) square.priority += 20;
-            if( square.content == Square::FOOD                       ) square.priority += 10;
-            if( square.content == Square::UNKNOWN                    ) square.priority += 5;
-            if( square.content != Square::WATER && !square.isVisible ) square.priority += 1;
-        }
-}
-
-
 void Map::makeMove( const Location &loc, Direction direction )
 {
     Location new_loc = getLocation( loc, direction );
-    m_grid[ new_loc.row ][ new_loc.col ].ant = m_grid[loc.row][loc.col].ant;
-    m_grid[ loc.row     ][ loc.col     ].ant = -1;
+    m_grid[ new_loc.row ][ new_loc.col ].ant_id = m_grid[loc.row][loc.col].ant_id;
+    m_grid[ new_loc.row ][ new_loc.col ].ant    = m_grid[loc.row][loc.col].ant;
+    m_grid[ loc.row     ][ loc.col     ].ant_id = -1;
+    m_grid[ loc.row     ][ loc.col     ].ant    = NULL;
 }
 
 
@@ -143,14 +129,14 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
                 }
                 case Square::HILL:
                 {
-                    os << static_cast<char>( 'A' + square.hill );
+                    os << static_cast<char>( 'A' + square.hill_id );
                     break;
                 }
                 case Square::EMPTY:
                 {
-                    if( square.ant >= 0 )
+                    if( square.ant_id >= 0 )
                     {
-                        os << static_cast<char>( 'a' + square.ant );
+                        os << static_cast<char>( 'a' + square.ant_id );
                     }
                     else 
                     {

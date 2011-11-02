@@ -1,6 +1,9 @@
 #ifndef SQUARE_H_
 #define SQUARE_H_
 
+
+#include "Ant.h"
+
 #include <vector>
 #include <string>
 #include <ostream>
@@ -11,11 +14,21 @@
 
 struct Square;
 
+//
+//  Helpers
+//
+
+// These are predicates for BFS searches
+bool hasAnt( const Square& s );
+bool hasAvailableAnt( const Square& s );
+bool hasEnemyAnt( const Square& s );
+bool hasFood( const Square& s );
+
+
 std::ostream& operator<<( std::ostream& os, const Square& s );
 
 struct Square
 {
-
     //
     // Represents possible square contents
     //
@@ -28,7 +41,6 @@ struct Square
         UNKNOWN
     };
     
-
     //
     // Methods
     //
@@ -41,6 +53,7 @@ struct Square
     void setVisible();
 
     bool isAvailable()const;
+    bool isWater()const;
 
     static std::string contentString( Content c );
 
@@ -51,21 +64,20 @@ struct Square
     Content content;           ///< What does this square contain 
 
     bool isVisible;            ///< Is this square visible to any ants?
-    int  ant;                  ///< Start of turn ant player id, -1 if none
-    int  hill;                 ///< Hill player id, -1 if none
-    int  priority;             ///< Priority for nearby ants
+    int  ant_id;               ///< Ant player id, -1 if none
+    int  hill_id;              ///< Hill player id, -1 if none
+    Ant* ant;                  ///< Ant data if present, NULL otherwise
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
-
 };
 
     
 inline Square::Square()
     : content( UNKNOWN ),
       isVisible( false ),
-      ant( -1 ),
-      hill( -1 ),
-      priority( 0 )
+      ant_id( -1 ),
+      hill_id( -1 ),
+      ant( NULL )
 {
 }
 
@@ -75,9 +87,9 @@ inline void Square::reset()
     if( content != WATER && content != UNKNOWN ) content = EMPTY;
 
     isVisible   = false;
-    ant         = -1;
-    hill        = -1;
-    priority    =  0;
+    ant_id      = -1;
+    hill_id     = -1;
+    ant         =  NULL;
 
     deadAnts.clear();
 };
@@ -92,7 +104,13 @@ inline void Square::setVisible()
 
 inline bool Square::isAvailable()const
 {
-    return ant < 0 && hill != 0 && content != WATER; 
+    return ant_id < 0 && hill_id != 0 && content != WATER; 
+}
+
+
+inline bool Square::isWater()const
+{
+    return content == WATER; 
 }
 
 
@@ -105,10 +123,15 @@ inline std::string Square::contentString( Content c )
 
 inline std::ostream& operator<<( std::ostream& os, const Square& s )
 {
-    os << "isVisible:" << s.isVisible << " ant:" << s.ant << " hill:" << s.hill; 
+    os << "isVisible:" << s.isVisible << " ant_id:" << s.ant_id << " hill_id:" << s.hill_id; 
     return os;
 }
 
+
+inline bool hasAnt( const Square& s )               { return s.ant_id == 0; }
+inline bool hasAvailableAnt( const Square& s )      { return s.ant_id == 0 && s.ant->available; }
+inline bool hasEnemyAnt( const Square& s )          { return s.ant_id >  0; }
+inline bool hasFood( const Square& s )              { return s.content == Square::FOOD; }
 
 
 #endif //SQUARE_H_

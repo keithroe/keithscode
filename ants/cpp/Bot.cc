@@ -1,8 +1,10 @@
 
-#include "PathFinder.h"
+#include "BFS.h"
 #include "Bot.h"
-#include "Path.h"
 #include "Debug.h"
+#include "Path.h"
+#include "PathFinder.h"
+
 #include <algorithm>
 #include <cstdlib>
 
@@ -59,19 +61,26 @@ void Bot::makeMoves()
 {
     Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
 
-    //m_moved_ants.clear();
-
-    m_state.prioritizeMap();
-
     for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
     {
+
+        BFS bfs( m_state.map(), *it, hasAvailableAnt );
+        if( bfs.search() ) 
+        {
+            Square& s = m_state.map()( bfs.destination() );
+            s.ant->available = false;
+            bfs.getReversePath( s.ant->path );
+            //TODO: create unavailable hash???
+        }
     }
 
+    ///TODO: switch to iterator traversal
     for( int ant = 0; ant < m_state.myAnts().size(); ++ant )
     {
-        makeMove( m_state.myAnts()[ant] );
+        if( m_state.myAnts()[ant]->available )
+          makeMove( m_state.myAnts()[ant] );
     }
-
+    
     const float turn_time = m_state.timer().getTime();
     m_max_time = turn_time > m_max_time ? turn_time : m_max_time;
     Debug::stream() << "time taken: \n" << turn_time << "ms.  Max: " << m_max_time << "ms." << std::endl;
@@ -97,6 +106,7 @@ void Bot::makeMove( Ant* ant )
     // 
     if( ant->path.nextStep() != NONE )
     {
+        // TODO: check if the goal has disappeard (food eaten, etc)
         Direction dir = ant->path.popNextStep();
         Location  loc = m_state.map().getLocation( cur_location, dir );
         if( m_state.map()( loc ).isAvailable() )

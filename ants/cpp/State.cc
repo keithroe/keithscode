@@ -36,6 +36,8 @@ void State::reset()
     m_my_hills.clear();
     m_food.clear();
     m_map.reset();
+
+    std::for_each( m_my_ants.begin(), m_my_ants.end(), resetAvailable );
 }
 
 
@@ -121,7 +123,7 @@ void State::removeRazedHills()
     for( LocationList::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
         const Square& square = m_map( *it );
-        if( square.isVisible && square.hill < 0 )
+        if( square.isVisible && square.hill_id < 0 )
            it = m_enemy_hills.erase( it );
     }
 }
@@ -248,25 +250,30 @@ istream& operator>>(istream &is, State &state)
             else if(inputType == "a") //live ant square
             {
                 is >> loc.row >> loc.col >> player;
-                state.m_map( loc ).ant = player;
-                if(player == 0)
+                state.m_map( loc ).ant_id = player;
+                if( player == 0 )
                 {
+                    Ant* ant = 0u;
                     State::AntHash::iterator prev_ant = state.m_my_prev_ants.find( loc );
                     if(  prev_ant == state.m_my_prev_ants.end() )
                     {
-                        state.m_my_ants.push_back( new Ant( loc ) );
+                        ant = new Ant( loc );
+                        state.m_my_ants.push_back( ant );
                     }
                     else
                     {
                         assert( prev_ant->second->location == loc );
-                        state.m_my_ants.push_back( prev_ant->second );
+                        ant = prev_ant->second; 
+                        state.m_my_ants.push_back( ant );
                         state.m_my_prev_ants.erase( prev_ant );
                     }
+                    state.m_map( loc ).ant =  ant;
                 }
                 else
                 {
                     state.m_enemy_ants.push_back( loc ); 
                 }
+
             }
             else if(inputType == "d") //dead ant square
             {
@@ -277,7 +284,7 @@ istream& operator>>(istream &is, State &state)
             {
                 is >> loc.row >> loc.col >> player;
                 state.m_map( loc ).content = Square::HILL;
-                state.m_map( loc ).hill    = player;
+                state.m_map( loc ).hill_id = player;
                 if(player == 0)
                     state.m_my_hills.push_back( loc );
                 else
