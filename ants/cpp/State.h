@@ -10,8 +10,9 @@
 #include "Timer.h"
 
 #include <iostream>
-#include <set>
+#include <list>
 #include <map>
+#include <set>
 #include <stdint.h>
 #include <vector>
 
@@ -23,6 +24,7 @@ class State
 public:
     typedef std::vector<Location>       Locations;
     typedef std::set<Location>          LocationSet;
+    typedef std::list<Location>         LocationList;
     typedef std::vector<Ant*>           Ants;
     typedef std::map<Location, Ant*>    AntHash;
 
@@ -38,26 +40,28 @@ public:
 
     Timer&             timer()                  { return m_timer;         }
 
-    const Map&         map() const              { return m_map;           }
-    const Ants&        myAnts()const            { return m_my_ants;       }
-    const Locations&   enemyAnts()const         { return m_enemy_ants;    }
-    const Locations&   myHills()const           { return m_my_hills;      }
-    const Locations&   enemyHills()const        { return m_enemy_hills;   }
-    const Locations&   food()const              { return m_food;          }
-    const LocationSet& frontier()const          { return m_frontier;      }
-    int                turn() const             { return m_turn;          }
-    float              attackRadius()           { return m_attack_radius; }
-    float              spawnRadius()            { return m_spawn_radius;  }
-    float              viewRadius()             { return m_view_radius;   }
+    const Map&            map() const              { return m_map;           }
+    const Ants&           myAnts()const            { return m_my_ants;       }
+    const Locations&      enemyAnts()const         { return m_enemy_ants;    }
+    const Locations&      myHills()const           { return m_my_hills;      }
+    const LocationList&   enemyHills()const        { return m_enemy_hills;   }
+    const Locations&      food()const              { return m_food;          }
+    const LocationSet&    frontier()const          { return m_frontier;      }
+    int                   turn() const             { return m_turn;          }
+    float                 attackRadius()           { return m_attack_radius; }
+    float                 spawnRadius()            { return m_spawn_radius;  }
+    float                 viewRadius()             { return m_view_radius;   }
 
-    void               endTurn()                { ++m_turn;               }
+    void                  endTurn()                { ++m_turn;               }
 
-    void               prioritizeMap()          { m_map.prioritize();     }
+    void                  prioritizeMap()          { m_map.prioritize();     }
     
 
-    Location getLocation(const Location &startLoc, Direction direction)const;
+    Location              getLocation(const Location &startLoc, Direction direction)const;
 
-    float    getDistance(const Location &loc1, const Location &loc2)const;
+    //float                 getDistance(const Location &loc1, const Location &loc2)const;
+    
+    void                  removeRazedHills();
 
     friend std::ostream& operator<<(std::ostream &os, const State &state);
     friend std::istream& operator>>(std::istream &is, State &state);
@@ -83,7 +87,7 @@ private:
     AntHash                   m_my_prev_ants;
     Locations                 m_enemy_ants;
     Locations                 m_my_hills;
-    Locations                 m_enemy_hills;
+    LocationList              m_enemy_hills;
     Locations                 m_food;
     LocationSet               m_frontier;
 

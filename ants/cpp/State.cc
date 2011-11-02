@@ -1,6 +1,8 @@
 
 #include "Debug.h"
 #include "State.h"
+
+#include <algorithm>
 #include <cmath>
 #include <queue>
 
@@ -25,10 +27,13 @@ void State::setup()
 
 void State::reset()
 {
+    // 
+    // Do not reset enemy hills until we know they are razed
+    // Do not reset m_my_prev_ants
+    //
     m_my_ants.clear();
     m_enemy_ants.clear();
     m_my_hills.clear();
-    m_enemy_hills.clear();
     m_food.clear();
     m_map.reset();
 }
@@ -44,6 +49,7 @@ void State::makeMove( Ant* ant, const Location &loc, Direction direction)
 }
 
 
+/*
 float State::getDistance(const Location &loc1, const Location &loc2)const
 {
     int d1 = abs(loc1.row-loc2.row),
@@ -52,6 +58,7 @@ float State::getDistance(const Location &loc1, const Location &loc2)const
         dc = min(d2, m_cols-d2);
     return sqrtf(dr*dr + dc*dc);
 }
+*/
 
 
 void State::updateVisionInformation()
@@ -87,7 +94,7 @@ void State::updateVisionInformation()
 
                 if(!visited[nLoc.row][nLoc.col] )
                 {
-                    if( getDistance(sLoc, nLoc) <= m_view_radius )
+                    if( m_map.distance(sLoc, nLoc) <= m_view_radius )
                     {
                         m_map( nLoc ).setVisible();
                         locQueue.push(nLoc);
@@ -106,6 +113,17 @@ void State::updateVisionInformation()
         }
     }
   
+}
+
+void State::removeRazedHills()
+{
+    // Check for any KNOWN razed hills 
+    for( LocationList::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
+    {
+        const Square& square = m_map( *it );
+        if( square.isVisible && square.hill < 0 )
+           it = m_enemy_hills.erase( it );
+    }
 }
 
 
@@ -146,8 +164,9 @@ ostream& operator<<(ostream &os, const State &state)
 
 istream& operator>>(istream &is, State &state)
 {
-    int row, col, player;
-    string inputType, junk;
+    Location loc;
+    int player;
+    std::string inputType, junk;
 
     //finds out which turn it is
     while(is >> inputType)
@@ -217,52 +236,56 @@ istream& operator>>(istream &is, State &state)
         {
             if(inputType == "w") //water square
             {
-                is >> row >> col;
-                state.m_map( row, col ).content = Square::WATER;
+                is >> loc.row >> loc.col;
+                state.m_map( loc ).content = Square::WATER;
             }
             else if(inputType == "f") //m_food square
             {
-                is >> row >> col;
-                state.m_map( row, col ).content = Square::FOOD;
-                state.m_food.push_back( Location(row, col) );
+                is >> loc.row >> loc.col;
+                state.m_map( loc ).content = Square::FOOD;
+                state.m_food.push_back( loc );
             }
             else if(inputType == "a") //live ant square
             {
-                is >> row >> col >> player;
-                state.m_map( row, col ).ant = player;
+                is >> loc.row >> loc.col >> player;
+                state.m_map( loc ).ant = player;
                 if(player == 0)
                 {
-                    State::AntHash::iterator prev_ant = state.m_my_prev_ants.find( Location( row, col ) );
+                    State::AntHash::iterator prev_ant = state.m_my_prev_ants.find( loc );
                     if(  prev_ant == state.m_my_prev_ants.end() )
                     {
-                        state.m_my_ants.push_back( new Ant( Location(row, col ) ) );
+                        state.m_my_ants.push_back( new Ant( loc ) );
                     }
                     else
                     {
-                        assert( prev_ant->second->location == Location( row, col ) );
+                        assert( prev_ant->second->location == loc );
                         state.m_my_ants.push_back( prev_ant->second );
                         state.m_my_prev_ants.erase( prev_ant );
                     }
                 }
                 else
                 {
-                    state.m_enemy_ants.push_back(Location(row, col)); 
+                    state.m_enemy_ants.push_back( loc ); 
                 }
             }
             else if(inputType == "d") //dead ant square
             {
-                is >> row >> col >> player;
-                state.m_map( row, col ).deadAnts.push_back(player);
+                is >> loc.row >> loc.col >> player;
+                state.m_map( loc ).deadAnts.push_back(player);
             }
             else if(inputType == "h")
             {
-                is >> row >> col >> player;
-                state.m_map( row, col ).content = Square::HILL;
-                state.m_map( row, col ).hill    = player;
+                is >> loc.row >> loc.col >> player;
+                state.m_map( loc ).content = Square::HILL;
+                state.m_map( loc ).hill    = player;
                 if(player == 0)
-                    state.m_my_hills.push_back(Location(row, col));
+                    state.m_my_hills.push_back( loc );
                 else
-                    state.m_enemy_hills.push_back(Location(row, col));
+                {
+                    if( std::find( state.m_enemy_hills.begin(), state.m_enemy_hills.end(), loc ) ==
+                        state.m_enemy_hills.end() )
+                        state.m_enemy_hills.push_back( loc );
+                }
 
             }
             else if(inputType == "players") //player information
@@ -286,11 +309,15 @@ istream& operator>>(istream &is, State &state)
         }
     }
 
-    // Delete dead ants
+
+    // Remove enemy hills we know are destroyed.  Leave hills we cant see so we
+    // can still target them
+    state.removeRazedHills();
+
+    // Clear out previous ants list since any ants left are dead :(
     for( State::AntHash::iterator it = state.m_my_prev_ants.begin(); it != state.m_my_prev_ants.end(); ++it )
         delete it->second;
     state.m_my_prev_ants.clear();
-
 
     return is;
 };

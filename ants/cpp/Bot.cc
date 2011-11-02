@@ -63,6 +63,10 @@ void Bot::makeMoves()
 
     m_state.prioritizeMap();
 
+    for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
+    {
+    }
+
     for( int ant = 0; ant < m_state.myAnts().size(); ++ant )
     {
         makeMove( m_state.myAnts()[ant] );
@@ -106,16 +110,17 @@ void Bot::makeMove( Ant* ant )
         }
     }
     
+
     std::vector<Candidate> candidates; 
 
     // Hills 
-    const State::Locations& hills = m_state.enemyHills();
-    for( State::Locations::const_iterator it = hills.begin(); it != hills.end(); ++it )
+    const State::LocationList& hills = m_state.enemyHills();
+    for( State::LocationList::const_iterator it = hills.begin(); it != hills.end(); ++it )
     {
         if( !( m_state.map()( *it ).isAvailable() ) ) continue;
-        //float dist = m_state.map().distance( cur_location, *it );
-        //if( dist <= m_state.viewRadius() )
-          candidates.push_back( std::make_pair( 30 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
+        {
+            candidates.push_back( std::make_pair( 30 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
+        }
     }
 
     // Food 
