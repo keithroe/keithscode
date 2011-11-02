@@ -87,13 +87,15 @@ void Bot::endTurn()
 void Bot::makeMove( Ant* ant )
 {
     const Location cur_location = ant->location;
-    std::vector<Candidate> candidates; 
 
     if( ant->path.nextStep() != NONE )
     {
-
-        kkdkfsdlkfjas;led
+        Direction d = ant->path.popNextStep();
+        m_state.makeMove( ant, cur_location, d );
+        return;
     }
+    
+    std::vector<Candidate> candidates; 
     // Hills 
     const State::Locations& hills = m_state.enemyHills();
     for( State::Locations::const_iterator it = hills.begin(); it != hills.end(); ++it )
@@ -130,7 +132,7 @@ void Bot::makeMove( Ant* ant )
         Path path;
         path_finder.getPath( cur_location, candidates.front().second, path ); 
 
-        Direction d = path.nextStep();
+        Direction d = path.popNextStep();
         if( d != NONE )
         {
             m_state.makeMove( ant, cur_location, d );

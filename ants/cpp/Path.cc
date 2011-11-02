@@ -2,7 +2,7 @@
 #include "Path.h"
 
 
-Direction Path::nextStep()
+Direction Path::nextStep()const
 { 
     if( m_steps.empty() ) return NONE;
     return m_steps.front();
