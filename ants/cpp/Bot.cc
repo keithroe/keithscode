@@ -70,7 +70,10 @@ void Bot::makeMoves()
             Square& s = m_state.map()( bfs.destination() );
             s.ant->available = false;
             bfs.getReversePath( s.ant->path );
-            //TODO: create unavailable hash???
+            
+            // TODO: have State::makeMove use the path  to determine direction directly
+            Direction d = s.ant->path.popNextStep();
+            m_state.makeMove( s.ant, bfs.destination(), d );
         }
     }
 
