@@ -25,6 +25,8 @@ public:
     Direction nextStep()const;
     Direction popNextStep();
 
+    void      reset()                   { m_steps.clear();          }
+
 private:
     Location               m_origin;
     Location               m_destination;

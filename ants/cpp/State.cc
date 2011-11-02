@@ -232,19 +232,14 @@ istream& operator>>(istream &is, State &state)
                 state.m_map( row, col ).ant = player;
                 if(player == 0)
                 {
-                    // TODO:
-                    // TODO: optimize pls
-                    // TODO:
                     State::AntHash::iterator prev_ant = state.m_my_prev_ants.find( Location( row, col ) );
                     if(  prev_ant == state.m_my_prev_ants.end() )
                     {
-                        Debug::stream() << "NO WOOT not reusing" << std::endl;
                         state.m_my_ants.push_back( new Ant( Location(row, col ) ) );
                     }
                     else
                     {
                         assert( prev_ant->second->location == Location( row, col ) );
-                        Debug::stream() << "WOOT reusing" << std::endl;
                         state.m_my_ants.push_back( prev_ant->second );
                         state.m_my_prev_ants.erase( prev_ant );
                     }

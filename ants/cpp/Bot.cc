@@ -88,14 +88,26 @@ void Bot::makeMove( Ant* ant )
 {
     const Location cur_location = ant->location;
 
+    //
+    // Check to see if there is already a valid path for this ant
+    // 
     if( ant->path.nextStep() != NONE )
     {
-        Direction d = ant->path.popNextStep();
-        m_state.makeMove( ant, cur_location, d );
-        return;
+        Direction dir = ant->path.popNextStep();
+        Location  loc = m_state.map().getLocation( cur_location, dir );
+        if( m_state.map()( loc ).isAvailable() )
+        {
+            m_state.makeMove( ant, cur_location, dir );
+            return;
+        }
+        else
+        {
+            ant->path.reset();
+        }
     }
     
     std::vector<Candidate> candidates; 
+
     // Hills 
     const State::Locations& hills = m_state.enemyHills();
     for( State::Locations::const_iterator it = hills.begin(); it != hills.end(); ++it )
@@ -129,10 +141,9 @@ void Bot::makeMove( Ant* ant )
         std::sort( candidates.begin(), candidates.end(), CandidateCompare() );
 
         PathFinder path_finder( m_state.map() );
-        Path path;
-        path_finder.getPath( cur_location, candidates.front().second, path ); 
+        path_finder.getPath( cur_location, candidates.front().second, ant->path); 
 
-        Direction d = path.popNextStep();
+        Direction d = ant->path.popNextStep();
         if( d != NONE )
         {
             m_state.makeMove( ant, cur_location, d );
