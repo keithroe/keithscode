@@ -1,5 +1,5 @@
 CC=g++
-#CFLAGS= -O3 -funroll-loops
+CFLAGS= -O3 -funroll-loops
 CFLAGS= 
 LDFLAGS= -lm
 
