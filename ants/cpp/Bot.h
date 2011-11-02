@@ -29,7 +29,6 @@ private:
     void makeMove( const Ant& ant  );
 
     void chooseDestination( const Location& cur_location );
-    
 
     float m_max_time;
     State m_state;
