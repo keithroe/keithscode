@@ -34,7 +34,6 @@ bool BFS::search()
 bool BFS::step()
 {
     Node* current =  m_open.front();
-    Debug::stream() << "checking: " << current->loc << std::endl;
 
     //
     // Check to see if we have reached our goal
@@ -73,14 +72,19 @@ bool BFS::step()
     //
     // Process all neighbors
     //
-    if( current->depth < m_max_depth )
+    if( current->depth < m_max_depth && m_map( current->loc ).isAvailable() )
     {
         for( int i = 0; i < NUM_DIRECTIONS; ++i )
         {
             const Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
-
+            
+            /*
             // Check if the neighbor is available to be traversed
             if( !m_map( neighbor_loc ).isAvailable() ) 
+            */
+
+            if( ( current->depth == 0 && !m_map( neighbor_loc ).isAvailable() ) ||
+                m_map( neighbor_loc ).isWater() )                    
                 continue;
 
             // Check if neighbor is already in open set

@@ -78,8 +78,10 @@ bool AStar::step()
         {
             Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
 
-            // Check to see if this neighbor is traversable
-            if( !m_map( neighbor_loc ).isAvailable() ) 
+            // Check to see if this neighbor is traversable Do not rule out
+            // temporarily unavailable nodes
+            if( ( current->g == 0 && !m_map( neighbor_loc ).isAvailable() ) ||
+                m_map( neighbor_loc ).isWater() )  
                 continue;
 
             // Search through open list for this neighbor

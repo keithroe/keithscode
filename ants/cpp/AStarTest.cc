@@ -23,12 +23,13 @@ int main( int argc, char** argv )
     Location orig(  18, 16 );
 
     map( dest ).content = Square::HILL;
-    map( dest ).hill = 1;
-    map( orig ).ant  = 0;
+    map( dest ).hill_id = 1;
+    map( orig ).ant_id  = 0;
 
     std::cout << map << std::endl;
 
     AStar astar( map, orig, dest );
+    astar.setMaxDepth( 30 );
     if( !astar.search() ) std::cerr << "No path found!!!!!!" << std::endl;
     else                  std::cerr << "Path found" << std::endl;  
 
@@ -44,7 +45,7 @@ int main( int argc, char** argv )
        Direction d = path.popNextStep();
        std::cerr << " Step " << i++ << ": in direction '" << DIRECTION_CHAR[ d ] << "'" << std::endl;
        orig = map.getLocation( orig, d );
-       map( orig ).ant = 0;
+       map( orig ).ant_id = 0;
        std::cout << map << std::endl;
     }
 }

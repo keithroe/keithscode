@@ -7,7 +7,7 @@
 
 bool pred( const Square& s )
 {
-  return s.hill > 0;
+  return s.hill_id > 0;
 }
 
 const int SIZE = 32;
@@ -27,8 +27,8 @@ int main( int argc, char** argv )
     Location orig(  18, 16 );
 
     map( dest ).content = Square::HILL;
-    map( dest ).hill = 1;
-    map( orig ).ant  = 0;
+    map( dest ).hill_id = 1;
+    map( orig ).ant_id  = 0;
 
     std::cout << map << std::endl;
 
@@ -48,7 +48,7 @@ int main( int argc, char** argv )
        Direction d = path.popNextStep();
        std::cerr << " Step " << i++ << ": in direction '" << DIRECTION_CHAR[ d ] << "'" << std::endl;
        current = map.getLocation( current, d );
-       map( current ).ant = 0;
+       map( current ).ant_id = 0;
        std::cout << map << std::endl;
     }
 
@@ -68,7 +68,7 @@ int main( int argc, char** argv )
        Direction d = rpath.popNextStep();
        std::cerr << " Step " << i++ << ": in direction '" << DIRECTION_CHAR[ d ] << "'" << std::endl;
        current = map.getLocation( current, d );
-       map( current ).ant = 0;
+       map( current ).ant_id = 0;
        std::cout << map << std::endl;
     }
 }

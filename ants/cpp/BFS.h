@@ -32,6 +32,9 @@ public:
     
     /// Get path from discovered destination to start_loc
     void getReversePath( Path& path )const;
+
+    Location destination()const { return m_destination; }
+    Location origin()const      { return m_origin;      }
 private:
     //
     // Uncopyable
