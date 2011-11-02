@@ -26,7 +26,7 @@ public:
     void endTurn();
 
 private:
-    void makeMove( const Ant& ant  );
+    void makeMove( Ant* ant  );
 
     void chooseDestination( const Location& cur_location );
 

@@ -1,4 +1,5 @@
 
+#include "Debug.h"
 #include "State.h"
 #include <cmath>
 #include <queue>
@@ -33,9 +34,12 @@ void State::reset()
 }
 
 
-void State::makeMove(const Location &loc, Direction direction)
+void State::makeMove( Ant* ant, const Location &loc, Direction direction)
 {
     cout << "o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << endl;
+    Location new_loc = m_map.getLocation( loc, direction );
+    ant->location = new_loc;
+    m_my_prev_ants[ new_loc ] = ant;
     m_map.makeMove( loc, direction );
 }
 
@@ -65,7 +69,7 @@ void State::updateVisionInformation()
 
     for(int a=0; a<(int) m_my_ants.size(); a++)
     {
-        sLoc = m_my_ants[a].location;
+        sLoc = m_my_ants[a]->location;
         locQueue.push(sLoc);
 
         std::vector<std::vector<bool> > visited(m_rows, std::vector<bool>(m_cols, 0));
@@ -231,11 +235,19 @@ istream& operator>>(istream &is, State &state)
                     // TODO:
                     // TODO: optimize pls
                     // TODO:
-                    State::AntHash::iterator prev_ant =  state.m_my_prev_ants.find( Location( row, col ) );
+                    State::AntHash::iterator prev_ant = state.m_my_prev_ants.find( Location( row, col ) );
                     if(  prev_ant == state.m_my_prev_ants.end() )
-                        state.m_my_ants.push_back( Ant( Location(row, col ) ) );
+                    {
+                        Debug::stream() << "NO WOOT not reusing" << std::endl;
+                        state.m_my_ants.push_back( new Ant( Location(row, col ) ) );
+                    }
                     else
+                    {
+                        assert( prev_ant->second->location == Location( row, col ) );
+                        Debug::stream() << "WOOT reusing" << std::endl;
                         state.m_my_ants.push_back( prev_ant->second );
+                        state.m_my_prev_ants.erase( prev_ant );
+                    }
                 }
                 else
                 {
@@ -279,7 +291,11 @@ istream& operator>>(istream &is, State &state)
         }
     }
 
+    // Delete dead ants
+    for( State::AntHash::iterator it = state.m_my_prev_ants.begin(); it != state.m_my_prev_ants.end(); ++it )
+        delete it->second;
     state.m_my_prev_ants.clear();
+
 
     return is;
 };

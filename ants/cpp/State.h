@@ -23,8 +23,8 @@ class State
 public:
     typedef std::vector<Location>       Locations;
     typedef std::set<Location>          LocationSet;
-    typedef std::vector<Ant>            Ants;
-    typedef std::map<Location, Ant>     AntHash;
+    typedef std::vector<Ant*>           Ants;
+    typedef std::map<Location, Ant*>    AntHash;
 
     State();
     ~State();
@@ -32,7 +32,7 @@ public:
     void setup();
     void reset();
 
-    void makeMove(const Location &loc, Direction direction);
+    void makeMove( Ant* ant, const Location &loc, Direction direction);
     
     void updateVisionInformation();
 

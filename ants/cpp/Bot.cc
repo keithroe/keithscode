@@ -84,11 +84,16 @@ void Bot::endTurn()
 }
 
 
-void Bot::makeMove( const Ant& ant )
+void Bot::makeMove( Ant* ant )
 {
-    const Location cur_location = ant.location;
+    const Location cur_location = ant->location;
     std::vector<Candidate> candidates; 
 
+    if( ant->path.nextStep() != NONE )
+    {
+
+        kkdkfsdlkfjas;led
+    }
     // Hills 
     const State::Locations& hills = m_state.enemyHills();
     for( State::Locations::const_iterator it = hills.begin(); it != hills.end(); ++it )
@@ -128,7 +133,7 @@ void Bot::makeMove( const Ant& ant )
         Direction d = path.nextStep();
         if( d != NONE )
         {
-            m_state.makeMove( cur_location, d );
+            m_state.makeMove( ant, cur_location, d );
             return;
         }
 
@@ -143,7 +148,7 @@ void Bot::makeMove( const Ant& ant )
         // Add helper for checking destinations
         if( m_state.map()( loc.row, loc.col ).isAvailable() )
         {
-            m_state.makeMove( cur_location, static_cast<Direction>( d ) );
+            m_state.makeMove( ant, cur_location, static_cast<Direction>( d ) );
             break;
         }
     }
