@@ -125,5 +125,5 @@ bool AStar::step()
 void AStar::getPath( Path& path )const
 {
   
-    path.assign( m_origin, m_destination, m_path.begin(), m_path.end() ); 
+    path.assign( m_destination, m_path.begin(), m_path.end() ); 
 }

@@ -8,17 +8,18 @@
 struct Ant
 {
     Ant( const Location& location )
-        : location( location ), available( true ) {}
+        : location( location ) {}
+
+    bool     available()const;
 
     Location location;
     Path     path;
-    bool     available;
 };
 
 
-inline void resetAvailable( Ant* ant )
+inline bool Ant::available()const
 {
-    ant->available = true;
+    return path.empty();
 }
 
 #endif // ANT_H_

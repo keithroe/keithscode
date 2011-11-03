@@ -16,3 +16,13 @@ Direction Path::popNextStep()
     m_steps.pop_front();
     return dir;     
 }
+
+
+std::ostream& operator<<( std::ostream& out, const Path& path )
+{
+    out << path.m_destination << ": ";
+    for( std::list<Direction>::const_iterator it = path.m_steps.begin();
+         it != path.m_steps.end();
+         ++it )
+        out << DIRECTION_CHAR[ *it ] << " ";
+}

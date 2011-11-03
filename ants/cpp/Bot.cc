@@ -47,6 +47,8 @@ void Bot::playGame()
     m_state.setup();
     endTurn();
 
+    Debug::stream() << m_state << std::endl;
+
     //continues making moves while the game is not over
     while( std::cin >> m_state )
     {
@@ -61,37 +63,25 @@ void Bot::makeMoves()
 {
     Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
 
-    /*
-    for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
+    //
+    // First make decision based on local battles
+    //
+
+    //
+    // Choose important rally points
+    //
+    
+    
+    //
+    // Now make move choices for individual ants
+    //
+    for( State::Ants::const_iterator it = m_state.myAnts().begin();
+         it != m_state.myAnts().end();
+         ++it )
     {
-        // TODO: right now this will not respect existing ant paths
-
-        BFS bfs( m_state.map(), *it, hasAvailableAnt );
-        if( bfs.search() ) 
-        {
-            Square& s = m_state.map()( bfs.destination() );
-            s.ant->available = false;
-            bfs.getReversePath( s.ant->path );
-
-            Debug::stream() << "     found path from ant " << s.ant->path.origin() << " to " << s.ant->path.destination() << std::endl;
-            
-            // TODO: have State::makeMove use the path  to determine direction directly
-            Direction d = s.ant->path.popNextStep();
-            m_state.makeMove( s.ant, s.ant->path.origin(), d );
-        }
-    }
-    */
-
-    ///TODO: switch to iterator traversal
-    for( int ant = 0; ant < m_state.myAnts().size(); ++ant )
-    {
-        if( m_state.myAnts()[ant]->available )
-          makeMove( m_state.myAnts()[ant] );
+        makeMove( *it );
     }
     
-    const float turn_time = m_state.timer().getTime();
-    m_max_time = turn_time > m_max_time ? turn_time : m_max_time;
-    Debug::stream() << "time taken: \n" << turn_time << "ms.  Max: " << m_max_time << "ms." << std::endl;
 }
 
 
@@ -100,6 +90,10 @@ void Bot::endTurn()
     if( m_state.turn() > 0 )
         m_state.reset();
     m_state.endTurn();
+
+    const float turn_time = m_state.timer().getTime();
+    m_max_time = turn_time > m_max_time ? turn_time : m_max_time;
+    Debug::stream() << "time taken: \n" << turn_time << "ms.  Max: " << m_max_time << "ms." << std::endl;
 
     std::cout << "go" << std::endl;
 }
@@ -112,7 +106,7 @@ void Bot::makeMove( Ant* ant )
     //
     // Check to see if there is already a valid path for this ant
     // 
-    if( ant->path.nextStep() != NONE )
+    if( !ant->path.empty() )
     {
         Debug::stream() << "        reusing path" << std::endl;
 
@@ -168,13 +162,16 @@ void Bot::makeMove( Ant* ant )
         PathFinder path_finder( m_state.map() );
         path_finder.getPath( cur_location, candidates.front().second, ant->path); 
 
-        Direction d = ant->path.popNextStep();
-        if( d != NONE )
+        Direction dir = ant->path.popNextStep();
+        if( dir != NONE )
         {
-            m_state.makeMove( ant, cur_location, d );
-            return;
+            Location  loc = m_state.map().getLocation( cur_location, dir );
+            if( m_state.map()( loc ).isAvailable() )
+            {
+                m_state.makeMove( ant, cur_location, dir );
+                return;
+            }
         }
-
     }
 
     int offset = rand() % NUM_DIRECTIONS;
@@ -190,7 +187,6 @@ void Bot::makeMove( Ant* ant )
             break;
         }
     }
-
 }
 /*
 void Bot::makeMove( const Ant& ant )
