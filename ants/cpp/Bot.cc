@@ -61,8 +61,10 @@ void Bot::makeMoves()
 {
     Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
 
+    /*
     for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
     {
+        // TODO: right now this will not respect existing ant paths
 
         BFS bfs( m_state.map(), *it, hasAvailableAnt );
         if( bfs.search() ) 
@@ -70,12 +72,15 @@ void Bot::makeMoves()
             Square& s = m_state.map()( bfs.destination() );
             s.ant->available = false;
             bfs.getReversePath( s.ant->path );
+
+            Debug::stream() << "     found path from ant " << s.ant->path.origin() << " to " << s.ant->path.destination() << std::endl;
             
             // TODO: have State::makeMove use the path  to determine direction directly
             Direction d = s.ant->path.popNextStep();
-            m_state.makeMove( s.ant, bfs.destination(), d );
+            m_state.makeMove( s.ant, s.ant->path.origin(), d );
         }
     }
+    */
 
     ///TODO: switch to iterator traversal
     for( int ant = 0; ant < m_state.myAnts().size(); ++ant )
@@ -109,6 +114,8 @@ void Bot::makeMove( Ant* ant )
     // 
     if( ant->path.nextStep() != NONE )
     {
+        Debug::stream() << "        reusing path" << std::endl;
+
         // TODO: check if the goal has disappeard (food eaten, etc)
         Direction dir = ant->path.popNextStep();
         Location  loc = m_state.map().getLocation( cur_location, dir );
