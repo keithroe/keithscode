@@ -14,38 +14,38 @@ public:
     Path() {}
 
     template <class Iter>
-    Path( const Location& origin, const Location& destination, Iter begins, Iter ends );
+    Path( const Location& destination, Iter begins, Iter ends );
 
     template <class Iter>
-    void assign( const Location& origin, const Location& destination, Iter begins, Iter ends );
+    void assign( const Location& destination, Iter begins, Iter ends );
 
-    Location  origin()const             { return m_origin;          }
     Location  destination()const        { return m_destination;     }
     unsigned  size()const               { return m_steps.size();    }
+    unsigned  empty()const              { return m_steps.empty();    }
     Direction nextStep()const;
     Direction popNextStep();
 
     void      reset()                   { m_steps.clear();          }
 
+    friend std::ostream& operator<<( std::ostream& out, const Path& path );
+
 private:
-    Location               m_origin;
     Location               m_destination;
     std::list<Direction>   m_steps;
 };
     
 
 template <class Iter>
-Path::Path( const Location& origin, const Location& destination, Iter begins, Iter ends )
-    : m_origin( origin ),
-      m_destination( destination )
+Path::Path( const Location& destination, Iter begins, Iter ends )
+    : m_destination( destination )
 {
     m_steps.assign( begins, ends );
 }
 
+
 template <class Iter>
-void Path::assign( const Location& origin, const Location& destination, Iter begins, Iter ends )
+void Path::assign( const Location& destination, Iter begins, Iter ends )
 {
-    m_origin      = origin;
     m_destination = destination;
     m_steps.assign( begins, ends );
 }

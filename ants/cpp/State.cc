@@ -36,8 +36,6 @@ void State::reset()
     m_my_hills.clear();
     m_food.clear();
     m_map.reset();
-
-    std::for_each( m_my_ants.begin(), m_my_ants.end(), resetAvailable );
 }
 
 

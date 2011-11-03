@@ -129,7 +129,7 @@ inline std::ostream& operator<<( std::ostream& os, const Square& s )
 
 
 inline bool hasAnt( const Square& s )               { return s.ant_id == 0; }
-inline bool hasAvailableAnt( const Square& s )      { return s.ant_id == 0 && s.ant->available; }
+inline bool hasAvailableAnt( const Square& s )      { return s.ant_id == 0 && s.ant->available(); }
 inline bool hasEnemyAnt( const Square& s )          { return s.ant_id >  0; }
 inline bool hasFood( const Square& s )              { return s.content == Square::FOOD; }
 

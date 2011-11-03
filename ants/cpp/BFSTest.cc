@@ -42,7 +42,7 @@ int main( int argc, char** argv )
     std::cerr <<  " path length: " << path.size() << std::endl;
     
     int i = 0;
-    Location current = path.origin();
+    Location current = bfs.origin();
     while( path.nextStep() != NONE )
     {
        Direction d = path.popNextStep();
@@ -62,7 +62,7 @@ int main( int argc, char** argv )
     std::cerr <<  " rpath length: " << rpath.size() << std::endl;
     
     i = 0;
-    current = rpath.origin();
+    current = bfs.destination();
     while( rpath.nextStep() != NONE )
     {
        Direction d = rpath.popNextStep();

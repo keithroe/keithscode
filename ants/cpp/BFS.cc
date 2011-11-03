@@ -18,9 +18,9 @@ BFS::BFS( const Map& map, const Location& start_loc, Predicate predicate )
 
 bool BFS::search()
 {
-    Debug::stream() << "BFS searching from locations  ..." << std::endl;
-    for( NodeQueue::iterator it = m_open.begin(); it != m_open.end(); ++it )
-        Debug::stream() <<  "    " << (*it)->loc << std::endl;
+    //Debug::stream() << "BFS searching from locations  ..." << std::endl;
+    //for( NodeQueue::iterator it = m_open.begin(); it != m_open.end(); ++it )
+    //    Debug::stream() <<  "    " << (*it)->loc << std::endl;
 
     while( !m_open.empty() )
     {
@@ -35,6 +35,7 @@ bool BFS::step()
 {
     Node* current =  m_open.front();
 
+    //Debug::stream() << "  Checking " << current->loc << std::endl;
     //
     // Check to see if we have reached our goal
     //
@@ -72,7 +73,7 @@ bool BFS::step()
     //
     // Process all neighbors
     //
-    if( current->depth < m_max_depth && m_map( current->loc ).isAvailable() )
+    if( current->depth < m_max_depth )
     {
         for( int i = 0; i < NUM_DIRECTIONS; ++i )
         {
@@ -85,17 +86,28 @@ bool BFS::step()
 
             if( ( current->depth == 0 && !m_map( neighbor_loc ).isAvailable() ) ||
                 m_map( neighbor_loc ).isWater() )                    
+                
+            {
+                //Debug::stream() << "  not avail " << std::endl;
                 continue;
+            }
 
             // Check if neighbor is already in open set
             if( std::find_if( m_open.begin(), m_open.end(), HasLocation( neighbor_loc ) ) != m_open.end() )
+            {
+                //Debug::stream() << "  in open set" << std::endl;
                 continue;
+            }
 
             // Check to see if this neighbor is in closed set 
             if( m_closed.find( neighbor_loc ) != m_closed.end() )
+            {
+                //Debug::stream() << "  in closed set" << std::endl;
                 continue;
+            }
 
             // Insert this location into open set
+            //Debug::stream() << "   pushing " << std::endl;
             Node* neighbor_node = new Node( neighbor_loc,
                                             static_cast<Direction>( i ),
                                             current->depth+1,
@@ -114,7 +126,7 @@ bool BFS::step()
 
 void BFS::getPath( Path& path )const
 {
-    path.assign( m_origin, m_destination, m_path.begin(), m_path.end() ); 
+    path.assign( m_destination, m_path.begin(), m_path.end() ); 
 }
 
 
@@ -124,6 +136,6 @@ void BFS::getReversePath( Path& path )const
     std::transform( m_path.begin(), m_path.end(), 
                     std::front_insert_iterator<std::deque<Direction> >( rpath ),
                     reverseDirection );
-    path.assign( m_destination, m_origin, rpath.begin(), rpath.end() ); 
+    path.assign( m_origin, rpath.begin(), rpath.end() ); 
 }
 
