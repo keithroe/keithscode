@@ -64,15 +64,6 @@ void Bot::makeMoves()
     Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
 
     //
-    // First make decision based on local battles
-    //
-
-    //
-    // Choose important rally points
-    //
-    
-    
-    //
     // Now make move choices for individual ants
     //
     for( State::Ants::const_iterator it = m_state.myAnts().begin();
@@ -83,7 +74,6 @@ void Bot::makeMoves()
     }
     
 }
-
 
 void Bot::endTurn()
 {
@@ -102,6 +92,13 @@ void Bot::endTurn()
 void Bot::makeMove( Ant* ant )
 {
     const Location cur_location = ant->location;
+
+
+    //
+    // First make decisions based on local battles
+    //
+     
+
 
     //
     // Check to see if there is already a valid path for this ant
@@ -125,6 +122,10 @@ void Bot::makeMove( Ant* ant )
     }
     
 
+    //
+    // Choose new destination 
+    //
+    
     std::vector<Candidate> candidates; 
 
     // Hills 
