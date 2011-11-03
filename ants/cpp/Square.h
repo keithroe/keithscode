@@ -30,14 +30,12 @@ std::ostream& operator<<( std::ostream& os, const Square& s );
 struct Square
 {
     //
-    // Represents possible square contents
+    // Represents possible square types
     //
-    enum Content 
+    enum Type 
     { 
         WATER=0,
-        HILL,
-        FOOD,
-        EMPTY,
+        LAND,
         UNKNOWN
     };
     
@@ -47,23 +45,25 @@ struct Square
     
     Square();
 
-    /// Resets the information for the square except water information
+    /// Resets the information for the square except type information
     void reset();
 
     void setVisible();
 
     bool isAvailable()const;
     bool isWater()const;
+    bool isLand()const;
+    bool isUnknown()const;
 
-    static std::string contentString( Content c );
+    static std::string typeString( Type c );
 
     //
     // Members
     //
     
-    Content content;           ///< What does this square contain 
-
-    bool isVisible;            ///< Is this square visible to any ants?
+    Type type;                 ///< What type of square is this 
+    bool visible;              ///< Is this square visible to any ants?
+    bool food;                 ///< Does this square contain food 
     int  ant_id;               ///< Ant player id, -1 if none
     int  hill_id;              ///< Hill player id, -1 if none
     Ant* ant;                  ///< Ant data if present, NULL otherwise
@@ -73,8 +73,9 @@ struct Square
 
     
 inline Square::Square()
-    : content( UNKNOWN ),
-      isVisible( false ),
+    : type( UNKNOWN ),
+      visible( false ),
+      food( false ),
       ant_id( -1 ),
       hill_id( -1 ),
       ant( NULL )
@@ -84,9 +85,9 @@ inline Square::Square()
 
 inline void Square::reset()
 {
-    if( content != WATER && content != UNKNOWN ) content = EMPTY;
-
-    isVisible   = false;
+    // Leave type alone as this is static between turns
+    visible     = false;
+    food        = false;
     ant_id      = -1;
     hill_id     = -1;
     ant         =  NULL;
@@ -97,41 +98,56 @@ inline void Square::reset()
 
 inline void Square::setVisible()
 {
-  isVisible = 1;
-  if( content == UNKNOWN ) content = EMPTY;
+    visible = true;
+    if( type == UNKNOWN ) type = LAND;
 }
 
 
 inline bool Square::isAvailable()const
 {
-    return ant_id < 0 && hill_id != 0 && content != WATER; 
+    return ant_id < 0 && hill_id != 0 && type != WATER; 
 }
 
 
 inline bool Square::isWater()const
 {
-    return content == WATER; 
+    return type == WATER; 
 }
 
 
-inline std::string Square::contentString( Content c )
+inline bool Square::isLand()const
 {
-    static const char* lookup[5] = { "WATER", "HILL", "FOOD", "EMPTY", "UNKNOWN" };
+    return type == LAND; 
+}
+
+
+inline bool Square::isUnknown()const
+{
+    return type == UNKNOWN; 
+}
+
+
+inline std::string Square::typeString( Type c )
+{
+    static const char* lookup[5] = { "WATER", "LAND", "UNKNOWN" };
     return lookup[ c ]; 
 }
 
 
 inline std::ostream& operator<<( std::ostream& os, const Square& s )
 {
-    os << "isVisible:" << s.isVisible << " ant_id:" << s.ant_id << " hill_id:" << s.hill_id; 
+    os << Square::typeString( s.type )
+       << " visible:" << ( s.visible ? "true" : "false" )
+       << " food:"    << ( s.food    ? "true" : "false" )
+       << " ant_id:"  << s.ant_id 
+       << " hill_id:" << s.hill_id; 
     return os;
 }
 
 
-inline bool hasAnt( const Square& s )               { return s.ant_id == 0; }
-inline bool hasAvailableAnt( const Square& s )      { return s.ant_id == 0 && s.ant->available(); }
-inline bool hasEnemyAnt( const Square& s )          { return s.ant_id >  0; }
-inline bool hasFood( const Square& s )              { return s.content == Square::FOOD; }
+inline bool hasAnt( const Square& s )           { return s.ant_id == 0; }
+inline bool hasEnemyAnt( const Square& s )      { return s.ant_id >  0; }
+inline bool hasFood( const Square& s )          { return s.food;        }
 
 
 #endif //SQUARE_H_

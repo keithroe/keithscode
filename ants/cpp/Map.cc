@@ -105,7 +105,6 @@ void Map::makeMove( const Location &loc, Direction direction )
 }
 
 
-
 std::ostream& operator<<( std::ostream &os, const Map& map )
 {
     os << "------------------------------------------------------------------" << std::endl;
@@ -115,42 +114,12 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
         {
             const Square& square = map.m_grid[ i ][ j ];
             os << ' ';
-            switch( square.content )
-            {
-                case Square::WATER:
-                {
-                    os << 'w';
-                    break;
-                }
-                case Square::FOOD:
-                {
-                    os << 'f';
-                    break;
-                }
-                case Square::HILL:
-                {
-                    os << static_cast<char>( 'A' + square.hill_id );
-                    break;
-                }
-                case Square::EMPTY:
-                {
-                    if( square.ant_id >= 0 )
-                    {
-                        os << static_cast<char>( 'a' + square.ant_id );
-                    }
-                    else 
-                    {
-                      os << (square.isVisible ? ' ' : '.');
-                    }
-                    break;
-
-                }
-                case Square::UNKNOWN:
-                {
-                    os << '?';
-                    break;
-                }
-            }
+            if     ( square.food         ) os << 'f';
+            else if( square.ant_id >=0   ) os << static_cast<char>( 'a' + square.ant_id );
+            else if( square.hill_id >= 0 ) os << static_cast<char>( 'A' + square.hill_id );
+            else if( square.isWater()    ) os << 'w';
+            else if( square.isUnknown()  ) os << '?';
+            else if( square.isLand()     ) os << (square.visible ? ' ' : '.');
         }
         os << std::endl;
     }
@@ -170,3 +139,5 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
     */
     return os;
 }
+
+

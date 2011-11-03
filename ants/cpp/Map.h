@@ -13,6 +13,7 @@
 class Map
 {
 public:
+
     Map();
     Map( unsigned height, unsigned width);
 
