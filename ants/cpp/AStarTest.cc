@@ -14,15 +14,14 @@ int main( int argc, char** argv )
 
     for( int i = 0; i < SIZE; ++i )
       for( int j = 0; j < SIZE; ++j )
-        map( i, j ).content = Square::EMPTY;
+        map( i, j ).type = Square::LAND;
 
     for( int i = 8; i < SIZE-8; ++i ) 
-      map( SIZE/2, i ).content = Square::WATER;
+      map( SIZE/2, i ).type = Square::WATER;
 
     Location dest( 12, 16 );
     Location orig(  18, 16 );
 
-    map( dest ).content = Square::HILL;
     map( dest ).hill_id = 1;
     map( orig ).ant_id  = 0;
 

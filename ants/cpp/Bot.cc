@@ -107,7 +107,7 @@ void Bot::makeMove( Ant* ant )
     {
         Debug::stream() << "        reusing path" << std::endl;
 
-        // TODO: check if the goal has disappeard (food eaten, etc)
+        // TODO: check if the goal has disappeared (food eaten, etc)
         Direction dir = ant->path.popNextStep();
         Location  loc = m_state.map().getLocation( cur_location, dir );
         if( m_state.map()( loc ).isAvailable() )

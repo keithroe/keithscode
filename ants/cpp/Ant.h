@@ -13,7 +13,9 @@ struct Ant
     bool     available()const;
 
     Location location;
+    Location goal;
     Path     path;
+
 };
 
 

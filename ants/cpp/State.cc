@@ -79,8 +79,8 @@ void State::updateVisionInformation()
         sLoc = m_my_ants[a]->location;
         locQueue.push(sLoc);
 
-        std::vector<std::vector<bool> > visited(m_rows, std::vector<bool>(m_cols, 0));
-        m_map( sLoc.row, sLoc.col ).setVisible();
+        std::vector<std::vector<bool> > visited( m_rows, std::vector<bool>(m_cols, 0));
+        m_map( sLoc ).setVisible();
         visited[sLoc.row][sLoc.col] = 1;
 
         while(!locQueue.empty())
@@ -102,7 +102,7 @@ void State::updateVisionInformation()
                     }
                     else
                     {
-                        if( m_map( nLoc ).content == Square::UNKNOWN )
+                        if( m_map( nLoc ).isUnknown() )
                         {
                             m_frontier.insert( nLoc );
                         }
@@ -121,7 +121,7 @@ void State::removeRazedHills()
     for( LocationList::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
         const Square& square = m_map( *it );
-        if( square.isVisible && square.hill_id < 0 )
+        if( square.visible && square.hill_id < 0 )
            it = m_enemy_hills.erase( it );
     }
 }
@@ -237,12 +237,12 @@ istream& operator>>(istream &is, State &state)
             if(inputType == "w") //water square
             {
                 is >> loc.row >> loc.col;
-                state.m_map( loc ).content = Square::WATER;
+                state.m_map( loc ).type = Square::WATER;
             }
             else if(inputType == "f") //m_food square
             {
                 is >> loc.row >> loc.col;
-                state.m_map( loc ).content = Square::FOOD;
+                state.m_map( loc ).food = true;
                 state.m_food.push_back( loc );
             }
             else if(inputType == "a") //live ant square
@@ -281,7 +281,6 @@ istream& operator>>(istream &is, State &state)
             else if(inputType == "h")
             {
                 is >> loc.row >> loc.col >> player;
-                state.m_map( loc ).content = Square::HILL;
                 state.m_map( loc ).hill_id = player;
                 if(player == 0)
                     state.m_my_hills.push_back( loc );
