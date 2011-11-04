@@ -1,4 +1,5 @@
 
+#include "BF.h"
 #include "BFS.h"
 #include "Bot.h"
 #include "Debug.h"
@@ -72,6 +73,18 @@ void Bot::makeMoves()
     Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
 
     //
+    // Prioritize map
+    //
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        BF bf( m_state.map(), (*it)->location, -1.0f, 10u );
+        bf.traverse();
+    }
+
+    Debug::stream() << m_state.map() << std::endl;
+
+
+    //
     // Now make move choices for individual ants
     //
     for( State::Ants::const_iterator it = m_state.myAnts().begin();
@@ -88,7 +101,6 @@ void Bot::endTurn()
     if( m_state.turn() > 0 )
         m_state.reset();
     m_state.endTurn();
-    m_targeted.clear();
 
     const float turn_time = m_state.timer().getTime();
     m_max_time = turn_time > m_max_time ? turn_time : m_max_time;
@@ -129,7 +141,7 @@ void Bot::makeMove( Ant* ant )
             {
                 const int manhattan_dist = m_state.map().manhattanDistance( cur_location, *it );
                 if( manhattan_dist < 30 )
-                    candidates.push_back( std::make_pair( 30 - manhattanDistance, *it ) );
+                    candidates.push_back( std::make_pair( 30 - manhattan_dist, *it ) );
             }
         }
 
