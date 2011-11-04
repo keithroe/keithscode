@@ -7,10 +7,17 @@
 
 #include <list>
 
-/// TODO: need a way to represent other types of 'paths' such as 'walk in this general direction'
 class Path
 {
 public:
+    enum Goal
+    {
+        HILL=0,
+        FOOD, 
+        EXPLORE,
+        OTHER 
+    };
+
     Path() {}
 
     template <class Iter>
@@ -21,8 +28,11 @@ public:
 
     Location  destination()const        { return m_destination;     }
     unsigned  size()const               { return m_steps.size();    }
-    unsigned  empty()const              { return m_steps.empty();    }
+    unsigned  empty()const              { return m_steps.empty();   }
     Direction nextStep()const;
+
+    Goal      goal()const               { return m_goal;            }
+    void      setGoal( Goal goal )      { m_goal = goal;            }
     Direction popNextStep();
 
     void      reset()                   { m_steps.clear();          }
@@ -31,23 +41,27 @@ public:
 
 private:
     Location               m_destination;
+    Goal                   m_goal;
     std::list<Direction>   m_steps;
+
 };
     
 
 template <class Iter>
-Path::Path( const Location& destination, Iter begins, Iter ends )
-    : m_destination( destination )
+Path::Path( const Location& destination, Iter begin, Iter end )
+    : m_destination( destination ),
+      m_goal( OTHER )
 {
-    m_steps.assign( begins, ends );
+    m_steps.assign( begin, end );
 }
 
 
 template <class Iter>
-void Path::assign( const Location& destination, Iter begins, Iter ends )
+void Path::assign( const Location& destination, Iter begin, Iter end )
 {
     m_destination = destination;
-    m_steps.assign( begins, ends );
+    m_goal        = OTHER;
+    m_steps.assign( begin, end );
 }
 
 #endif // PATH_H_

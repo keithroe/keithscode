@@ -2,7 +2,7 @@
 #define BOT_H_
 
 #include "State.h"
-#include <vector>
+#include <set>
 
 class Location;
 
@@ -28,10 +28,10 @@ public:
 private:
     void makeMove( Ant* ant  );
 
-    void chooseDestination( const Location& cur_location );
 
-    float m_max_time;
-    State m_state;
+    std::set<Location> m_location;
+    float              m_max_time;
+    State              m_state;
 };
 
 #endif //BOT_H_

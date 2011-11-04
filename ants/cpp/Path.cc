@@ -1,12 +1,12 @@
 
 #include "Path.h"
 
-
 Direction Path::nextStep()const
 { 
     if( m_steps.empty() ) return NONE;
     return m_steps.front();
 }
+
 
 Direction Path::popNextStep()
 { 
