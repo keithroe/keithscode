@@ -5,6 +5,7 @@ LDFLAGS= -lm
 
 HEADERS= Ant.h \
          AStar.h \
+         BF.h \
          BFS.h \
          Bot.h \
          Debug.h \
@@ -18,6 +19,7 @@ HEADERS= Ant.h \
          Timer.h
 
 SOURCES= AStar.cc \
+         BF.cc \
          BFS.cc \
          Bot.cc \
          Location.cc \

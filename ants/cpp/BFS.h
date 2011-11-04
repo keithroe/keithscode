@@ -13,6 +13,7 @@ class Map;
 class Square;
 class Path;
 
+
 class BFS
 {
 public:

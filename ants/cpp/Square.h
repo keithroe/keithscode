@@ -61,12 +61,13 @@ struct Square
     // Members
     //
     
-    Type type;                 ///< What type of square is this 
-    bool visible;              ///< Is this square visible to any ants?
-    bool food;                 ///< Does this square contain food 
-    int  ant_id;               ///< Ant player id, -1 if none
-    int  hill_id;              ///< Hill player id, -1 if none
-    Ant* ant;                  ///< Ant data if present, NULL otherwise
+    Type  type;                 ///< What type of square is this 
+    bool  visible;              ///< Is this square visible to any ants?
+    bool  food;                 ///< Does this square contain food 
+    int   ant_id;               ///< Ant player id, -1 if none
+    int   hill_id;              ///< Hill player id, -1 if none
+    Ant*  ant;                  ///< Ant data if present, NULL otherwise
+    float priority;
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
 };
@@ -78,7 +79,8 @@ inline Square::Square()
       food( false ),
       ant_id( -1 ),
       hill_id( -1 ),
-      ant( NULL )
+      ant( NULL ),
+      priority( 0.0f )
 {
 }
 
@@ -91,6 +93,7 @@ inline void Square::reset()
     ant_id      = -1;
     hill_id     = -1;
     ant         =  NULL;
+    priority    = 0.0f;
 
     deadAnts.clear();
 };
@@ -140,7 +143,8 @@ inline std::ostream& operator<<( std::ostream& os, const Square& s )
        << " visible:" << ( s.visible ? "true" : "false" )
        << " food:"    << ( s.food    ? "true" : "false" )
        << " ant_id:"  << s.ant_id 
-       << " hill_id:" << s.hill_id; 
+       << " hill_id:" << s.hill_id 
+       << " priority:" << s.priority; 
     return os;
 }
 
