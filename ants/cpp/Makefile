@@ -1,11 +1,9 @@
 CC=g++
-CFLAGS= -O3 -funroll-loops
-CFLAGS= 
+CFLAGS= -O3 -funroll-loops -Wall -Werror
 LDFLAGS= -lm
 
 HEADERS= Ant.h \
          AStar.h \
-         BF.h \
          BFS.h \
          Bot.h \
          Debug.h \
@@ -19,7 +17,6 @@ HEADERS= Ant.h \
          Timer.h
 
 SOURCES= AStar.cc \
-         BF.cc \
          BFS.cc \
          Bot.cc \
          Location.cc \
@@ -32,11 +29,12 @@ OBJECTS=$(SOURCES:.cc=.o)
 MYBOT=MyBot
 ASTARTEST=astartest
 BFSTEST=bfstest
+DIFFTEST=difftest
 
 #Uncomment the following to enable debugging
 CFLAGS += -g -DDEBUG
 
-all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST)
+all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST) $(DIFFTEST)
 
 $(MYBOT): MyBot.o $(OBJECTS)  $(HEADERS) 
 	$(CC)  $(CFLAGS) $(LDFLAGS) MyBot.o $(OBJECTS) -o $@
@@ -47,11 +45,14 @@ $(ASTARTEST): AStarTest.o $(OBJECTS) $(HEADERS)
 $(BFSTEST): BFSTest.o $(OBJECTS) $(HEADERS) 
 	$(CC) $(LDFLAGS) BFSTest.o $(OBJECTS) -o $@
 
+$(DIFFTEST): DiffusionTest.o $(OBJECTS) $(HEADERS) 
+	$(CC) $(LDFLAGS) DiffusionTest.o $(OBJECTS) -o $@
+
 %.o : %.cc $(HEADERS) 
 	$(CC) -c $(CFLAGS) $< -o $@
 
 clean: 
-	-rm -f ${EXECUTABLE} MyBot astartest bfstest AStarTest.o MyBot.o ${OBJECTS} *.d
+	-rm -f ${EXECUTABLE} MyBot astartest bfstest difftest AStarTest.o MyBot.o ${OBJECTS} *.d
 	-rm -f debug.txt
 
 zip:

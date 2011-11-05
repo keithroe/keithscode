@@ -34,12 +34,15 @@ public:
     void setup();
     void reset();
 
-    void makeMove( Ant* ant, const Location &loc, Direction direction);
+    void makeMove( Ant* ant, Direction direction);
+    void makeMove( Ant* ant, const Location& location );
     
     void updateVisionInformation();
 
     Timer&             timer()                  { return m_timer;         }
 
+    int                   rows()const              { return m_rows;          }
+    int                   cols()const              { return m_cols;          }
     const Map&            map() const              { return m_map;           }
           Map&            map()                    { return m_map;           }
     const Ants&           myAnts()const            { return m_my_ants;       }

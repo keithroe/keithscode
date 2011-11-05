@@ -77,8 +77,8 @@ private:
 
         Location loc;
         Direction dir;
-        int g;
-        int h;
+        unsigned g;
+        unsigned h;
         Node* child;
     };
     

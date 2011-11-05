@@ -9,8 +9,8 @@
 using namespace std;
 
 State::State()
-    : m_game_over( 0 ),
-      m_turn( 0 )
+    : m_turn( 0 ),
+      m_game_over( 0 )
 {
 }
 
@@ -39,26 +39,27 @@ void State::reset()
 }
 
 
-void State::makeMove( Ant* ant, const Location &loc, Direction direction)
+void State::makeMove( Ant* ant, Direction direction )
 {
-    cout << "o " << loc.row << " " << loc.col << " " << DIRECTION_CHAR[direction] << endl;
-    Location new_loc = m_map.getLocation( loc, direction );
-    ant->location = new_loc;
+    cout << "o " << ant->location.row << " " << ant->location.col << " " << DIRECTION_CHAR[direction] << endl;
+    m_map.makeMove( ant->location, direction );
+    
+    Location new_loc = m_map.getLocation( ant->location, direction );
     m_my_prev_ants[ new_loc ] = ant;
-    m_map.makeMove( loc, direction );
+    ant->location = new_loc;
 }
 
 
-/*
-float State::getDistance(const Location &loc1, const Location &loc2)const
+void State::makeMove( Ant* ant, const Location& loc )
 {
-    int d1 = abs(loc1.row-loc2.row),
-        d2 = abs(loc1.col-loc2.col),
-        dr = min(d1, m_rows-d1),
-        dc = min(d2, m_cols-d2);
-    return sqrtf(dr*dr + dc*dc);
+    Direction dir = m_map.getDirection( ant->location, loc );
+
+    cout << "o " << ant->location.row << " " << ant->location.col << " " << DIRECTION_CHAR[dir] << endl;
+    m_map.makeMove( ant->location, loc );
+
+    m_my_prev_ants[ loc ] = ant;
+    ant->location = loc;
 }
-*/
 
 
 void State::updateVisionInformation()

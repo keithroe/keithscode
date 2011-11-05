@@ -1,10 +1,10 @@
 
-#include "BF.h"
+//#include "BF.h"
+#include "AStar.h"
 #include "BFS.h"
 #include "Bot.h"
 #include "Debug.h"
 #include "Path.h"
-#include "PathFinder.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -25,9 +25,10 @@ namespace
     // Checks if this ant has a valid path and resets the path if not
     bool hasValidPath( Ant* ant, const Map& map )
     {
+        // TODO: check goal to make sure it still has the food, etc
         if( ant->path.empty() ) return false;
         Location next_loc = map.getLocation( ant->location, ant->path.nextStep() );
-
+        return map( next_loc ).isAvailable(); 
     }
 }
 
@@ -75,14 +76,35 @@ void Bot::makeMoves()
     //
     // Prioritize map
     //
-    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
-        BF bf( m_state.map(), (*it)->location, -1.0f, 10u );
-        bf.traverse();
+        std::vector<Location> neighbors;
+        m_state.map().getNeighbors( *it, isLand, neighbors );
+        for( std::vector<Location>::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
+        {
+          m_state.map().setPriority( *it, 10 );
+        }
     }
 
-    Debug::stream() << m_state.map() << std::endl;
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        // TODO: more principled choice of weights (based on view dist??), no magic numbers
+        m_state.map().setPriority( (*it)->location, -100 );
+    }
 
+    for( State::LocationList::const_iterator it = m_state.enemyHills().begin(); it != m_state.enemyHills().end(); ++it )
+    {
+        m_state.map().setPriority( *it, 1000 );
+    }
+    
+
+    // TODO: unknown squares??? 
+    
+    int diffusion_steps = std::max( m_state.rows(), m_state.cols() ) / 2;
+    Debug::stream() << " diffusion steps " <<  diffusion_steps << std::endl;
+    m_state.map().diffusePriority( diffusion_steps );
+
+    //Debug::stream() << m_state.map() << std::endl;
 
     //
     // Now make move choices for individual ants
@@ -121,16 +143,12 @@ void Bot::makeMove( Ant* ant )
     // TODO
     // return;
 
-
     // 
     // Select a new path if needed
     //
-    if( !hasValidPath( ant, m_state.map() ) ) // Checks if goal still valid & next square available 
+    if( !hasValidPath( ant, m_state.map() ) )
     {
-        //
-        // Choose new destination 
-        //
-        
+        Debug::stream() << "Looking for new goal based path" << std::endl;
         std::vector<Candidate> candidates; 
 
         // Hills 
@@ -138,11 +156,9 @@ void Bot::makeMove( Ant* ant )
         for( State::LocationList::const_iterator it = hills.begin(); it != hills.end(); ++it )
         {
             if( !( m_state.map()( *it ).isAvailable() ) ) continue;
-            {
-                const int manhattan_dist = m_state.map().manhattanDistance( cur_location, *it );
-                if( manhattan_dist < 30 )
-                    candidates.push_back( std::make_pair( 30 - manhattan_dist, *it ) );
-            }
+            //float dist = m_state.map().distance( cur_location, *it );
+            //if( dist <= m_state.viewRadius() )
+              candidates.push_back( std::make_pair( 30 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
         }
 
         // Food 
@@ -155,58 +171,62 @@ void Bot::makeMove( Ant* ant )
               candidates.push_back( std::make_pair( 10 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
         }
 
-        // Unexplored areas
-        const State::LocationSet frontier = m_state.frontier();
-        for( State::LocationSet::iterator it = frontier.begin(); it != frontier.end(); ++it )
-        {
-            if( !m_state.map()( *it ).isAvailable() ) continue;
-            candidates.push_back( std::make_pair( 0 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
-        }
-        
         if( !candidates.empty() ) 
         {
             std::sort( candidates.begin(), candidates.end(), CandidateCompare() );
 
-            PathFinder path_finder( m_state.map() );
-            path_finder.getPath( cur_location, candidates.front().second, ant->path); 
-
-            Direction dir = ant->path.popNextStep();
-            if( dir != NONE )
+            // TODO: try more than one candidate
+            AStar astar( m_state.map(), cur_location, candidates.front().second  ); 
+            if( astar.search() )
             {
-                Location  loc = m_state.map().getLocation( cur_location, dir );
-                if( m_state.map()( loc ).isAvailable() )
-                {
-                    m_state.makeMove( ant, cur_location, dir );
-                    return;
-                }
+                Debug::stream() << "  found new goal based path" << std::endl;
+                astar.getPath( ant->path );
             }
-        }
-
-        int offset = rand() % NUM_DIRECTIONS;
-        for( int i = 0; i < NUM_DIRECTIONS; ++i )
-        {
-            Direction d = static_cast<Direction>( (i+offset) % NUM_DIRECTIONS );
-            Location loc = m_state.map().getLocation( cur_location, static_cast<Direction>( d ) );
-
-            // Add helper for checking destinations
-            if( m_state.map()( loc.row, loc.col ).isAvailable() )
+            else
             {
-                m_state.makeMove( ant, cur_location, static_cast<Direction>( d ) );
-                break;
+                Debug::stream() << "  failed to find new goal based path" << std::endl;
             }
         }
     }
 
+    //
+    //
+    //
+    if( hasValidPath( ant, m_state.map() ) )
+    {
+        Debug::stream() << "  yes valid goal based path" << std::endl;
+        Direction dir = ant->path.popNextStep();
+        m_state.makeMove( ant, dir );
+    }
 
     //
-    // Move along path.  This path should always be valid at this point
-    // 
-    Direction dir = ant->path.popNextStep();
-    Location  loc = m_state.map().getLocation( cur_location, dir );
-    m_state.makeMove( ant, cur_location, dir );
-    
+    // Choose path according to diffusion map priorities
+    //
+    else
+    {
+        Debug::stream() << "  no valid goal based path" << std::endl;
+        std::vector<Location> neighbors;
+        m_state.map().getNeighbors( cur_location, notWater, neighbors );
+        if( neighbors.empty() ) return;
 
+        Location move_loc  = *( neighbors.begin() );
+        float max_priority = m_state.map().getPriority( move_loc );
+        for( std::vector<Location>::iterator it = neighbors.begin()+1; it != neighbors.end(); ++it )
+        {
+            Location neighbor_loc = *it;
+            float neighbor_priority = m_state.map().getPriority( neighbor_loc );
+            if( neighbor_priority > max_priority )
+            {
+                max_priority = neighbor_priority;
+                move_loc     = neighbor_loc;
+            }
+        }
+
+        m_state.makeMove( ant, move_loc );
+    }
 }
+
+
 /*
 void Bot::makeMove( const Ant& ant )
 {

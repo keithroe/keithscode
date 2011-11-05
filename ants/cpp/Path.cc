@@ -25,4 +25,6 @@ std::ostream& operator<<( std::ostream& out, const Path& path )
          it != path.m_steps.end();
          ++it )
         out << DIRECTION_CHAR[ *it ] << " ";
+
+    return out;
 }
