@@ -149,13 +149,14 @@ inline std::ostream& operator<<( std::ostream& os, const Square& s )
 }
 
 
-inline bool hasAnt( const Square& s )           { return s.ant_id == 0;           }
-inline bool hasEnemyAnt( const Square& s )      { return s.ant_id >  0;           }
-inline bool hasFood( const Square& s )          { return s.food;                  }
-inline bool isLand( const Square& s )           { return s.type == Square::LAND;  }
-inline bool isWater( const Square& s )          { return s.type == Square::WATER; }
-inline bool notWater( const Square& s )         { return s.type != Square::WATER; }
-inline bool isAvailable( const Square& s )      { return s.isAvailable(); }
+inline bool hasAnt( const Square& s )          { return s.ant_id == 0;           }
+inline bool hasEnemyAnt( const Square& s )     { return s.ant_id >  0;           }
+inline bool hasFood( const Square& s )         { return s.food;                  }
+inline bool hasEnemyHill( const Square& s )    { return s.hill_id > 0;           }
+inline bool isLand( const Square& s )          { return s.type == Square::LAND;  }
+inline bool isWater( const Square& s )         { return s.type == Square::WATER; }
+inline bool notWater( const Square& s )        { return s.type != Square::WATER; }
+inline bool isAvailable( const Square& s )     { return s.isAvailable();         }
 
 
 #endif //SQUARE_H_
