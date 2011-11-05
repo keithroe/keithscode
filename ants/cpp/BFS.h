@@ -80,8 +80,8 @@ private:
     Location               m_origin; 
     Location               m_destination; 
 
-    unsigned               m_max_depth;
     Predicate              m_predicate;
+    unsigned               m_max_depth;
 };
 
 
