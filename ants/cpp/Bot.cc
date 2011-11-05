@@ -5,6 +5,7 @@
 #include "Bot.h"
 #include "Debug.h"
 #include "Path.h"
+#include "Square.h"
 
 #include <algorithm>
 #include <cstdlib>
@@ -15,20 +16,33 @@
 
 namespace 
 {
-    typedef std::pair<int, Location> Candidate;
+    struct Candidate
+    {
+        int        estimate;
+        Location   location;
+        Path::Goal goal;
+    };
+
     struct CandidateCompare
     {
         bool operator()( const Candidate& c0, const Candidate& c1 )
-        { return c0.first > c1.first; }
+        { return c0.estimate > c1.estimate; }
     };
+
 
     // Checks if this ant has a valid path and resets the path if not
     bool hasValidPath( Ant* ant, const Map& map )
     {
-        // TODO: check goal to make sure it still has the food, etc
-        if( ant->path.empty() ) return false;
+        if( ant->path.empty() )              return false;
+
         Location next_loc = map.getLocation( ant->location, ant->path.nextStep() );
-        return map( next_loc ).isAvailable(); 
+        if( !map( next_loc ).isAvailable() ) return false; 
+
+        Location goal_loc = ant->path.destination();
+        if( ant->path.goal() == Path::FOOD ) return hasFood( map( goal_loc ) );
+        if( ant->path.goal() == Path::HILL ) return hasEnemyHill( map( goal_loc ) );
+
+        return true;
     }
 }
 
@@ -98,13 +112,12 @@ void Bot::makeMoves()
     }
     
 
-    // TODO: unknown squares??? 
     
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() ) / 2;
     Debug::stream() << " diffusion steps " <<  diffusion_steps << std::endl;
     m_state.map().diffusePriority( diffusion_steps );
 
-    //Debug::stream() << m_state.map() << std::endl;
+    Debug::stream() << m_state.map() << std::endl;
 
     //
     // Now make move choices for individual ants
@@ -117,6 +130,7 @@ void Bot::makeMoves()
     }
     
 }
+
 
 void Bot::endTurn()
 {
@@ -136,7 +150,6 @@ void Bot::makeMove( Ant* ant )
 {
     const Location cur_location = ant->location;
 
-
     //
     // First make decisions based on local battles
     //
@@ -155,20 +168,27 @@ void Bot::makeMove( Ant* ant )
         const State::LocationList& hills = m_state.enemyHills();
         for( State::LocationList::const_iterator it = hills.begin(); it != hills.end(); ++it )
         {
-            if( !( m_state.map()( *it ).isAvailable() ) ) continue;
-            //float dist = m_state.map().distance( cur_location, *it );
-            //if( dist <= m_state.viewRadius() )
-              candidates.push_back( std::make_pair( 30 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
+            Candidate c;
+            c.estimate = 40 - m_state.map().manhattanDistance( cur_location, *it );
+            c.location = *it;
+            c.goal     = Path::HILL;
+            candidates.push_back( c );
         }
 
-        // Food 
+        // Food  TODO: handle food via BFS from food
         const State::Locations& food = m_state.food();
         for( State::Locations::const_iterator it = food.begin(); it != food.end(); ++it )
         {
-            if( !m_state.map()( *it ).isAvailable() ) continue;
+            // Only add this if it is in our view radius
             float dist = m_state.map().distance( cur_location, *it );
             if( dist <= m_state.viewRadius() )
-              candidates.push_back( std::make_pair( 10 - m_state.map().manhattanDistance( cur_location, *it ), *it ) );
+            {
+                Candidate c;
+                c.estimate = 10 - m_state.map().manhattanDistance( cur_location, *it );
+                c.location = *it;
+                c.goal     = Path::FOOD;
+                candidates.push_back( c );
+            }
         }
 
         if( !candidates.empty() ) 
@@ -176,15 +196,12 @@ void Bot::makeMove( Ant* ant )
             std::sort( candidates.begin(), candidates.end(), CandidateCompare() );
 
             // TODO: try more than one candidate
-            AStar astar( m_state.map(), cur_location, candidates.front().second  ); 
+            AStar astar( m_state.map(), cur_location, candidates.front().location ); 
             if( astar.search() )
             {
                 Debug::stream() << "  found new goal based path" << std::endl;
                 astar.getPath( ant->path );
-            }
-            else
-            {
-                Debug::stream() << "  failed to find new goal based path" << std::endl;
+                ant->path.setGoal( candidates.front().goal );
             }
         }
     }
