@@ -26,6 +26,11 @@ public:
     void endTurn();
 
 private:
+    /// Check if this ant should make a high priority battle move.  return true
+    /// if the ant makes a move
+    bool attackDefend( Ant* ant );
+    
+    /// Move ant according to diffused map priorities
     void makeMove( Ant* ant  );
 
 

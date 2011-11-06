@@ -4,6 +4,7 @@ LDFLAGS= -lm
 
 HEADERS= Ant.h \
          AStar.h \
+         BF.h \
          BFS.h \
          Bot.h \
          Debug.h \

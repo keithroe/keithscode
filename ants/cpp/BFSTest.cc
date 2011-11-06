@@ -1,7 +1,7 @@
 
 
 #include "Path.h"
-#include "BFS.h"
+#include "BF.h"
 #include "Map.h"
 #include <iostream>
 
@@ -9,6 +9,58 @@ bool pred( const Square& s )
 {
   return s.hill_id > 0;
 }
+
+
+struct FindHill 
+{
+    bool operator()( const BFNode* node )
+    {
+        if( node->square->hill_id > 0 )
+        {
+            node->getPath( path );
+            node->getRPath( rpath );
+            rpath_origin = node->loc;
+            return false;
+        }
+        return true;
+    }
+    Path path;
+    Path rpath;
+    Location rpath_origin;
+};
+
+
+struct FirstStepAvailable
+{
+    bool operator()( const BFNode* current, const Square& neighbor )
+    {
+        return current->depth > 0 || neighbor.isAvailable();
+    }
+};
+
+
+
+struct FindAnts
+{
+    bool operator()( const BFNode* node )
+    {
+        if( node->square->ant_id == 0 )
+        {
+            ants.push_back( node->loc );
+        }
+        return true;
+    }
+    std::vector<Location> ants;
+};
+
+
+struct AlwaysAvailable
+{
+    bool operator()( const BFNode* current, const Square& neighbor )
+    {
+        return true;
+    }
+};
 
 const int SIZE = 32;
 int main( int argc, char** argv )
@@ -29,45 +81,60 @@ int main( int argc, char** argv )
     map( dest ).hill_id = 1;
     map( orig ).ant_id  = 0;
 
-    std::cout << map << std::endl;
+    std::cerr << map << std::endl;
 
-    BFS   bfs( map, orig, pred );
-    if( !bfs.search() ) std::cerr << "No path found!!!!!!" << std::endl;
-    else                std::cerr << "Path found" << std::endl;  
 
-    Path path;
-    bfs.getPath( path );
+    FindHill find_hill;
+    FirstStepAvailable first_step_available;
+    BF<FindHill, FirstStepAvailable>  bfs( map, orig, find_hill, first_step_available );
+    bfs.traverse();
 
-    std::cerr <<  " path length: " << path.size() << std::endl;
+    std::cerr <<  " path length: " << find_hill.path.size() << std::endl;
     
     int i = 0;
-    Location current = bfs.origin();
-    while( path.nextStep() != NONE )
+    Location current = orig;
+    while( find_hill.path.nextStep() != NONE )
     {
-       Direction d = path.popNextStep();
+       Direction d = find_hill.path.popNextStep();
        std::cerr << " Step " << i++ << ": in direction '" << DIRECTION_CHAR[ d ] << "'" << std::endl;
        current = map.getLocation( current, d );
        map( current ).ant_id = 0;
-       std::cout << map << std::endl;
+       std::cerr << map << std::endl;
     }
 
     std::cerr << " now in reverse ======================================" << std::endl;
     
     map.reset();
-
-    Path rpath;
-    bfs.getReversePath( rpath );
     
-    std::cerr <<  " rpath length: " << rpath.size() << std::endl;
+    std::cerr <<  " rpath length: " << find_hill.rpath.size() << std::endl;
     
     i = 0;
-    current = bfs.destination();
-    while( rpath.nextStep() != NONE )
+    current = find_hill.rpath_origin;
+    while( find_hill.rpath.nextStep() != NONE )
     {
-       Direction d = rpath.popNextStep();
+       Direction d = find_hill.rpath.popNextStep();
        std::cerr << " Step " << i++ << ": in direction '" << DIRECTION_CHAR[ d ] << "'" << std::endl;
        current = map.getLocation( current, d );
        map( current ).ant_id = 0;
-       std::cout << map << std::endl;
+       std::cerr << map << std::endl;
+    }
+
+
+    std::cerr << "ant search =========================" << std::endl;
+
+    map.reset();
+    map( Location(  4,  8 ) ).ant_id = 0;
+    map( Location( 18, 12 ) ).ant_id = 0;
+    map( Location( 20, 24 ) ).ant_id = 0;
+    
+    FindAnts        find_ants;
+    AlwaysAvailable always_available;
+    BF<FindAnts, AlwaysAvailable>  bfs2( map, Location( 12,16 ), find_ants, always_available );
+    bfs2.traverse();
+
+    for( std::vector<Location>::iterator it = find_ants.ants.begin(); it != find_ants.ants.end(); ++it )
+    {
+        std::cerr << *it << std::endl;
     }
 }
+

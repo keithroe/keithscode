@@ -225,6 +225,7 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
     }
     os << "------------------------------------------------------------------" << std::endl;
 
+    /*
     for( unsigned i = 0u; i < map.m_height; ++i )
     {
         for( unsigned j = 0u; j < map.m_width; ++j )
@@ -241,20 +242,8 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
         }
         os << std::endl;
     }
-
-    /*
-    
-    for( unsigned i = 0u; i < map.m_height; ++i )
-    {
-        for( unsigned j = 0u; j < map.m_width; ++j )
-        {
-            os << " " << map.m_grid[ i ][ j ].priority; 
-        }
-        os << std::endl;
-    }
-
-    os << "------------------------------------------------------------------" << std::endl;
     */
+
     return os;
 }
 
