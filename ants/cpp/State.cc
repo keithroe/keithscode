@@ -113,6 +113,8 @@ void State::updateVisionInformation()
             }
         }
     }
+
+    removeRazedHills();
   
 }
 
@@ -313,11 +315,6 @@ istream& operator>>(istream &is, State &state)
                 getline(is, junk);
         }
     }
-
-
-    // Remove enemy hills we know are destroyed.  Leave hills we cant see so we
-    // can still target them
-    state.removeRazedHills();
 
     // Clear out previous ants list since any ants left are dead :(
     for( State::AntHash::iterator it = state.m_my_prev_ants.begin(); it != state.m_my_prev_ants.end(); ++it )

@@ -87,19 +87,30 @@ void Bot::makeMoves()
 {
     Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
 
+    std::list<Ant*> available( m_state.myAnts().begin(), m_state.myAnts().end() );
+
     //
-    // First make 'global' ant decisions such as battle
+    // First make imporant ant decisions such as attack/defend 
     //
-    std::set<Ant*> battle_ants;
-    for( State::Ants::const_iterator it = m_state.myAnts().begin();
-         it != m_state.myAnts().end();
-         ++it )
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); ++it )
     {
-        // for now, just move away from lost battles
+        if( attackDefend( *it ) )
+            it = available.erase( it );
     }
 
     //
     // Prioritize map
+    //
+    //
+    // TODO 
+    // TODO: Not enough priority for unknown
+    // TODO: Add priority for not visible
+    //
+    //
+    //
+    //
+    //
+    //
     //
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
@@ -107,7 +118,7 @@ void Bot::makeMoves()
         m_state.map().getNeighbors( *it, isLand, neighbors );
         for( std::vector<Location>::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
         {
-          m_state.map().setPriority( *it, 10 );
+          m_state.map().setPriority( *it, 100 );
         }
     }
 
@@ -133,9 +144,7 @@ void Bot::makeMoves()
     //
     // Now make move choices for individual ants
     //
-    for( State::Ants::const_iterator it = m_state.myAnts().begin();
-         it != m_state.myAnts().end();
-         ++it )
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); ++it )
     {
         makeMove( *it );
     }
@@ -157,6 +166,57 @@ void Bot::endTurn()
 }
 
 
+bool Bot::attackDefend( Ant* ant )
+{
+    Debug::stream() << "  Checking for battle " << std::endl;
+
+    // TODO: experiment to see if we want to ignore previous paths (always keep paths to hills)
+    if( hasValidPath( ant, m_state.map() ) )
+    {
+        Debug::stream() << "    No battle move -- previous path exists" << std::endl;
+        return false;
+    }
+
+    // Check if there is a hill to rally to TODO: rally then attack?? 
+    std::vector<Candidate> candidates; 
+    const State::LocationList& hills = m_state.enemyHills();
+    for( State::LocationList::const_iterator it = hills.begin(); it != hills.end(); ++it )
+    {
+        int manhattan_distance =  m_state.map().manhattanDistance( ant->location, *it );
+        if( manhattan_distance < 40 )
+        {
+            Candidate c;
+            c.estimate = m_state.map().manhattanDistance( ant->location, *it );
+            c.location = *it;
+            c.goal     = Path::HILL;
+            candidates.push_back( c );
+        }
+    }
+
+    std::sort( candidates.begin(), candidates.end(), CandidateCompare() );
+    for( std::vector<Candidate>::iterator it = candidates.begin(); it != candidates.end(); ++it )
+    {
+        Debug::stream() << "    Searching for path to " << it->location << std::endl;
+        AStar astar( m_state.map(), ant->location, it->location ); 
+        if( astar.search() )
+        {
+            // Set the ants path
+            Debug::stream() << "      found new goal hill attack path " << ant->path << std::endl;
+            astar.getPath( ant->path );
+            ant->path.setGoal( candidates.front().goal );
+
+            // Make the first move
+            Direction dir = ant->path.popNextStep();
+            m_state.makeMove( ant, dir );
+            return true;
+        }
+    }
+
+    return false;
+
+}
+
+
 void Bot::makeMove( Ant* ant )
 {
     const Location cur_location = ant->location;
@@ -175,17 +235,6 @@ void Bot::makeMove( Ant* ant )
     {
         Debug::stream() << "  Looking for new goal based path" << std::endl;
         std::vector<Candidate> candidates; 
-
-        // Hills 
-        const State::LocationList& hills = m_state.enemyHills();
-        for( State::LocationList::const_iterator it = hills.begin(); it != hills.end(); ++it )
-        {
-            Candidate c;
-            c.estimate = 40 - m_state.map().manhattanDistance( cur_location, *it );
-            c.location = *it;
-            c.goal     = Path::HILL;
-            candidates.push_back( c );
-        }
 
         // Food  TODO: handle food via BFS from food
         const State::Locations& food = m_state.food();
@@ -243,18 +292,24 @@ void Bot::makeMove( Ant* ant )
         m_state.map().getNeighbors( cur_location, isAvailable, neighbors );
         if( neighbors.empty() ) return;
 
+        Debug::stream() << "    checking " << neighbors.size() << "neighbors" << std::endl;
         Location move_loc  = *( neighbors.begin() );
         float max_priority = m_state.map().getPriority( move_loc );
+        Debug::stream() << "      starting with weight " << max_priority << " to " << move_loc << std::endl;
         for( std::vector<Location>::iterator it = neighbors.begin()+1; it != neighbors.end(); ++it )
         {
             Location neighbor_loc = *it;
             float neighbor_priority = m_state.map().getPriority( neighbor_loc );
+            Debug::stream() << "      checking weight " << neighbor_priority<< " to " << neighbor_loc<< std::endl;
             if( neighbor_priority > max_priority )
             {
                 max_priority = neighbor_priority;
                 move_loc     = neighbor_loc;
             }
         }
+
+        Debug::stream() << "    moving " << max_priority << " to " << move_loc << std::endl;
+
 
         m_state.makeMove( ant, move_loc );
     }
