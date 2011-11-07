@@ -238,9 +238,9 @@ bool Bot::attackDefend( Ant* ant )
         if( astar.search() )
         {
             // Set the ants path
-            Debug::stream() << "      found new goal hill attack path " << ant->path << std::endl;
             astar.getPath( ant->path );
             ant->path.setGoal( candidates.front().goal );
+            Debug::stream() << "      found new goal hill attack path " << ant->path << std::endl;
 
             // Make the first move
             Direction dir = ant->path.popNextStep();
@@ -374,23 +374,23 @@ void Bot::updateHillList()
     m_enemy_hills.insert( m_state.enemyHills().begin(), m_state.enemyHills().end() );
 
     // Check for any KNOWN razed hills 
+    std::vector< LocationSet::iterator > remove_these;
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
-        // TODO
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        //
-        // eraseable struct
         const Square& square = m_state.map()( *it );
         if( square.visible && square.hill_id < 0 )
-           it = m_enemy_hills.erase( it );
+           remove_these.push_back( it );
     }
+    for( std::vector< LocationSet::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
+       m_enemy_hills.erase( *it );
+        
+
+
+    Debug::stream() << "working set of hills:" << std::endl;
+    for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
+    {
+        Debug::stream() << "  " << *it << std::endl; 
+    }
+
 }
 

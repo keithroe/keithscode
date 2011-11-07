@@ -41,8 +41,6 @@ public:
 
     Timer&                timer()                  { return m_timer;         }
 
-    int                   rows()const              { return m_rows;          }
-    int                   cols()const              { return m_cols;          }
     const Map&            map() const              { return m_map;           }
           Map&            map()                    { return m_map;           }
     const Ants&           myAnts()const            { return m_my_ants;       }
@@ -52,13 +50,15 @@ public:
     const Locations&      food()const              { return m_food;          }
     const LocationSet&    frontier()const          { return m_frontier;      }
     int                   turn() const             { return m_turn;          }
+
+    // Per game constants
+    int                   rows()const              { return m_rows;          }
+    int                   cols()const              { return m_cols;          }
     float                 attackRadius()           { return m_attack_radius; }
     float                 spawnRadius()            { return m_spawn_radius;  }
     float                 viewRadius()             { return m_view_radius;   }
 
     void                  endTurn()                { ++m_turn;               }
-
-    void                  removeRazedHills();
 
     friend std::ostream& operator<<(std::ostream &os, const State &state);
     friend std::istream& operator>>(std::istream &is, State &state);
