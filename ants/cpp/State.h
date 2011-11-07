@@ -39,7 +39,7 @@ public:
     
     void updateVisionInformation();
 
-    Timer&             timer()                  { return m_timer;         }
+    Timer&                timer()                  { return m_timer;         }
 
     int                   rows()const              { return m_rows;          }
     int                   cols()const              { return m_cols;          }
@@ -48,7 +48,7 @@ public:
     const Ants&           myAnts()const            { return m_my_ants;       }
     const Locations&      enemyAnts()const         { return m_enemy_ants;    }
     const Locations&      myHills()const           { return m_my_hills;      }
-    const LocationList&   enemyHills()const        { return m_enemy_hills;   }
+    const Locations&      enemyHills()const        { return m_enemy_hills;   }
     const Locations&      food()const              { return m_food;          }
     const LocationSet&    frontier()const          { return m_frontier;      }
     int                   turn() const             { return m_turn;          }
@@ -58,10 +58,6 @@ public:
 
     void                  endTurn()                { ++m_turn;               }
 
-    Location              getLocation(const Location &startLoc, Direction direction)const;
-
-    //float                 getDistance(const Location &loc1, const Location &loc2)const;
-    
     void                  removeRazedHills();
 
     friend std::ostream& operator<<(std::ostream &os, const State &state);
@@ -88,7 +84,7 @@ private:
     AntHash                   m_my_prev_ants;
     Locations                 m_enemy_ants;
     Locations                 m_my_hills;
-    LocationList              m_enemy_hills;
+    Locations                 m_enemy_hills;
     Locations                 m_food;
     LocationSet               m_frontier;
 
