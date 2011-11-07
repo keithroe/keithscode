@@ -112,6 +112,7 @@ void Bot::playGame()
     while( std::cin >> m_state )
     {
         m_state.updateVisionInformation();
+        updateHillList();
         makeMoves();
         endTurn();
     }
@@ -165,7 +166,7 @@ void Bot::makeMoves()
         m_state.map().setPriority( (*it)->location, -100 );
     }
 
-    for( State::LocationList::const_iterator it = m_state.enemyHills().begin(); it != m_state.enemyHills().end(); ++it )
+    for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
         m_state.map().setPriority( *it, 1000 );
     }
@@ -216,8 +217,7 @@ bool Bot::attackDefend( Ant* ant )
 
     // Check if there is a hill to rally to TODO: rally then attack?? 
     std::vector<Candidate> candidates; 
-    const State::LocationList& hills = m_state.enemyHills();
-    for( State::LocationList::const_iterator it = hills.begin(); it != hills.end(); ++it )
+    for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
         int manhattan_distance =  m_state.map().manhattanDistance( ant->location, *it );
         if( manhattan_distance < 40 )
@@ -364,6 +364,33 @@ void Bot::makeMove( Ant* ant )
 
 
         m_state.makeMove( ant, move_loc );
+    }
+}
+
+
+void Bot::updateHillList()
+{
+    // Add in all visible hills -- duplicates will be ignored
+    m_enemy_hills.insert( m_state.enemyHills().begin(), m_state.enemyHills().end() );
+
+    // Check for any KNOWN razed hills 
+    for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
+    {
+        // TODO
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+        //
+        // eraseable struct
+        const Square& square = m_state.map()( *it );
+        if( square.visible && square.hill_id < 0 )
+           it = m_enemy_hills.erase( it );
     }
 }
 

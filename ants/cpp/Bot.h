@@ -26,6 +26,8 @@ public:
     void endTurn();
 
 private:
+    void updateHillList();
+
     /// Check if this ant should make a high priority battle move.  return true
     /// if the ant makes a move
     bool attackDefend( Ant* ant );
@@ -35,8 +37,11 @@ private:
     /// Move ant according to diffused map priorities
     void makeMove( Ant* ant  );
 
+    typedef std::set<Location>  LocationSet;
 
-    std::set<Location> m_location;
+    LocationSet        m_enemy_hills;
+    LocationSet        m_targetted_food;
+
     float              m_max_time;
     State              m_state;
 };

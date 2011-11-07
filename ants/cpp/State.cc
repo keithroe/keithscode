@@ -33,6 +33,7 @@ void State::reset()
     //
     m_my_ants.clear();
     m_enemy_ants.clear();
+    m_enemy_hills.clear();
     m_my_hills.clear();
     m_food.clear();
     m_map.reset();
@@ -288,12 +289,7 @@ istream& operator>>(istream &is, State &state)
                 if(player == 0)
                     state.m_my_hills.push_back( loc );
                 else
-                {
-                    if( std::find( state.m_enemy_hills.begin(), state.m_enemy_hills.end(), loc ) ==
-                        state.m_enemy_hills.end() )
-                        state.m_enemy_hills.push_back( loc );
-                }
-
+                    state.m_enemy_hills.push_back( loc );
             }
             else if(inputType == "players") //player information
                 is >> state.m_num_players;
