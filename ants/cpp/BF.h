@@ -44,7 +44,7 @@ struct BFNode
     BFNode*   child;
 };
 
-void BFNode::getPath( Path& path )const
+inline void BFNode::getPath( Path& path )const
 {
     // Backtrack to create path
     path.reset();
@@ -58,7 +58,7 @@ void BFNode::getPath( Path& path )const
 }
 
 
-void BFNode::getRPath( Path& path )const
+inline void BFNode::getRPath( Path& path )const
 {
     // Backtrack to create path
     path.reset();
