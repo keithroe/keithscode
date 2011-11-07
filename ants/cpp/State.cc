@@ -28,7 +28,6 @@ void State::setup()
 void State::reset()
 {
     // 
-    // Do not reset enemy hills until we know they are razed
     // Do not reset m_my_prev_ants
     //
     m_my_ants.clear();
@@ -113,20 +112,6 @@ void State::updateVisionInformation()
                 visited[nLoc.row][nLoc.col] = 1;
             }
         }
-    }
-
-    removeRazedHills();
-  
-}
-
-void State::removeRazedHills()
-{
-    // Check for any KNOWN razed hills 
-    for( LocationList::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
-    {
-        const Square& square = m_map( *it );
-        if( square.visible && square.hill_id < 0 )
-           it = m_enemy_hills.erase( it );
     }
 }
 

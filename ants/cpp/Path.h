@@ -18,7 +18,8 @@ public:
         OTHER 
     };
 
-    Path() {}
+    //Path() : m_goal( OTHER ) {}
+    Path()  {}
 
     template <class Iter>
     Path( const Location& destination, Iter begins, Iter ends );

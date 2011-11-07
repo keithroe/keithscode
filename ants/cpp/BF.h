@@ -2,13 +2,14 @@
 #ifndef BF_H_
 #define BF_H_
 
-#include "Location.h"
 #include "Debug.h"
 #include "Direction.h"
+#include "Location.h"
 #include "Map.h"
 
-#include <map>
+#include <algorithm>
 #include <deque>
+#include <map>
 #include <vector>
 
 class Map;
@@ -158,7 +159,6 @@ BF<Action, ValidNeighbor>::~BF()
         delete it->second;
     m_closed.clear();
 }
-
 
 
 template< class Action, class ValidNeighbor >
