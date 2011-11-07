@@ -1,6 +1,7 @@
 
 //#include "BF.h"
 #include "AStar.h"
+#include "BF.h"
 #include "BFS.h"
 #include "Bot.h"
 #include "Debug.h"
@@ -44,6 +45,40 @@ namespace
 
         return true;
     }
+
+
+
+    struct FindAnt
+    {
+        FindAnt() : found_ant( false ) {}
+
+        bool operator()( const BFNode* node )
+        {
+            // Make sure that child of goal is available so we guarentee a valid path
+            if( node->square->ant_id == 0 && node->child->square->isAvailable() )
+            {
+                ant       = node->loc;
+                found_ant = true;
+                return false;
+            }
+            return true;
+        }
+
+        Location ant;
+        bool     found_ant;
+    };
+
+
+
+    struct AlwaysAvailable
+    {
+        bool operator()( const BFNode* current, const Square& neighbor )
+        {
+            return true;
+        }
+    };
+
+
 }
 
 
@@ -99,18 +134,20 @@ void Bot::makeMoves()
     }
 
     //
+    // Assign ants to food
+    //
+    std::set<Ant*> assigned_to_food;
+    assignToFood( assigned_to_food );
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); ++it )
+    {
+        if( assigned_to_food.find( *it ) != assigned_to_food.end() )
+            it = available.erase( it );
+    }
+
+    
+    //
     // Prioritize map
-    //
-    //
-    // TODO 
-    // TODO: Not enough priority for unknown
     // TODO: Add priority for not visible
-    //
-    //
-    //
-    //
-    //
-    //
     //
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
@@ -213,7 +250,22 @@ bool Bot::attackDefend( Ant* ant )
     }
 
     return false;
+}
 
+
+void Bot::assignToFood( std::set<Ant*>& assigned_to_food )
+{
+    for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
+    {
+        FindAnt find_ant;
+        AlwaysAvailable always_available;
+        BF<FindAnt, AlwaysAvailable> bfs( m_state.map(), *it, find_ant, always_available );
+        bfs.traverse();
+        if( find_ant.found_ant )
+        {
+            //ant-
+        }
+    }
 }
 
 
