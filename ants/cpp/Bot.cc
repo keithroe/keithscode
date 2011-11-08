@@ -122,6 +122,17 @@ void Bot::makeMoves()
     }
 
     //
+    // First make important ant decisions such as attack/defend 
+    //
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end();  )
+    {
+        if( attackDefend( *it ) )
+            it = available.erase( it );
+        else
+            ++it;
+    }
+
+    //
     // Assign ants to food
     //
     std::set<Ant*> assigned_to_food;
@@ -134,16 +145,6 @@ void Bot::makeMoves()
             ++it;
     }
     
-    //
-    // First make important ant decisions such as attack/defend 
-    //
-    for( std::list<Ant*>::iterator it = available.begin(); it != available.end();  )
-    {
-        if( attackDefend( *it ) )
-            it = available.erase( it );
-        else
-            ++it;
-    }
 
     //
     // Prioritize map
@@ -232,11 +233,12 @@ bool Bot::attackDefend( Ant* ant )
     {
         Debug::stream() << "    Searching for path to " << it->location << std::endl;
         AStar astar( m_state.map(), ant->location, it->location ); 
+        astar.setMaxDepth( 35 );
         if( astar.search() )
         {
             // Set the ants path
             astar.getPath( ant->path );
-            ant->path.setGoal( candidates.front().goal );
+            ant->path.setGoal( it->goal );
             Debug::stream() << "      found new goal hill attack path " << ant->path << std::endl;
 
             // Make the first move
@@ -418,6 +420,7 @@ void Bot::updateTargetedFood()
     for( std::vector< LocationSet::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
         m_targeted_food.erase( *it );
 }
+
 
 // Checks if this ant has a valid path and resets the path if not
 bool Bot::hasValidPath( Ant* ant )
