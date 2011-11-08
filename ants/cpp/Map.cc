@@ -31,6 +31,7 @@ Map::Map( unsigned height, unsigned width)
           m_priorities0[ i ] = new float[ m_width ];
           m_priorities1[ i ] = new float[ m_width ];
           memset( m_priorities0[ i ], 0, m_width*sizeof( float ) );
+          memset( m_priorities1[ i ], 0, m_width*sizeof( float ) );
     }
 
 }
@@ -44,8 +45,8 @@ void Map::resize( unsigned height, unsigned width )
         for( unsigned int i = 0; i < m_height; ++i )
         {
             delete [] m_grid[i];
-            delete [] m_priorities0;
-            delete [] m_priorities1;
+            delete [] m_priorities0[i];
+            delete [] m_priorities1[i];
         }
         delete m_grid;
         delete m_priorities0;
@@ -63,6 +64,7 @@ void Map::resize( unsigned height, unsigned width )
           m_priorities0[ i ] = new float[ m_width ];
           m_priorities1[ i ] = new float[ m_width ];
           memset( m_priorities0[ i ], 0, m_width*sizeof( float ) );
+          memset( m_priorities1[ i ], 0, m_width*sizeof( float ) );
     }
 }
 

@@ -5,6 +5,8 @@
 #include "Path.h"
 #include "Location.h"
 
+#include <ostream>
+
 class Ant
 {
 public:
@@ -14,7 +16,6 @@ public:
     bool     available()const;
 
     Location location;
-    Location goal;
     Path     path;
 
 private:
@@ -26,6 +27,12 @@ private:
 inline bool Ant::available()const
 {
     return path.empty();
+}
+
+inline std::ostream& operator<<( std::ostream& out, const Ant& ant )
+{
+    out << ant.location << ": " << ant.path;
+    return out;
 }
 
 #endif // ANT_H_

@@ -9,8 +9,18 @@
 using namespace std;
 
 State::State()
-    : m_turn( 0 ),
-      m_game_over( 0 )
+    : m_rows(0),
+      m_cols(0),
+      m_turn(0),
+      m_turns(0),
+      m_num_players(0),
+      m_attack_radius(0),
+      m_spawn_radius(0),
+      m_view_radius(0),
+      m_load_time(0),
+      m_turn_time(0),
+      m_game_over(0),
+      m_seed(0)
 {
 }
 
@@ -245,16 +255,16 @@ istream& operator>>(istream &is, State &state)
                     if(  prev_ant == state.m_my_prev_ants.end() )
                     {
                         ant = new Ant( loc );
-                        state.m_my_ants.push_back( ant );
                     }
                     else
                     {
                         assert( prev_ant->second->location == loc );
                         ant = prev_ant->second; 
-                        state.m_my_ants.push_back( ant );
                         state.m_my_prev_ants.erase( prev_ant );
                     }
+                    state.m_my_ants.push_back( ant );
                     state.m_map( loc ).ant =  ant;
+                    Debug::stream() << "  my_ants[" << state.m_my_ants.size()-1 << "] set to " << *ant << std::endl;
                 }
                 else
                 {
@@ -299,7 +309,10 @@ istream& operator>>(istream &is, State &state)
 
     // Clear out previous ants list since any ants left are dead :(
     for( State::AntHash::iterator it = state.m_my_prev_ants.begin(); it != state.m_my_prev_ants.end(); ++it )
+    {
+        Debug::stream() << "deleting ant " << it->first << " -- " << it->second << std::endl;
         delete it->second;
+    }
     state.m_my_prev_ants.clear();
 
     return is;
