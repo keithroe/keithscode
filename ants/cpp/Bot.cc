@@ -128,7 +128,7 @@ void Bot::makeMoves()
     // Assign ants to food
     //
     std::set<Ant*> assigned_to_food;
-    assignToFood( assigned_to_food, 2, true );
+    assignToFood( assigned_to_food, 4, true );
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
     {
         if( assigned_to_food.find( *it ) != assigned_to_food.end() )
@@ -136,7 +136,6 @@ void Bot::makeMoves()
         else
             ++it;
     }
-
     
     //
     // First make important ant decisions such as attack/defend 
@@ -153,7 +152,7 @@ void Bot::makeMoves()
     // Assign ants to food
     //
     assigned_to_food.clear();
-    assignToFood( assigned_to_food, 12, false );
+    assignToFood( assigned_to_food, 15, false );
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
     {
         if( assigned_to_food.find( *it ) != assigned_to_food.end() )
@@ -196,10 +195,14 @@ void Bot::makeMoves()
     //
     // Now make move choices for individual ants
     //
+    std::for_each( m_state.myAnts().begin(), m_state.myAnts().end(),
+                   std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
+    /*
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); ++it )
     {
         makeMove( *it );
     }
+    */
     
 }
 
@@ -257,12 +260,6 @@ bool Bot::attackDefend( Ant* ant )
             astar.getPath( ant->path );
             ant->path.setGoal( it->goal );
             Debug::stream() << "      found new goal hill attack path " << ant->path << std::endl;
-
-            // Make the first move
-            Direction dir = ant->path.popNextStep();
-            Debug::stream() << " attackDefend -  Moving ant " << ant->location << " : " << DIRECTION_CHAR[dir] 
-                            << std::endl;
-            m_state.makeMove( ant, dir );
             return true;
         }
     }
@@ -273,6 +270,7 @@ bool Bot::attackDefend( Ant* ant )
 
 void Bot::assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, bool override_hills )
 {
+    // TODO: no food paths > 2 in len!!!!!!!!
     for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
     {
         Debug::stream() << " Searching for ant to collect food: " << *it << std::endl;
@@ -291,12 +289,6 @@ void Bot::assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, boo
         {
             assigned_to_food.insert( find_ant.ant );
             find_ant.ant->path.setGoal( Path::FOOD ); // TODO: investigate design to ensure goal always valid
-            
-            // Make the first move
-            Direction dir = find_ant.ant->path.popNextStep();
-            Debug::stream() << "      assignToFood -  Moving ant " << find_ant.ant->location << " : "
-                            << DIRECTION_CHAR[dir] << std::endl;
-            m_state.makeMove( find_ant.ant, dir );
             m_targeted_food.insert( *it );
         }
         else
