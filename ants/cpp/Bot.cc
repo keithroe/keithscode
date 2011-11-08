@@ -41,6 +41,7 @@ namespace
             // Make sure that child of goal is available so we guarentee a valid path
             if( node->square->ant_id == 0 &&
                 node->square->ant->path.goal() != Path::FOOD &&
+                node->square->ant->path.goal() != Path::HILL &&
                 node->child->square->isAvailable() )
             {
                 node->getRPath( node->square->ant->path );
@@ -132,7 +133,6 @@ void Bot::makeMoves()
         else
             ++it;
     }
-
     
     //
     // First make important ant decisions such as attack/defend 
@@ -170,7 +170,6 @@ void Bot::makeMoves()
         m_state.map().setPriority( *it, 1000 );
     }
     
-
     
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() ) / 2;
     m_state.map().diffusePriority( diffusion_steps );
