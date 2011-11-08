@@ -121,7 +121,7 @@ template<class Iter>
 AStar::AStar( const Map& map, Iter begins, Iter ends, const Location& destination )
     : m_map( map ),
       m_destination( destination ),
-      m_max_depth( 20 )
+      m_max_depth( 40 )
 {
     for( Iter it = begins; it != ends; ++it )
         m_open.push_back( new Node( *it, NONE, 0, m_map.manhattanDistance( *it, destination ), 0 ) );

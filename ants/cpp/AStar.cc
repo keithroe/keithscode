@@ -11,7 +11,7 @@
 AStar::AStar( const Map& map, const Location& start, const Location& destination )
     : m_map( map ),
       m_destination( destination ),
-      m_max_depth( 20 )
+      m_max_depth( 40 )
 {
     m_open.push_back( new Node( start, NONE, 0, m_map.manhattanDistance( start, destination ), 0 ) );
 }
@@ -72,7 +72,7 @@ bool AStar::step()
     //
     // Process all neighbors
     //
-    if( current->g+1 < m_max_depth )
+    if( current->f()+1u < m_max_depth )
     {
         for( int i = 0; i < NUM_DIRECTIONS; ++i )
         {

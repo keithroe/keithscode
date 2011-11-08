@@ -233,7 +233,7 @@ bool Bot::attackDefend( Ant* ant )
     {
         Debug::stream() << "    Searching for path to " << it->location << std::endl;
         AStar astar( m_state.map(), ant->location, it->location ); 
-        astar.setMaxDepth( 35 );
+        astar.setMaxDepth( 50 );
         if( astar.search() )
         {
             // Set the ants path
