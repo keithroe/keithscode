@@ -123,44 +123,54 @@ void Bot::makeMoves()
         Debug::stream() << *it << std::endl;
     }
 
-    // TODO: probably a good idea to search for VERY nearby food as highest priority (like dist <= 3 )
     //
-    // Assign ants to food
+    // Assign ants to attack/defend locally 
     //
-    std::set<Ant*> assigned_to_food;
-    assignToFood( assigned_to_food, 4, true );
+    std::set<Ant*> assigned_ants;
+    battle( assigned_ants );
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
     {
-        if( assigned_to_food.find( *it ) != assigned_to_food.end() )
-            it = available.erase( it );
-        else
-            ++it;
-    }
-    
-    //
-    // First make important ant decisions such as attack/defend 
-    //
-    for( std::list<Ant*>::iterator it = available.begin(); it != available.end();  )
-    {
-        if( attackDefend( *it ) )
-            it = available.erase( it );
-        else
-            ++it;
-    }
-    
-    //
-    // Assign ants to food
-    //
-    assigned_to_food.clear();
-    assignToFood( assigned_to_food, 15, false );
-    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
-    {
-        if( assigned_to_food.find( *it ) != assigned_to_food.end() )
+        if( assigned_ants.find( *it ) != assigned_ants.end() )
             it = available.erase( it );
         else
             ++it;
     }
 
+    //
+    // Assign ants to very nearby food with high priority
+    //
+    assignToFood( assigned_ants, 3, true );
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
+    {
+        if( assigned_ants.find( *it ) != assigned_ants.end() )
+            it = available.erase( it );
+        else
+            ++it;
+    }
+    
+    //
+    // Attack hills 
+    //
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end();  )
+    {
+        if( attackHills( *it ) )
+            it = available.erase( it );
+        else
+            ++it;
+    }
+    
+    //
+    // Assign ants to farther food with lower
+    //
+    assigned_ants.clear();
+    assignToFood( assigned_ants, 15, false );
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
+    {
+        if( assigned_ants.find( *it ) != assigned_ants.end() )
+            it = available.erase( it );
+        else
+            ++it;
+    }
 
     //
     // Prioritize map
@@ -221,7 +231,12 @@ void Bot::endTurn()
 }
 
 
-bool Bot::attackDefend( Ant* ant )
+void Bot::battle( std::set<Ant*>& assigned )
+{
+}
+
+
+bool Bot::attackHills( Ant* ant )
 {
     Debug::stream() << "  Checking for battle " << std::endl;
 

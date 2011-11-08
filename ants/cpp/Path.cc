@@ -27,7 +27,7 @@ Direction Path::popNextStep()
 
 std::ostream& operator<<( std::ostream& out, const Path& path )
 {
-    static const char* lookup[4] = { "HILL", "FOOD", "EXPLORE", "OTHER" };
+    static const char* lookup[5] = { "ATTACK", "HILL", "FOOD", "EXPLORE", "OTHER" };
     out << path.m_destination << " - " << lookup[ path.m_goal ] << ": ";
     for( std::list<Direction>::const_iterator it = path.m_steps.begin();
          it != path.m_steps.end();

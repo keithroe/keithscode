@@ -30,11 +30,12 @@ private:
     void updateTargetedFood();
     bool hasValidPath( Ant* ant );
 
-    /// Check if this ant should make a high priority battle move.  return true
-    /// if the ant makes a move
-    bool attackDefend( Ant* ant );
+    void battle( std::set<Ant*>& assigned );
+
+    /// Check if this ant should move to attack a hill.  return true if ant assigned a path 
+    bool attackHills( Ant* ant );
     
-    void assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, bool override_hills );
+    void assignToFood( std::set<Ant*>& assigned, unsigned max_dist, bool override_hills );
 
     /// Move ant according to diffused map priorities
     void makeMove( Ant* ant  );
