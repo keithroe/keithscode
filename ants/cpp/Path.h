@@ -12,7 +12,8 @@ class Path
 public:
     enum Goal
     {
-        HILL=0,
+        ATTACK=0,
+        HILL,
         FOOD, 
         EXPLORE,
         OTHER 
