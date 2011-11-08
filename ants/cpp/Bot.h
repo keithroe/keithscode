@@ -28,6 +28,7 @@ public:
 private:
     void updateHillList();
     void updateTargetedFood();
+    bool hasValidPath( Ant* ant );
 
     /// Check if this ant should make a high priority battle move.  return true
     /// if the ant makes a move

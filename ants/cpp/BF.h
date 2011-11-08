@@ -69,7 +69,7 @@ inline void BFNode::getRPath( Path& path )const
     for( const BFNode* current = this; current->child != 0; current = current->child )
     {
         dirs.push_back( reverseDirection( current->dir ) );
-        destination = current->loc;
+        destination = current->child->loc;
     }
     path.assign( destination, dirs.begin(), dirs.end() );
 }

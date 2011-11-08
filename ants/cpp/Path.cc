@@ -14,6 +14,8 @@ Direction Path::popNextStep()
 
     Direction dir = m_steps.front();
     m_steps.pop_front();
+    
+    if( m_steps.empty() ) m_goal = OTHER;
     return dir;     
 }
 
