@@ -352,7 +352,8 @@ void Bot::makeMove( Ant* ant )
     if( hasValidPath( ant ) )
     {
         Direction dir = ant->path.popNextStep();
-        Debug::stream() << "  Yes valid goal based path moving " << ant->location << ": " << dir << std::endl;
+        Debug::stream() << "  Yes valid goal based path moving " << ant->location << ": " << DIRECTION_CHAR[dir]
+                        << std::endl;
         m_state.makeMove( ant, dir );
     }
     //
@@ -429,6 +430,9 @@ bool Bot::hasValidPath( Ant* ant )
     Location next_loc = map.getLocation( ant->location, ant->path.nextStep() );
     if( !map( next_loc ).isAvailable() ) 
     {
+        Debug::stream() << "     resetting path: next sq not avail" << std::endl;
+        if( ant->path.goal() == Path::FOOD )
+            m_targeted_food.erase( ant->path.destination() );
         ant->path.reset();
         return false;
     }
@@ -436,6 +440,7 @@ bool Bot::hasValidPath( Ant* ant )
     Location goal_loc = ant->path.destination();
     if(  ant->path.goal() == Path::FOOD && !hasFood( map( goal_loc ) ) )
     {
+        Debug::stream() << "     resetting path: food gone" << std::endl;
         m_targeted_food.erase( ant->path.destination() );
         ant->path.reset();
         return false;
@@ -443,6 +448,7 @@ bool Bot::hasValidPath( Ant* ant )
 
     if ( ant->path.goal() == Path::HILL && !hasEnemyHill( map( goal_loc ) ) )
     {
+        Debug::stream() << "     resetting path: hill gone" << std::endl;
         ant->path.reset();
         return false;
     }
