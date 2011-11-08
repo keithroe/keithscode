@@ -47,30 +47,32 @@ namespace
     }
 
 
-
     struct FindAnt
     {
-        FindAnt() : found_ant( false ) {}
+        FindAnt() : ant( 0u ), found_ant( false ) {}
 
         bool operator()( const BFNode* node )
         {
+            // TODO: test if ant assigned to hill attack???
             // Make sure that child of goal is available so we guarentee a valid path
-            if( node->square->ant_id == 0 && node->child->square->isAvailable() )
+            if( node->square->ant_id == 0 &&
+                node->square->ant->path.goal() != Path::FOOD &&
+                node->child->square->isAvailable() )
             {
-                ant       = node->loc;
+                node->getRPath( node->square->ant->path );
+                ant       = node->square->ant;
                 found_ant = true;
                 return false;
             }
             return true;
         }
 
-        Location ant;
-        bool     found_ant;
+        Ant*   ant;
+        bool   found_ant;
     };
 
 
-
-    struct AlwaysAvailable
+    struct Always
     {
         bool operator()( const BFNode* current, const Square& neighbor )
         {
@@ -78,6 +80,7 @@ namespace
         }
     };
 
+    typedef  BF<FindAnt, Always> FindNearestAnt;
 
 }
 
@@ -113,6 +116,7 @@ void Bot::playGame()
     {
         m_state.updateVisionInformation();
         updateHillList();
+        updateTargetedFood();
         makeMoves();
         endTurn();
     }
@@ -121,17 +125,15 @@ void Bot::playGame()
 
 void Bot::makeMoves()
 {
-    Debug::stream() << "turn " << m_state.turn() << ":" << std::endl;
+    Debug::stream() << " ===============================================" << std::endl; 
+    Debug::stream() << " turn " << m_state.turn() << ":" << std::endl;
 
     std::list<Ant*> available( m_state.myAnts().begin(), m_state.myAnts().end() );
 
-    //
-    // First make imporant ant decisions such as attack/defend 
-    //
+    Debug::stream() << " available ants: " << std::endl;
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); ++it )
     {
-        if( attackDefend( *it ) )
-            it = available.erase( it );
+        Debug::stream() << *it << std::endl;
     }
 
     //
@@ -139,13 +141,26 @@ void Bot::makeMoves()
     //
     std::set<Ant*> assigned_to_food;
     assignToFood( assigned_to_food );
-    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); ++it )
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
     {
         if( assigned_to_food.find( *it ) != assigned_to_food.end() )
             it = available.erase( it );
+        else
+            ++it;
     }
 
     
+    //
+    // First make important ant decisions such as attack/defend 
+    //
+    for( std::list<Ant*>::iterator it = available.begin(); it != available.end();  )
+    {
+        if( attackDefend( *it ) )
+            it = available.erase( it );
+        else
+            ++it;
+    }
+
     //
     // Prioritize map
     // TODO: Add priority for not visible
@@ -174,10 +189,8 @@ void Bot::makeMoves()
 
     
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() ) / 2;
-    Debug::stream() << " diffusion steps " <<  diffusion_steps << std::endl;
     m_state.map().diffusePriority( diffusion_steps );
-
-    Debug::stream() << m_state.map() << std::endl;
+    //Debug::stream() << m_state.map() << std::endl;
 
     //
     // Now make move choices for individual ants
@@ -219,6 +232,7 @@ bool Bot::attackDefend( Ant* ant )
     std::vector<Candidate> candidates; 
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
+        Debug::stream() << "    adding candidate " << *it << std::endl;
         int manhattan_distance =  m_state.map().manhattanDistance( ant->location, *it );
         if( manhattan_distance < 40 )
         {
@@ -244,6 +258,8 @@ bool Bot::attackDefend( Ant* ant )
 
             // Make the first move
             Direction dir = ant->path.popNextStep();
+            Debug::stream() << " attackDefend -  Moving ant " << ant->location << " : " << DIRECTION_CHAR[dir] 
+                            << std::endl;
             m_state.makeMove( ant, dir );
             return true;
         }
@@ -257,13 +273,25 @@ void Bot::assignToFood( std::set<Ant*>& assigned_to_food )
 {
     for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
     {
+        if( m_targeted_food.find( *it ) != m_targeted_food.end() )
+            continue;
+
         FindAnt find_ant;
-        AlwaysAvailable always_available;
-        BF<FindAnt, AlwaysAvailable> bfs( m_state.map(), *it, find_ant, always_available );
-        bfs.traverse();
+        Always  always;
+        FindNearestAnt find_nearest_ant( m_state.map(), *it, find_ant, always );
+        find_nearest_ant.setMaxDepth( 20 );
+        find_nearest_ant.traverse();
         if( find_ant.found_ant )
         {
-            //ant-
+            assigned_to_food.insert( find_ant.ant );
+            find_ant.ant->path.setGoal( Path::FOOD ); // TODO: investigate design to ensure goal always valid
+            
+            // Make the first move
+            Direction dir = find_ant.ant->path.popNextStep();
+            Debug::stream() << " assignToFood -  Moving ant " << find_ant.ant->location << " : " << DIRECTION_CHAR[dir] 
+                            << std::endl;
+            Debug::stream() << "       inserting " << find_ant.ant << " into assigned_to_food " << std::endl;
+            m_state.makeMove( find_ant.ant, dir );
         }
     }
 }
@@ -274,6 +302,7 @@ void Bot::makeMove( Ant* ant )
     const Location cur_location = ant->location;
     Debug::stream() << "makeMove( ant: " << cur_location << " )" << std::endl;
 
+    /*
     //
     // First make decisions based on local battles
     //
@@ -324,14 +353,15 @@ void Bot::makeMove( Ant* ant )
     {
         Debug::stream() << "  Preexisting valid goal based path " << ant->path << std::endl;
     }
+    */
 
     //
     // If we have a valid path, execute it
     //
     if( hasValidPath( ant, m_state.map() ) )
     {
-        Debug::stream() << "  Yes valid goal based path" << std::endl;
         Direction dir = ant->path.popNextStep();
+        Debug::stream() << "  Yes valid goal based path moving " << ant->location << ": " << dir << std::endl;
         m_state.makeMove( ant, dir );
     }
     //
@@ -360,8 +390,8 @@ void Bot::makeMove( Ant* ant )
             }
         }
 
-        Debug::stream() << "    moving " << max_priority << " to " << move_loc << std::endl;
-
+        Debug::stream() << "    moving " << ant->location << " to " << move_loc << " prio " << max_priority
+                        << std::endl;
 
         m_state.makeMove( ant, move_loc );
     }
@@ -373,24 +403,26 @@ void Bot::updateHillList()
     // Add in all visible hills -- duplicates will be ignored
     m_enemy_hills.insert( m_state.enemyHills().begin(), m_state.enemyHills().end() );
 
-    // Check for any KNOWN razed hills 
+    // Check for any KNOWN razed hills and remove them from list
     std::vector< LocationSet::iterator > remove_these;
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
         const Square& square = m_state.map()( *it );
         if( square.visible && square.hill_id < 0 )
-           remove_these.push_back( it );
+            remove_these.push_back( it );
     }
     for( std::vector< LocationSet::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
-       m_enemy_hills.erase( *it );
-        
-
-
-    Debug::stream() << "working set of hills:" << std::endl;
-    for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
-    {
-        Debug::stream() << "  " << *it << std::endl; 
-    }
-
+        m_enemy_hills.erase( *it );
 }
 
+
+void Bot::updateTargetedFood()
+{
+    std::vector< LocationSet::iterator > remove_these;
+    for( LocationSet::iterator it = m_targeted_food.begin(); it != m_targeted_food.end(); ++it )
+        if( m_state.map()( *it ).food == false )
+            remove_these.push_back( it );
+
+    for( std::vector< LocationSet::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
+        m_targeted_food.erase( *it );
+}

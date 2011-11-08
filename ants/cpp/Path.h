@@ -36,7 +36,7 @@ public:
     void      setGoal( Goal goal )      { m_goal = goal;            }
     Direction popNextStep();
 
-    void      reset()                   { m_steps.clear();          }
+    void      reset()                   { m_steps.clear(); m_goal = OTHER; }
 
     friend std::ostream& operator<<( std::ostream& out, const Path& path );
 

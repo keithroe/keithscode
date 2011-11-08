@@ -27,6 +27,7 @@ public:
 
 private:
     void updateHillList();
+    void updateTargetedFood();
 
     /// Check if this ant should make a high priority battle move.  return true
     /// if the ant makes a move
@@ -40,7 +41,7 @@ private:
     typedef std::set<Location>  LocationSet;
 
     LocationSet        m_enemy_hills;
-    LocationSet        m_targetted_food;
+    LocationSet        m_targeted_food;
 
     float              m_max_time;
     State              m_state;
