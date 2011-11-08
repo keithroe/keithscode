@@ -31,22 +31,6 @@ namespace
     };
 
 
-    // Checks if this ant has a valid path and resets the path if not
-    bool hasValidPath( Ant* ant, const Map& map )
-    {
-        if( ant->path.empty() )              return false;
-
-        Location next_loc = map.getLocation( ant->location, ant->path.nextStep() );
-        if( !map( next_loc ).isAvailable() ) return false; 
-
-        Location goal_loc = ant->path.destination();
-        if( ant->path.goal() == Path::FOOD ) return hasFood( map( goal_loc ) );
-        if( ant->path.goal() == Path::HILL ) return hasEnemyHill( map( goal_loc ) );
-
-        return true;
-    }
-
-
     struct FindAnt
     {
         FindAnt() : ant( 0u ), found_ant( false ) {}
@@ -222,7 +206,7 @@ bool Bot::attackDefend( Ant* ant )
     Debug::stream() << "  Checking for battle " << std::endl;
 
     // TODO: experiment to see if we want to ignore previous paths (always keep paths to hills)
-    if( hasValidPath( ant, m_state.map() ) )
+    if( hasValidPath( ant ) )
     {
         Debug::stream() << "    No battle move -- previous path exists" << std::endl;
         return false;
@@ -273,13 +257,17 @@ void Bot::assignToFood( std::set<Ant*>& assigned_to_food )
 {
     for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
     {
+        Debug::stream() << " Searching for ant to collect food: " << *it << std::endl;
         if( m_targeted_food.find( *it ) != m_targeted_food.end() )
+        {
+            Debug::stream() << "   already targeted" << std::endl; 
             continue;
+        }
 
         FindAnt find_ant;
         Always  always;
         FindNearestAnt find_nearest_ant( m_state.map(), *it, find_ant, always );
-        find_nearest_ant.setMaxDepth( 20 );
+        find_nearest_ant.setMaxDepth( 12 );
         find_nearest_ant.traverse();
         if( find_ant.found_ant )
         {
@@ -288,10 +276,14 @@ void Bot::assignToFood( std::set<Ant*>& assigned_to_food )
             
             // Make the first move
             Direction dir = find_ant.ant->path.popNextStep();
-            Debug::stream() << " assignToFood -  Moving ant " << find_ant.ant->location << " : " << DIRECTION_CHAR[dir] 
-                            << std::endl;
-            Debug::stream() << "       inserting " << find_ant.ant << " into assigned_to_food " << std::endl;
+            Debug::stream() << "      assignToFood -  Moving ant " << find_ant.ant->location << " : "
+                            << DIRECTION_CHAR[dir] << std::endl;
             m_state.makeMove( find_ant.ant, dir );
+            m_targeted_food.insert( *it );
+        }
+        else
+        {
+            Debug::stream() << "    no path found" << std::endl;
         }
     }
 }
@@ -358,7 +350,7 @@ void Bot::makeMove( Ant* ant )
     //
     // If we have a valid path, execute it
     //
-    if( hasValidPath( ant, m_state.map() ) )
+    if( hasValidPath( ant ) )
     {
         Direction dir = ant->path.popNextStep();
         Debug::stream() << "  Yes valid goal based path moving " << ant->location << ": " << dir << std::endl;
@@ -426,3 +418,37 @@ void Bot::updateTargetedFood()
     for( std::vector< LocationSet::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
         m_targeted_food.erase( *it );
 }
+
+// Checks if this ant has a valid path and resets the path if not
+bool Bot::hasValidPath( Ant* ant )
+{
+    Debug::stream() << " Checking validity of path " << ant->path << std::endl;
+    if( ant->path.empty() ) 
+        return false;
+
+    const Map& map = m_state.map();
+    Location next_loc = map.getLocation( ant->location, ant->path.nextStep() );
+    if( !map( next_loc ).isAvailable() ) 
+    {
+        ant->path.reset();
+        return false;
+    }
+
+    Location goal_loc = ant->path.destination();
+    if(  ant->path.goal() == Path::FOOD && !hasFood( map( goal_loc ) ) )
+    {
+        m_targeted_food.erase( ant->path.destination() );
+        ant->path.reset();
+        return false;
+    } 
+
+    if ( ant->path.goal() == Path::HILL && !hasEnemyHill( map( goal_loc ) ) )
+    {
+        ant->path.reset();
+        return false;
+    }
+
+    return true;
+}
+
+
