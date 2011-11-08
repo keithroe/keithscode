@@ -1,5 +1,6 @@
 
 #include "Path.h"
+#include "Debug.h"
 
 Direction Path::nextStep()const
 { 
@@ -15,7 +16,11 @@ Direction Path::popNextStep()
     Direction dir = m_steps.front();
     m_steps.pop_front();
     
-    if( m_steps.empty() ) m_goal = OTHER;
+    if( m_steps.empty() )
+    {
+        Debug::stream() <<"      resetting path to " << m_destination << std::endl;
+        m_goal = OTHER;
+    }
     return dir;     
 }
 

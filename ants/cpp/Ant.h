@@ -5,8 +5,9 @@
 #include "Path.h"
 #include "Location.h"
 
-struct Ant
+class Ant
 {
+public:
     Ant( const Location& location )
         : location( location ) {}
 
@@ -16,6 +17,9 @@ struct Ant
     Location goal;
     Path     path;
 
+private:
+    Ant& operator=( Ant& );
+    Ant( Ant& );
 };
 
 
