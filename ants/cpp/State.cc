@@ -57,6 +57,8 @@ void State::makeMove( Ant* ant, Direction direction )
     Location new_loc = m_map.getLocation( ant->location, direction );
     m_my_prev_ants[ new_loc ] = ant;
     ant->location = new_loc;
+    
+    Debug::stream() << " setting my_prev_ants[ " << new_loc << "] to " << *ant << std::endl;
 }
 
 
