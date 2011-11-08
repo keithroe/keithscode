@@ -39,10 +39,10 @@ public:
     void makeMove( const Location &loc0, const Location& loc1 );
 
     void setPriority( const Location& loc, float priority )
-    { m_priorities0[ loc.row ][ loc.col ] = priority; }
+    { rangeCheck( loc.row, loc.col ); m_priorities0[ loc.row ][ loc.col ] = priority; }
     
     float getPriority( const Location& loc )const
-    { return m_priorities0[ loc.row ][ loc.col ]; }
+    { rangeCheck( loc.row, loc.col ); return m_priorities0[ loc.row ][ loc.col ]; }
 
     Square& operator()( const Location& loc )
     { rangeCheck( loc.row, loc.col ); return m_grid[loc.row][loc.col]; }

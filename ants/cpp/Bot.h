@@ -34,7 +34,7 @@ private:
     /// if the ant makes a move
     bool attackDefend( Ant* ant );
     
-    void assignToFood( std::set<Ant*>& assigned_to_food );
+    void assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, bool override_hills );
 
     /// Move ant according to diffused map priorities
     void makeMove( Ant* ant  );
