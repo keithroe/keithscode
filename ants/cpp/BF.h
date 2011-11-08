@@ -164,9 +164,9 @@ BF<Action, ValidNeighbor>::~BF()
 template< class Action, class ValidNeighbor >
 void BF<Action, ValidNeighbor>::traverse()
 {
-    Debug::stream() << "BF searching from locations  ..." << std::endl;
+    //Debugstream() << "BF searching from locations  ..." << std::endl;
     for( typename BFNodeQueue::iterator it = m_open.begin(); it != m_open.end(); ++it )
-        Debug::stream() <<  "    " << (*it)->loc << std::endl;
+        //Debugstream() <<  "    " << (*it)->loc << std::endl;
 
     while( !m_open.empty() && step() ) ;
 }
@@ -177,13 +177,13 @@ bool BF<Action, ValidNeighbor>::step()
 {
     BFNode* current =  m_open.front();
 
-    Debug::stream() << "  Checking " << current->loc << std::endl;
+    //Debugstream() << "  Checking " << current->loc << std::endl;
     //
     // Check to see if we have reached our goal
     //
     if( !m_action( current ) )
     {
-        Debug::stream() << "    m_action cancelled traversal" << current->loc << std::endl;
+        //Debugstream() << "    m_action cancelled traversal" << current->loc << std::endl;
         return false;
     }
 
@@ -201,7 +201,7 @@ bool BF<Action, ValidNeighbor>::step()
         for( int i = 0; i < NUM_DIRECTIONS; ++i )
         {
             const Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
-            Debug::stream() << "    Checking  neighbor " << neighbor_loc  << std::endl;
+            //Debugstream() << "    Checking  neighbor " << neighbor_loc  << std::endl;
             
             /*
             // Check if the neighbor is available to be traversed
@@ -210,26 +210,26 @@ bool BF<Action, ValidNeighbor>::step()
 
             if( m_map( neighbor_loc ).isWater() || !m_valid_neighbor( current, m_map( neighbor_loc ) ) )
             {
-                Debug::stream() << "      not avail " << std::endl;
+                //Debugstream() << "      not avail " << std::endl;
                 continue;
             }
 
             // Check if neighbor is already in open set
             if( std::find_if( m_open.begin(), m_open.end(), HasLocation( neighbor_loc ) ) != m_open.end() )
             {
-                Debug::stream() << "      in open set" << std::endl;
+                //Debugstream() << "      in open set" << std::endl;
                 continue;
             }
 
             // Check to see if this neighbor is in closed set 
             if( m_closed.find( neighbor_loc ) != m_closed.end() )
             {
-                Debug::stream() << "      in closed set" << std::endl;
+                //Debugstream() << "      in closed set" << std::endl;
                 continue;
             }
 
             // Insert this location into open set
-            Debug::stream() << "       pushing " << std::endl;
+            //Debugstream() << "       pushing " << std::endl;
             BFNode* neighbor_node = new BFNode( neighbor_loc,
                                                 &m_map( neighbor_loc ),
                                                 static_cast<Direction>( i ),

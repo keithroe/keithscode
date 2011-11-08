@@ -92,7 +92,7 @@ inline void Square::reset()
     food        = false;
     ant_id      = -1;
     hill_id     = -1;
-    ant         =  NULL;
+    ant         = NULL;
     priority    = 0.0f;
 
     deadAnts.clear();
