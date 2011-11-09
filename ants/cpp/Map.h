@@ -60,6 +60,8 @@ public:
     { assert( row < m_height &&  col < m_width ); }
 
     void diffusePriority( unsigned iterations );
+
+    Location computeCentroid( const std::vector<Location>& location );
     
     friend std::ostream& operator<<(std::ostream& os, const Map& map);
 

@@ -136,5 +136,21 @@ int main( int argc, char** argv )
     {
         std::cerr << *it << std::endl;
     }
+
+
+
+    Map map1( 32, 32 );
+
+    std::vector<Location> locs;
+    locs.push_back( Location( 28, 1 ) );
+    locs.push_back( Location( 28, 3 ) );
+    locs.push_back( Location(  1, 3 ) );
+    locs.push_back( Location(  1, 30 ) );
+
+    std::cerr << "\n\ncentroid test =========================" << std::endl;
+    for( std::vector<Location>::iterator it = locs.begin(); it != locs.end(); ++it )
+        std::cerr << "    " << *it << std::endl;
+    std::cerr << " centroid 0: " << map1.computeCentroid( locs ) << std::endl;
+    
 }
 
