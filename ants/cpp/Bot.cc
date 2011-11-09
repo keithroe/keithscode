@@ -381,59 +381,6 @@ void Bot::makeMove( Ant* ant )
     const Location cur_location = ant->location;
     Debug::stream() << "makeMove( ant: " << cur_location << " )" << std::endl;
 
-    /*
-    //
-    // First make decisions based on local battles
-    //
-    // TODO
-    // return;
-
-    // 
-    // Select a new path if needed
-    //
-    if( !checkValidPath( ant, m_state.map() ) )
-    {
-        Debug::stream() << "  Looking for new goal based path" << std::endl;
-        std::vector<Candidate> candidates; 
-
-        // Food  TODO: handle food via BFS from food
-        const State::Locations& food = m_state.food();
-        for( State::Locations::const_iterator it = food.begin(); it != food.end(); ++it )
-        {
-            // Only add this if it is in our view radius
-            float dist = m_state.map().distance( cur_location, *it );
-            if( dist <= m_state.viewRadius() )
-            {
-                Candidate c;
-                c.estimate = 10 - m_state.map().manhattanDistance( cur_location, *it );
-                c.location = *it;
-                c.goal     = Path::FOOD;
-                candidates.push_back( c );
-            }
-        }
-
-        if( !candidates.empty() ) 
-        {
-            std::sort( candidates.begin(), candidates.end(), CandidateCompare() );
-
-            // TODO: try more than one candidate
-            
-            Debug::stream() << "      Searching for path to " << candidates.front().location << std::endl;
-            AStar astar( m_state.map(), cur_location, candidates.front().location ); 
-            if( astar.search() )
-            {
-                astar.getPath( ant->path );
-                ant->path.setGoal( candidates.front().goal );
-                Debug::stream() << "      found new goal based path " << ant->path << std::endl;
-            }
-        }
-    }
-    else
-    {
-        Debug::stream() << "  Preexisting valid goal based path " << ant->path << std::endl;
-    }
-    */
-
     //
     // If we have a valid path, execute it
     //
