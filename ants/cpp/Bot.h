@@ -28,7 +28,7 @@ public:
 private:
     void updateHillList();
     void updateTargetedFood();
-    bool hasValidPath( Ant* ant );
+    bool checkValidPath( Ant* ant );
 
     void battle( std::set<Ant*>& assigned );
 

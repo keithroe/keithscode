@@ -1,11 +1,13 @@
 
-#include "Map.h"
+#include "Debug.h"
 #include "Location.h"
+#include "Map.h"
+
+#include <cmath>
 #include <cstdlib>
+#include <cstring>
 #include <iomanip>
 #include <ostream>
-#include <cmath>
-#include <cstring>
     
 Map::Map()
     : m_height( 0u ),
@@ -108,12 +110,33 @@ Location Map::getLocation( const Location &loc, Direction direction )const
 Direction Map::getDirection( const Location &loc0, const Location& loc1 )const
 {
     int dx = loc1.col - loc0.col;
-    if( dx ==  1 || dx + m_width == 1 ) return EAST;
-    if( dx == -1 || dx - m_width == 1 ) return WEST;
+    //if( dx ==  1 || dx + m_width == 1 ) return EAST;
+    //if( dx == -1 || dx - m_width == 1 ) return WEST;
 
     int dy = loc1.row - loc0.row; 
-    if( dy ==  1 || dy + m_height == 1 ) return SOUTH;
-    return NORTH;
+    //if( dy ==  1 || dy + m_height == 1 ) return SOUTH;
+    //if( dy == -1 || dy - m_height == 1 ) return NORTH;
+
+    int half_width  = m_width  / 2;
+    if( dx >  half_width ) dx -= m_width;
+    if( dx < -half_width ) dx += m_width;
+    
+    int half_height = m_height / 2;
+    if( dy >  half_height ) dy -= m_height;
+    if( dy < -half_height ) dy += m_height;
+
+    Direction dir;
+    if( abs( dx ) > abs( dy ) )
+    {
+        dir = dx > 0 ? EAST : WEST;
+    }
+    else
+    {
+        dir = dy > 0 ? SOUTH : NORTH;
+    }
+
+    Debug::stream() << "   getDirection( " << loc0 << "," << loc1 << " ): returning " << DIRECTION_CHAR[dir] << std::endl;
+    return dir;
 }
 
 
@@ -176,6 +199,39 @@ void Map::makeMove( const Location &loc0, const Location& loc1 )
 }
 
 
+Location Map::computeCentroid( const std::vector<Location>& locations )
+{
+    assert( !locations.empty() );
+    float x = locations.begin()->col;
+    float y = locations.begin()->row;
+    const float half_width  = static_cast<float>( m_width  ) * 0.5f;
+    const float half_height = static_cast<float>( m_height ) * 0.5f;
+
+    float num_points = 1.0f;
+    for( std::vector<Location>::const_iterator it = locations.begin()+1; it != locations.end(); ++it )
+    {
+        Location cur = *it;
+        float dx = static_cast<float>( cur.col ) - x;
+        if( dx >  half_width ) dx -= m_width;
+        if( dx < -half_width ) dx += m_width;
+        
+        float dy = static_cast<float>( cur.row ) - y;
+        if( dy >  half_height ) dy -= m_height;
+        if( dy < -half_height ) dy += m_height;
+        
+        x = ( ( x + dx ) + num_points*x ) / ( num_points + 1.0f );
+        y = ( ( y + dy ) + num_points*y ) / ( num_points + 1.0f );
+        num_points += 1.0f;
+    }
+    if( x > (m_width-1)  ) x -= m_width;
+    if( x < 0            ) x += m_width;
+    if( y > (m_height-1) ) y -= m_height;
+    if( y < 0            ) y += m_height;
+    
+    return Location( static_cast<int>( y+0.5f ), static_cast<int>( x+0.5f ) );
+}
+
+
 void Map::diffusePriority( unsigned iterations )
 {
     for( unsigned int k = 0; k < iterations; ++k )
@@ -184,20 +240,20 @@ void Map::diffusePriority( unsigned iterations )
         {
             for( unsigned j = 0u; j < m_width; ++j )
             {
-                // TODO: can optimize this.  Create ring buffer around priorities so no wrapping necessary;
-                Location loc( i, j );
                 const Square& sqr = m_grid[ i ][ j ];
-                if( sqr.isUnknown() || sqr.isWater() ) continue;
-                float val = m_priorities0[ i ][ j ];
-                Location n = getLocation( loc, NORTH ); 
-                Location s = getLocation( loc, SOUTH ); 
-                Location e = getLocation( loc, EAST  ); 
-                Location w = getLocation( loc, WEST  ); 
-                float val_n = m_grid[ n.row ][ n.col ].isWater() ? val : m_priorities0[ n.row ][ n.col ];
-                float val_s = m_grid[ s.row ][ s.col ].isWater() ? val : m_priorities0[ s.row ][ s.col ]; 
-                float val_e = m_grid[ e.row ][ e.col ].isWater() ? val : m_priorities0[ e.row ][ e.col ];
-                float val_w = m_grid[ w.row ][ w.col ].isWater() ? val : m_priorities0[ w.row ][ w.col ];
-                m_priorities1[ i ][ j ] = 0.2f * ( m_priorities0[ i ][ j ] + val_n + val_s + val_e + val_w ); 
+                if( !sqr.isLand() ) continue;
+                float sum         = m_priorities0[ i ][ j ];
+                float num_nodes   = 1.0f;
+                for( int d = 0; d < 4; ++d )
+                {
+                    Location neighbor = getLocation( Location( i, j ), static_cast<Direction>( d ) ); 
+                    if( m_grid[ neighbor.row ][ neighbor.col ].isLand() )
+                    {
+                        sum       += m_priorities0[ neighbor.row ][ neighbor.col ]; 
+                        num_nodes += 1.0f;
+                    }
+                }
+                m_priorities1[ i ][ j ] = 1.0f / num_nodes  * ( sum ); 
             }
         }
         float** temp = m_priorities0;
@@ -227,7 +283,6 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
     }
     os << "------------------------------------------------------------------" << std::endl;
 
-    /*
     for( unsigned i = 0u; i < map.m_height; ++i )
     {
         for( unsigned j = 0u; j < map.m_width; ++j )
@@ -244,7 +299,6 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
         }
         os << std::endl;
     }
-    */
 
     return os;
 }
