@@ -34,26 +34,32 @@ namespace
 
     struct FindFoodAnt
     {
-        FindFoodAnt( bool override_hills ) 
-          : override_hills( override_hills ), ant( 0u ), found_ant( false ) {}
+        FindFoodAnt( std::set<Ant*>& assigned_ants, bool override_hills ) 
+          : assigned_ants( assigned_ants ), override_hills( override_hills ), ant( 0u ), found_ant( false ) {}
 
+        // TODO: clean this up!!!!!!!
         bool operator()( const BFNode* node )
         {
-            // Make sure that child of goal is available so we guarentee a valid path
-            if( node->square->ant_id == 0 &&
-                node->square->ant->path.goal() != Path::FOOD   &&
-                node->square->ant->path.goal() != Path::ATTACK &&
-                ( override_hills || node->square->ant->path.goal() != Path::HILL ) &&
-                node->child->square->isAvailable() )
+            if( node->square->ant_id == 0 )
             {
-                node->getRPath( node->square->ant->path );
-                ant       = node->square->ant;
-                found_ant = true;
-                return false;
+                Ant* cur_ant = node->square->ant;
+                if(   cur_ant->path.goal() != Path::ATTACK &&
+                    ( cur_ant->path.goal() != Path::FOOD || 
+                      ( assigned_ants.find( cur_ant ) != assigned_ants.end() && cur_ant->path.size()>node->depth ) ) &&
+                    ( cur_ant->path.goal() != Path::HILL || override_hills ) &&
+                    node->child->square->isAvailable() )
+                {
+                    node->getRPath( cur_ant->path );
+                    cur_ant->path.setGoal( Path::FOOD );
+                    ant       = cur_ant;
+                    found_ant = true;
+                    return false;
+                }
             }
             return true;
         }
 
+        const std::set<Ant*>& assigned_ants;
         bool   override_hills;
         Ant*   ant;
         bool   found_ant;
@@ -143,6 +149,7 @@ void Bot::makeMoves()
     //
     // Assign ants to attack/defend locally 
     //
+    Debug::stream() << " Assigning battle tasks..." << std::endl;
     std::set<Ant*> assigned_ants;
     battle( assigned_ants );
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
@@ -156,6 +163,7 @@ void Bot::makeMoves()
     //
     // Assign ants to very nearby food with high priority
     //
+    Debug::stream() << " Assigning short distance food tasks... " << std::endl;
     assignToFood( assigned_ants, 4, true );
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
     {
@@ -168,6 +176,7 @@ void Bot::makeMoves()
     //
     // Attack hills 
     //
+    Debug::stream() << " Assigning hill-attack tasks... " << std::endl;
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end();  )
     {
         if( attackHills( *it ) )
@@ -179,8 +188,9 @@ void Bot::makeMoves()
     //
     // Assign ants to farther food with lower
     //
+    Debug::stream() << " Assigning long distance food tasks... " << std::endl;
     assigned_ants.clear();
-    assignToFood( assigned_ants, 14, false );
+    assignToFood( assigned_ants, 20, false );
     for( std::list<Ant*>::iterator it = available.begin(); it != available.end(); )
     {
         if( assigned_ants.find( *it ) != assigned_ants.end() )
@@ -222,6 +232,7 @@ void Bot::makeMoves()
     //
     // Now make move choices for individual ants
     //
+    Debug::stream() << " Making moves (path or map based )... " << std::endl;
     std::for_each( m_state.myAnts().begin(), m_state.myAnts().end(),
                    std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
 }
@@ -347,7 +358,37 @@ bool Bot::attackHills( Ant* ant )
 
 void Bot::assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, bool override_hills )
 {
-    // TODO: no food paths > 2 in len!!!!!!!!
+    assert( assigned_to_food.empty() );
+
+    for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
+    {
+        Debug::stream() << " Searching for ant to collect food: " << *it << std::endl;
+        if( m_targeted_food.find( *it ) != m_targeted_food.end() )
+        {
+            Debug::stream() << "   already targeted" << std::endl; 
+            continue;
+        }
+        FindFoodAnt    find_ant( assigned_to_food, override_hills );
+        Always         always;
+        FindNearestAnt find_nearest_ant( m_state.map(), *it, find_ant, always );
+        find_nearest_ant.setMaxDepth( max_dist );
+        find_nearest_ant.traverse();
+        if( find_ant.found_ant )
+        {
+            Debug::stream() << "    assigning ant " << *(find_ant.ant) << std::endl;
+            assigned_to_food.insert( find_ant.ant );
+        }
+        else
+        {
+            Debug::stream() << "    no path found" << std::endl;
+        }
+    }
+            
+    for( std::set<Ant*>::iterator it = assigned_to_food.begin(); it != assigned_to_food.end(); ++it )
+    {
+        m_targeted_food.insert( (*it)->path.destination() );
+    }
+    /*
     for( State::Locations::const_iterator it = m_state.food().begin(); it != m_state.food().end(); ++it )
     {
         Debug::stream() << " Searching for ant to collect food: " << *it << std::endl;
@@ -373,6 +414,7 @@ void Bot::assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, boo
             Debug::stream() << "    no path found" << std::endl;
         }
     }
+    */
 }
 
 

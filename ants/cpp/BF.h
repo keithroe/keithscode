@@ -164,10 +164,6 @@ BF<Action, ValidNeighbor>::~BF()
 template< class Action, class ValidNeighbor >
 void BF<Action, ValidNeighbor>::traverse()
 {
-    //Debugstream() << "BF searching from locations  ..." << std::endl;
-    for( typename BFNodeQueue::iterator it = m_open.begin(); it != m_open.end(); ++it )
-        //Debugstream() <<  "    " << (*it)->loc << std::endl;
-
     while( !m_open.empty() && step() ) ;
 }
 
@@ -181,11 +177,7 @@ bool BF<Action, ValidNeighbor>::step()
     //
     // Check to see if we have reached our goal
     //
-    if( !m_action( current ) )
-    {
-        //Debugstream() << "    m_action cancelled traversal" << current->loc << std::endl;
-        return false;
-    }
+    if( !m_action( current ) ) return false;
 
     //
     // Move current from open to closed list 
@@ -208,7 +200,7 @@ bool BF<Action, ValidNeighbor>::step()
             if( !m_map( neighbor_loc ).isAvailable() ) 
             */
 
-            if( m_map( neighbor_loc ).isWater() || !m_valid_neighbor( current, m_map( neighbor_loc ) ) )
+            if( !m_map( neighbor_loc ).isLand() || !m_valid_neighbor( current, m_map( neighbor_loc ) ) )
             {
                 //Debugstream() << "      not avail " << std::endl;
                 continue;
