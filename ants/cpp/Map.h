@@ -23,7 +23,10 @@ public:
     // Reset all squares to empty state.  Leave water as is
     void reset();
 
-    // Get the location arrived at by moving in a given direction with edge wrapping
+    unsigned width()const  { return m_width;  }
+    unsigned height()const { return m_height; }
+
+    // Get location arrived at by moving in a given direction with edge wrapping
     Location  getLocation( const Location &loc, Direction direction )const;
     Direction getDirection( const Location &loc0, const Location& loc1 )const;
 
@@ -34,6 +37,7 @@ public:
 
     int   manhattanDistance( const Location& loc0, const Location& loc1 )const;
     float distance         ( const Location& loc0, const Location& loc1 )const;
+    int   distance2        ( const Location& loc0, const Location& loc1 )const;
 
     void makeMove( const Location &loc, Direction direction );
     void makeMove( const Location &loc0, const Location& loc1 );
@@ -61,7 +65,7 @@ public:
 
     void diffusePriority( unsigned iterations );
 
-    Location computeCentroid( const std::vector<Location>& location );
+    Location computeCentroid( const std::vector<Location>& location )const;
     
     friend std::ostream& operator<<(std::ostream& os, const Map& map);
 

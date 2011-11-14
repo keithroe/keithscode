@@ -79,7 +79,7 @@ inline void BFNode::getRPath( Path& path )const
 ///    - returns true to continue search, false to stop
 ///    - stores any results of search (such as path or list of found nodes)
 ///
-/// ValidNeighbor: bool (*ValidNeighbor)( const BFNode* current, const Square& neighbor )
+/// ValidNeighbor: bool (*ValidNeighbor)( const BFNode* current, const Location& location, const Square& neighbor )
 ///    - returns true if this square is traversable for this search
 ///
 template< class Action, class ValidNeighbor >
@@ -200,7 +200,7 @@ bool BF<Action, ValidNeighbor>::step()
             if( !m_map( neighbor_loc ).isAvailable() ) 
             */
 
-            if( !m_map( neighbor_loc ).isLand() || !m_valid_neighbor( current, m_map( neighbor_loc ) ) )
+            if( !m_map( neighbor_loc ).isLand() || !m_valid_neighbor( current, neighbor_loc, m_map( neighbor_loc ) ) )
             {
                 //Debugstream() << "      not avail " << std::endl;
                 continue;

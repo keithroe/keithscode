@@ -4,6 +4,7 @@ LDFLAGS= -lm
 
 HEADERS= Ant.h \
          AStar.h \
+		 Battle.h \
          BF.h \
          BFS.h \
          Bot.h \
@@ -18,6 +19,7 @@ HEADERS= Ant.h \
          Timer.h
 
 SOURCES= AStar.cc \
+		 Battle.cc \
          BFS.cc \
          Bot.cc \
          Location.cc \
@@ -40,6 +42,7 @@ all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST) $(DIFFTEST)
 
 $(MYBOT): MyBot.o $(OBJECTS)  $(HEADERS) 
 	$(CC)  $(CFLAGS) $(LDFLAGS) MyBot.o $(OBJECTS) -o $@
+	cp MyBot ..
 
 $(ASTARTEST): AStarTest.o $(OBJECTS) $(HEADERS) 
 	$(CC) $(LDFLAGS) AStarTest.o $(OBJECTS) -o $@

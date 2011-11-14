@@ -2,9 +2,51 @@
 #define DEBUG_H_
 
 
+#include <iostream>
 #include <fstream>
+#include "Location.h"
 
+//------------------------------------------------------------------------------
+//
+// visualizer helpers
+//
+//------------------------------------------------------------------------------
+inline void circle( const Location& loc, float radius, bool fill )
+{
+#ifdef DEBUG
+    std::cout << "v circle " << loc.row << " " << loc.col << " " << radius 
+              << " " << ( fill? "true" : "false" ) << std::endl;
+#endif
+}
 
+inline void setFillColor( int r, int g, int b, float a )
+{
+#ifdef DEBUG
+    std::cout << "v setFillColor " << r << " " << g << " " << b << " " << a
+              << std::endl;
+#endif
+}
+
+inline void setLineColor( int r, int g, int b, float a )
+{
+#ifdef DEBUG
+    std::cout << "v setLineColor " << r << " " << g << " " << b << " " << a
+              << std::endl;
+#endif
+}
+
+inline void tile( const Location& loc )
+{
+#ifdef DEBUG
+    std::cout << "v tile " << loc.row << " " << loc.col << std::endl;
+#endif
+}
+
+//------------------------------------------------------------------------------
+//
+// Logging helpers
+//
+//------------------------------------------------------------------------------
 struct Debug
 {
 
