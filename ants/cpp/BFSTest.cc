@@ -32,7 +32,7 @@ struct FindHill
 
 struct FirstStepAvailable
 {
-    bool operator()( const BFNode* current, const Square& neighbor )
+    bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
     {
         return current->depth > 0 || neighbor.isAvailable();
     }
@@ -56,7 +56,7 @@ struct FindAnts
 
 struct AlwaysAvailable
 {
-    bool operator()( const BFNode* current, const Square& neighbor )
+    bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
     {
         return true;
     }

@@ -179,6 +179,14 @@ float Map::distance( const Location& loc0, const Location& loc1 )const
     return sqrtf( static_cast<float>( dx*dx ) + static_cast<float>( dy*dy ) );
 }
 
+int Map::distance2( const Location& loc0, const Location& loc1 )const
+{
+    int dx, dy;
+    getDxDy( loc0, loc1, dx, dy );
+
+    return  dx*dx + dy*dy;
+}
+
 
 void Map::makeMove( const Location &loc, Direction direction )
 {
@@ -199,7 +207,7 @@ void Map::makeMove( const Location &loc0, const Location& loc1 )
 }
 
 
-Location Map::computeCentroid( const std::vector<Location>& locations )
+Location Map::computeCentroid( const std::vector<Location>& locations )const
 {
     assert( !locations.empty() );
     float x = locations.begin()->col;

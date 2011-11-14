@@ -30,7 +30,7 @@ private:
     void updateTargetedFood();
     bool checkValidPath( Ant* ant );
 
-    void battle( std::set<Ant*>& assigned );
+    //void battle( std::set<Ant*>& assigned );
 
     /// Check if this ant should move to attack a hill.  return true if ant assigned a path 
     bool attackHills( Ant* ant );
