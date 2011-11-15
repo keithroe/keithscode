@@ -74,14 +74,19 @@ inline void BFNode::getRPath( Path& path )const
     path.assign( destination, dirs.begin(), dirs.end() );
 }
 
-///
-/// Action: bool (*Action)( const BFNode* node )
-///    - returns true to continue search, false to stop
-///    - stores any results of search (such as path or list of found nodes)
-///
-/// ValidNeighbor: bool (*ValidNeighbor)( const BFNode* current, const Location& location, const Square& neighbor )
-///    - returns true if this square is traversable for this search
-///
+
+//------------------------------------------------------------------------------
+//
+// Action: bool (*Action)( const BFNode* node )
+//    - returns true to continue search, false to stop
+//    - stores any results of search (such as path or list of found nodes)
+//
+// ValidNeighbor: bool (*ValidNeighbor)( const BFNode* current,
+//                                       const Location& location,
+//                                       const Square& neighbor )
+//    - returns true if this square is traversable for this search
+//
+//------------------------------------------------------------------------------
 template< class Action, class ValidNeighbor >
 class BF
 {

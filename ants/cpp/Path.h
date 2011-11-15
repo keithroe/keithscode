@@ -21,11 +21,13 @@ public:
 
     Path() : m_goal( OTHER ) {}
 
-    template <class Iter>
-    Path( const Location& destination, Iter begins, Iter ends );
 
     template <class Iter>
+    Path( const Location& destination, Iter begins, Iter ends );
+    
+    template <class Iter>
     void assign( const Location& destination, Iter begins, Iter ends );
+    void assign( const Location& destination, Direction step, Goal goal=OTHER );
 
     Location  destination()const        { return m_destination;     }
     unsigned  size()const               { return m_steps.size();    }

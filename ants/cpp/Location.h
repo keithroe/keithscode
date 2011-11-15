@@ -16,7 +16,7 @@ struct Location;
 // Utility functions
 //
 Location offset( const Location& loc, const int direction[ 2 ] );
-Location wrap( const Location& loc, int max_row, int max_col );
+Location clamp( const Location& loc, int height, int width );
 std::ostream& operator<<( std::ostream& out, const Location& loc );
 bool operator<( const Location& loc0, const Location& loc1 );
 
@@ -40,7 +40,7 @@ struct Location
     };
 
     void offset( const int direction[ 2 ] );
-    void wrap( int max_row, int max_col );
+    void clamp( int height, int width );
 
     int  hash()const { return ( row << 16  ) + col; }
 
@@ -56,10 +56,10 @@ inline void Location::offset( const int direction[ 2 ] )
 }
 
 
-inline void Location::wrap( int max_row, int max_col )
+inline void Location::clamp( int height, int width )
 {
-    row = ( row + max_row ) % max_row;
-    col = ( col + max_col ) % max_col;
+    row = ( row + height ) % height;
+    col = ( col + width  ) % width;
 }
 
 
@@ -71,10 +71,10 @@ inline Location offset( const Location& loc, const int direction[ 2 ] )
 }
 
 
-inline Location wrap( const Location& loc, int max_row, int max_col )
+inline Location clamp( const Location& loc, int height, int width )
 {
     Location temp( loc.row, loc.col );
-    temp.wrap( max_row, max_col );
+    temp.clamp( height, width );
     return temp;
 }
 

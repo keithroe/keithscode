@@ -332,7 +332,8 @@ void Bot::makeMove( Ant* ant )
         Direction dir = ant->path.popNextStep();
         Debug::stream() << "  Yes valid goal based path moving " << ant->location << ": " << DIRECTION_CHAR[dir]
                         << std::endl;
-        m_state.makeMove( ant, dir );
+        if( dir != NONE )
+            m_state.makeMove( ant, dir );
     }
     //
     // Else choose path according to diffusion map priorities
@@ -404,6 +405,9 @@ bool Bot::checkValidPath( Ant* ant )
     Debug::stream() << " Checking validity of path " << ant->path << std::endl;
     if( ant->path.empty() ) 
         return false;
+
+    if( ant->path.nextStep() == NONE ) 
+        return true;
 
     const Map& map = m_state.map();
     Location next_loc = map.getLocation( ant->location, ant->path.nextStep() );
