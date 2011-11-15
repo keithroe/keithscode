@@ -13,32 +13,40 @@
 //------------------------------------------------------------------------------
 inline void circle( const Location& loc, float radius, bool fill )
 {
-#ifdef DEBUG
+#ifdef DEBUG 
+#ifdef VISUALIZER
     std::cout << "v circle " << loc.row << " " << loc.col << " " << radius 
               << " " << ( fill? "true" : "false" ) << std::endl;
+#endif
 #endif
 }
 
 inline void setFillColor( int r, int g, int b, float a )
 {
 #ifdef DEBUG
+#ifdef VISUALIZER
     std::cout << "v setFillColor " << r << " " << g << " " << b << " " << a
               << std::endl;
+#endif
 #endif
 }
 
 inline void setLineColor( int r, int g, int b, float a )
 {
 #ifdef DEBUG
+#ifdef VISUALIZER
     std::cout << "v setLineColor " << r << " " << g << " " << b << " " << a
               << std::endl;
+#endif
 #endif
 }
 
 inline void tile( const Location& loc )
 {
 #ifdef DEBUG
+#ifdef VISUALIZER
     std::cout << "v tile " << loc.row << " " << loc.col << std::endl;
+#endif
 #endif
 }
 
