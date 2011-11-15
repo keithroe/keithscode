@@ -2,6 +2,17 @@
 #include "Path.h"
 #include "Debug.h"
 
+
+
+void Path::assign( const Location& destination, Direction step, Goal goal )
+{
+    m_destination = destination;
+    m_goal        = goal;
+    m_steps.clear();
+    m_steps.push_back( step );
+}
+
+
 Direction Path::nextStep()const
 { 
     if( m_steps.empty() ) return NONE;

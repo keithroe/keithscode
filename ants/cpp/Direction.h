@@ -15,8 +15,8 @@ enum Direction
 
 };
 
-const char DIRECTION_CHAR[NUM_DIRECTIONS] = { 'N', 'E', 'S', 'W' };
-const int  DIRECTION_OFFSET[4][2]         = { {-1,0}, {0,1}, {1,0}, {0,-1} };
+const char DIRECTION_CHAR[NUM_DIRECTIONS]      = { 'N', 'E', 'S', 'W', 'X' };
+const int  DIRECTION_OFFSET[NUM_DIRECTIONS][2] = { {-1,0}, {0,1}, {1,0}, {0,-1}, {0,0} };
 
 inline Direction reverseDirection( Direction dir )
 {
