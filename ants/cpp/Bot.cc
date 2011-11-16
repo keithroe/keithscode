@@ -148,6 +148,8 @@ void Bot::makeMoves()
     std::set<Ant*> battle_ants;
     battle( m_state.map(), m_state.myAnts(), m_state.enemyAnts(), battle_ants );
     available.remove_if( AntInSet( battle_ants ) );
+    std::for_each( battle_ants.begin(), battle_ants.end(),
+                   std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
 
     //
     // Assign ants to very nearby food with high priority
@@ -210,8 +212,14 @@ void Bot::makeMoves()
     // Now make move choices for individual ants
     //
     Debug::stream() << " Making moves (path or map based )... " << std::endl;
-    std::for_each( m_state.myAnts().begin(), m_state.myAnts().end(),
-                   std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        // Battle ants have already been moved
+        if( battle_ants.find( *it ) == battle_ants.end() )
+            makeMove( *it );
+    }
+    //std::for_each( m_state.myAnts().begin(), m_state.myAnts().end(),
+    //               std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
 }
 
 
