@@ -466,7 +466,7 @@ void battle( Map& map,
     // Run simulated annealing on the ants
     //
     // TODO: bias the ants to attack
-    const int MAX_ITERATIONS = 20;
+    const int MAX_ITERATIONS = 100;
 
     Directions moves     ( ally_enemies.size(), NONE );
     Directions best_moves( ally_enemies.size(), NONE );
@@ -476,6 +476,10 @@ void battle( Map& map,
 
     Debug::stream() << "Battle: initial score is " << max_score << std::endl;
 
+    LocationSet occupied_squares;
+    for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
+        occupied_squares.insert( it->first );
+    
     // TODO: any benefit to randomizing?
     std::vector<int> transition_order( ally_enemies.size() );
     for( unsigned i = 0; i < ally_enemies.size(); ++i ) transition_order[i] = i;
@@ -492,13 +496,21 @@ void battle( Map& map,
 
         // Make sure we get an available move 
         int tries = 0;
-        while( new_move != NONE && !map( new_loc ).isAvailable() && tries < 3 )
+        while( new_move != NONE                                           &&
+               occupied_squares.find( new_loc ) != occupied_squares.end() &&
+               !map( new_loc ).isAvailable()                              &&
+               tries < 3 )
         {
             new_move = static_cast<Direction>( (new_move+1) % 5 );
             if( new_move == cur_move ) // Skip over cur_move
                 new_move = static_cast<Direction>( (new_move+1) % 5 );
             new_loc = map.getLocation( rant_loc, new_move );
             tries++;
+        }
+        if( new_move != NONE )
+        {
+            occupied_squares.erase ( rant_loc );
+            occupied_squares.insert( new_loc );
         }
 
         Debug::stream() << "Battle:   trying move of " << rant_loc << " in " << DIRECTION_CHAR[new_move] << std::endl;
@@ -534,6 +546,11 @@ void battle( Map& map,
             fillPlusOne( grid, width, height, map.getLocation( rant_loc, moves[ rant ] ), MY_ANT_ID, -1 );
             fillPlusOne( grid, width, height, map.getLocation( rant_loc, cur_move      ), MY_ANT_ID, +1 );
             moves[ rant ] = cur_move;
+            if( new_move != NONE )
+            {
+                occupied_squares.erase ( new_loc );
+                occupied_squares.insert( rant_loc );
+            }
         }
     }
     Debug::stream() << "Battle:  max score is" << max_score << std::endl;
@@ -545,7 +562,7 @@ void battle( Map& map,
     {
         Location ant_location = ally_enemies[i].first;
         Ant* ant = map( ant_location ).ant;
-        ant->path.assign( map.getLocation( ant_location, moves[i] ), best_moves[i], Path::ATTACK );
+        ant->path.assign( map.getLocation( ant_location, best_moves[i] ), best_moves[i], Path::ATTACK );
         assigned.insert( ant );
         
         Debug::stream() << "Battle:     moving ant at " << ant_location << " in " << DIRECTION_CHAR[ best_moves[i] ] << std::endl;

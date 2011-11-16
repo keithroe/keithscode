@@ -108,7 +108,7 @@ inline void Square::setVisible()
 
 inline bool Square::isAvailable()const
 {
-    return ant_id < 0 && hill_id != 0 && type != WATER; 
+    return ant_id < 0 && hill_id != 0 && !food && type != WATER; 
 }
 
 
