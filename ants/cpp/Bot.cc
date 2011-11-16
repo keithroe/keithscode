@@ -149,7 +149,7 @@ void Bot::makeMoves()
     battle( m_state.map(), m_state.myAnts(), m_state.enemyAnts(), battle_ants );
     available.remove_if( AntInSet( battle_ants ) );
     std::for_each( battle_ants.begin(), battle_ants.end(),
-                   std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
+                   std::bind1st( std::mem_fun( &Bot::makeUncheckedMove), this ) );
 
     //
     // Assign ants to very nearby food with high priority
@@ -324,6 +324,16 @@ void Bot::assignToFood( std::set<Ant*>& assigned_to_food, unsigned max_dist, boo
     {
         m_targeted_food.insert( (*it)->path.destination() );
     }
+}
+
+
+void Bot::makeUncheckedMove( Ant* ant )
+{
+    // Presumes this ant's next move is valid!!!
+    Direction dir = ant->path.popNextStep();
+    Debug::stream() << "  unchecked  moving " << ant->location << ": " << DIRECTION_CHAR[dir] << std::endl;
+    if( dir != NONE )
+        m_state.makeMove( ant, dir );
 }
 
 

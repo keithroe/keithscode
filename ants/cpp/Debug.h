@@ -11,6 +11,7 @@
 // visualizer helpers
 //
 //------------------------------------------------------------------------------
+#define VISUALIZER
 inline void circle( const Location& loc, float radius, bool fill )
 {
 #ifdef DEBUG 

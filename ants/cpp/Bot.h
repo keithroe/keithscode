@@ -39,6 +39,7 @@ private:
 
     /// Move ant according to diffused map priorities
     void makeMove( Ant* ant  );
+    void makeUncheckedMove( Ant* ant );
 
     typedef std::set<Location>  LocationSet;
 
