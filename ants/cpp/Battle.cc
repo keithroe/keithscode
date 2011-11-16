@@ -24,9 +24,6 @@ namespace
     typedef std::vector<Direction>                          Directions;
 
 
-    // TODO: for now, only take into account my ants as enemies of enemies
-    //       need to add in other players ants as enemies of enemies too?
-    //       just run EnemyCombatants from all enemies found by first pass.
     struct AllEnemyAnts 
     {
         AllEnemyAnts( const Location& location, int ant_id, AntEnemies& ant_enemies ) 
@@ -76,83 +73,81 @@ namespace
     typedef BF<AllEnemyAnts, BattlePeriphery> EnemyCombatants;
 
 
-    void fill( int*** grid, unsigned width, unsigned height, const Location& location, int inc)
+    void fill( int*** grid, unsigned width, unsigned height, const Location& location, int ant_id, int inc)
     {
-        // TODO: should extend this to battle zone+1 ring
-
+        // TODO: only expand the zone in directions which do not lead to water
         Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-2, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-2, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
 
         x = clamp( Location( location.row-1, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
 
         x = clamp( Location( location.row-0, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
 
         x = clamp( Location( location.row+1, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
 
         x = clamp( Location( location.row+2, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row+2, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
         x = clamp( Location( location.row+2, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ 0 ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
     }
 
     void fillPlusOne( int*** grid, int width, int height, const Location& location, int ant_id, int inc )
     {
         // TODO: only expand the zone in directions which do not lead to water
-        // TODO: how can we better represent enemy ant location on next move???
         Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
         grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
@@ -273,7 +268,6 @@ namespace
     }
 
 
-    // TODO: going to need incremental updates to score???
     int score( const Map& map, const AntEnemies& ant_enemies, const Directions& moves, int*** grid )
     {
         LocationSet dead_enemies; 
@@ -457,7 +451,7 @@ void battle( Map& map,
     setFillColor( 255, 0, 0, 0.1f );
     for( LocationSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
     {
-        fillPlusOne( grid, width, height, *it, map( *it ).ant_id, 1 );
+        fill( grid, width, height, *it, map( *it ).ant_id, 1 );
         circle( *it, 1, true );
     }
     setFillColor( 0, 0, 0, 0.0f );
@@ -465,7 +459,6 @@ void battle( Map& map,
     //
     // Run simulated annealing on the ants
     //
-    // TODO: bias the ants to attack
     const int MAX_ITERATIONS = 100;
 
     Directions moves     ( ally_enemies.size(), NONE );
@@ -490,7 +483,6 @@ void battle( Map& map,
 
     for( int i = 0; i < MAX_ITERATIONS; ++i )
     {
-        // TODO: check if move is available 
         int       rant     = transition_order[ i % ally_enemies.size() ];
         Location  rant_loc = ally_enemies[ rant ].first;
         Direction cur_move = moves[ rant ];
@@ -517,8 +509,8 @@ void battle( Map& map,
         Debug::stream() << "Battle:   trying move of " << rant_loc << " in " << DIRECTION_CHAR[new_move] << std::endl;
 
         // Make the move
-        fillPlusOne( grid, width, height, map.getLocation( rant_loc, cur_move ), MY_ANT_ID, -1 );
-        fillPlusOne( grid, width, height, new_loc,                               MY_ANT_ID, +1 );
+        fill( grid, width, height, map.getLocation( rant_loc, cur_move ), MY_ANT_ID, -1 );
+        fill( grid, width, height, new_loc,                               MY_ANT_ID, +1 );
         moves[ rant ] = new_move;
         
         // Check if we have a new best state
@@ -546,8 +538,8 @@ void battle( Map& map,
         {
             // Undo the last move
             Debug::stream() << "Battle:          rejecting transition" << cur_score << std::endl;
-            fillPlusOne( grid, width, height, map.getLocation( rant_loc, moves[ rant ] ), MY_ANT_ID, -1 );
-            fillPlusOne( grid, width, height, map.getLocation( rant_loc, cur_move      ), MY_ANT_ID, +1 );
+            fill( grid, width, height, map.getLocation( rant_loc, moves[ rant ] ), MY_ANT_ID, -1 );
+            fill( grid, width, height, map.getLocation( rant_loc, cur_move      ), MY_ANT_ID, +1 );
             moves[ rant ] = cur_move;
             if( new_move != NONE )
             {
@@ -584,144 +576,4 @@ void battle( Map& map,
     delete grid;
     grid = 0u;
 
-    /*
-    AntEnemies enemy_enemies;
-    for( Ants::const_iterator it = ants.begin(); it != ants.end(); ++it )
-    {
-        Location location = (*it )->location;
-        AllEnemyAnts    enemy_ants( location, 0, ally_enemies );
-        BattlePeriphery periphery( map, location );
-        EnemyCombatants bfs( map, location, enemy_ants, periphery );
-        
-        Debug::stream() << "    searching from " << location << std::endl;
-        bfs.traverse();
-    }
-
-    const unsigned height = map.height();
-    const unsigned width  = map.width();
-    int*** grid; 
-    grid = new int**[ height ];
-    for( unsigned i = 0; i < height; ++i )
-    {
-        grid[i] = new int*[ width ];
-        for( unsigned j = 0; j < width; ++j )
-        {
-            grid[i][j] = new int[ 10 ];
-            memset( reinterpret_cast<void*>( grid[i][j] ), 0, 10*sizeof(unsigned) );
-        }
-    }
-    
-    setFillColor( 0, 0, 255, 0.5f );
-    for( EnemyAntSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
-    {
-        fillEnemy( grid, width, height, *it, map( *it ).ant_id, 1 );
-        circle( *it, 1, true );
-    }
-
-    setFillColor( 255, 0, 0, 0.5f );
-    for( Ants::const_iterator it = allies.begin(); it != allies.end(); ++it )
-    {
-        fill( grid, width, height, (*it)->location, 1 );
-        circle( (*it)->location, 1, true );
-    }
-
-    // TODO: bias the ants to attack
-    const int MAX_ITERATIONS = 100;
-
-    std::vector<Direction> moves( allies.size(), NONE );
-    std::vector<Direction> best_moves( allies.size(), NONE );
-    int max_score = score( allies, enemies, grid );
-    for( int i = 0; i < MAX_ITERATIONS; ++i )
-    {
-        // TODO: randomize an array the length of allies with indices [0,allies.size()) and cycle through it
-        int transition_ant = rand() % allies.size();
-
-        fill( grid, width, height, map.getLocation( allies[transition_ant]->location, moves[transition_ant] ), -1 );
-        moves[transition_ant] = static_cast<Direction>( ( moves[transition_ant ] + rand() % 4 ) % 5 );
-        fill( grid, width, height, map.getLocation( allies[transition_ant]->location, moves[transition_ant] ), 1 );
-        
-        int cur_score = score( allies, enemies, nearby, grid );
-        if( cur_score > max_score )
-        {
-            max_score = cur_score;
-            best_moves.assign( moves.begin(), moves.end() );
-        }
-    }
-
-
-    for( unsigned i = 0; i < height; ++i )
-    {
-        for( unsigned j = 0; j < width; ++j )
-            delete [] grid[i][j];
-        delete grid[i];
-    }
-    delete grid;
-    grid = 0u;
-
-    */
-
-
-   
-    /*
-    EnemyAntSet clustered;
-    for( EnemyAnts::const_iterator it = enemy_ants.begin(); it != enemy_ants.end(); ++it )
-    {
-    }
-    */
-
-
-    /*
-    // TODO: add positive weights for ants which can just see enemy ants (so that they draw other ants BEFORE battle )
-    for( Ants::const_iterator it = ants.begin(); it != ants.end(); ++it )
-    {
-        FindAllAnts find_all;
-        Always      always;
-        FindAnts bfs( map, (*it)->location, find_all, always );
-        bfs.setMaxDepth( 8 );
-        bfs.traverse();
-        Debug::stream() << "finding all ants around " << (*it)->location << std::endl;
-        Debug::stream() << "    allies:" <<  std::endl;
-        for( std::vector<Ant*>::iterator it = find_all.allies.begin(); it != find_all.allies.end(); ++it )
-            Debug::stream() << "        " <<  **it <<  std::endl;
-       
-        Debug::stream() << "    enemies:" <<  std::endl;
-        for( std::vector< std::pair<int, Location> >::iterator it = find_all.enemies.begin();
-             it != find_all.enemies.end();
-             ++it )
-            Debug::stream() << "        " <<  it->first << ":" << it->second <<  std::endl;
-
-
-        if( !find_all.enemies.empty() )
-        {
-            std::vector<Location> locs;
-            for( std::vector< std::pair<int, Location> >::iterator it = find_all.enemies.begin();
-                 it != find_all.enemies.end();
-                 ++it )
-                locs.push_back( it->second );
-
-            Location enemy_centroid = map.computeCentroid( locs );
-            if( find_all.enemies.size() >= find_all.allies.size() )
-            { 
-                for( std::vector<Ant*>::iterator it = find_all.allies.begin(); it != find_all.allies.end(); ++it )
-                {
-                    Ant* ant = *it;
-                    Direction d = map.getDirection( enemy_centroid, ant->location );
-                    // TODO: check if the dir is blocked
-                    ant->path.assign( map.getLocation( ant->location, d  ), &d, &d+1 );
-                    ant->path.setGoal( Path::ATTACK );
-                }
-            }
-            else
-            {
-                for( std::vector<Ant*>::iterator it = find_all.allies.begin(); it != find_all.allies.end(); ++it )
-                {
-                    Ant* ant = *it;
-                    Direction d = map.getDirection( ant->location, enemy_centroid );
-                    ant->path.assign( map.getLocation( ant->location, d ), &d, &d+1 );
-                    ant->path.setGoal( Path::ATTACK );
-                }
-            }
-        }
-    }
-    */
 }

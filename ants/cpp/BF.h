@@ -50,7 +50,7 @@ inline void BFNode::getPath( Path& path )const
     // Backtrack to create path
     path.reset();
 
-    std::deque<Direction> dirs;     // TODO: switch to vec once correct
+    std::deque<Direction> dirs;
     for( const BFNode* current = this; current->child != 0; current = current->child )
     {
         dirs.push_front( current->dir );

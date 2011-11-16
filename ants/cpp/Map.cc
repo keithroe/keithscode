@@ -142,7 +142,6 @@ Direction Map::getDirection( const Location &loc0, const Location& loc1 )const
 
 void Map::getNeighbors( const Location& loc, std::vector<Location>& neighbors )const
 {
-    // TODO: is ignoring water OK for all uses of this func?
     neighbors.push_back( getLocation( loc, NORTH ) );
     neighbors.push_back( getLocation( loc, EAST  ) );
     neighbors.push_back( getLocation( loc, SOUTH ) );
