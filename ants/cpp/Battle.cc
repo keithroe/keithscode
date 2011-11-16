@@ -24,6 +24,7 @@ namespace
     typedef std::vector<Direction>                          Directions;
 
 
+
     struct AllEnemyAnts 
     {
         AllEnemyAnts( const Location& location, int ant_id, AntEnemies& ant_enemies ) 
@@ -333,17 +334,17 @@ namespace
 
     inline unsigned rnd()
     {
-        static unsigned seed = 12345u;
+        static unsigned seed = 1234567u;
         const unsigned A = 1664525u;
         const unsigned C = 1013904223u;
         seed = A*seed + C;
-        return seed & 0x00FFFFFF;
+        return seed;
     }
 
 
     inline float rndf()
     {
-        return static_cast<float>( rnd() )/ static_cast<float>( 0x01000000 );
+        return static_cast<float>( rnd() )/ 4294967296.0f;
     }
 
 
