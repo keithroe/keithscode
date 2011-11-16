@@ -470,15 +470,18 @@ void battle( Map& map,
 
     Directions moves     ( ally_enemies.size(), NONE );
     Directions best_moves( ally_enemies.size(), NONE );
+    int        best_score = score( map, ally_enemies, moves, grid );
+    int        cur_score  = best_score;
 
-    int max_score = score( map, ally_enemies, moves, grid );
-    int cur_score = max_score;
+    Debug::stream() << "Battle: initial score is " << best_score << std::endl;
 
-    Debug::stream() << "Battle: initial score is " << max_score << std::endl;
-
+    LocationSet original_squares;;
     LocationSet occupied_squares;
     for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
+    {
+        original_squares.insert( it->first );
         occupied_squares.insert( it->first );
+    }
     
     // TODO: any benefit to randomizing?
     std::vector<int> transition_order( ally_enemies.size() );
@@ -496,22 +499,20 @@ void battle( Map& map,
 
         // Make sure we get an available move 
         int tries = 0;
-        while( new_move != NONE                                           &&
-               occupied_squares.find( new_loc ) != occupied_squares.end() &&
-               !map( new_loc ).isAvailable()                              &&
+        while( ( ( !map( new_loc ).isAvailable() && original_squares.find( new_loc ) != original_squares.end() ) || 
+               occupied_squares.find( new_loc ) != occupied_squares.end() ) && 
                tries < 3 )
-        {
+        {  
+            // TODO: this is broken if ant surrounded (no valid move).  need to allow 'no transition'
+            //       occupied_squares check will fail for 'no transition' as well
             new_move = static_cast<Direction>( (new_move+1) % 5 );
             if( new_move == cur_move ) // Skip over cur_move
                 new_move = static_cast<Direction>( (new_move+1) % 5 );
             new_loc = map.getLocation( rant_loc, new_move );
             tries++;
         }
-        if( new_move != NONE )
-        {
-            occupied_squares.erase ( rant_loc );
-            occupied_squares.insert( new_loc );
-        }
+        occupied_squares.erase ( rant_loc );
+        occupied_squares.insert( new_loc );
 
         Debug::stream() << "Battle:   trying move of " << rant_loc << " in " << DIRECTION_CHAR[new_move] << std::endl;
 
@@ -523,10 +524,12 @@ void battle( Map& map,
         // Check if we have a new best state
         const int new_score = score( map, ally_enemies, moves, grid );
         Debug::stream() << "Battle:      score: " << new_score << std::endl; 
-        if( new_score > max_score || ( new_score == max_score && cur_move == NONE ) ) // Prefer movement
+        // TODO: perhaps better way of avoiding NONE preference would be to
+        //       randomize initial moves (to random available moves) 
+        if( new_score > best_score || ( new_score == best_score && cur_move == NONE ) ) // Prefer movement
         {
             Debug::stream() << "Battle:  found new better score " << cur_score << std::endl;
-            max_score = new_score;
+            best_score = new_score;
             best_moves.assign( moves.begin(), moves.end() );
         }
 
@@ -553,7 +556,7 @@ void battle( Map& map,
             }
         }
     }
-    Debug::stream() << "Battle:  max score is" << max_score << std::endl;
+    Debug::stream() << "Battle:  max score is" << best_score << std::endl;
 
     //
     // Assign paths for all battle ants
