@@ -38,15 +38,15 @@ namespace
         FindFoodAnt( std::set<Ant*>& assigned_ants, bool override_hills ) 
           : assigned_ants( assigned_ants ), override_hills( override_hills ), ant( 0u ), found_ant( false ) {}
 
-        // TODO: clean this up!!!!!!!
         bool operator()( const BFNode* node )
         {
             if( node->square->ant_id == 0 )
             {
+                // TODO: allow overrides of any ant -- need to remove ant's old food goal from m_targeted_food
                 Ant* cur_ant = node->square->ant;
                 if(   cur_ant->path.goal() != Path::ATTACK &&
                     ( cur_ant->path.goal() != Path::FOOD || 
-                      ( assigned_ants.find( cur_ant ) != assigned_ants.end() && cur_ant->path.size()>node->depth ) ) &&
+                      ( assigned_ants.find( cur_ant ) != assigned_ants.end() && cur_ant->path.size() > node->depth )) &&
                     ( cur_ant->path.goal() != Path::HILL || override_hills ) &&
                     node->child->square->isAvailable() )
                 {
