@@ -157,6 +157,7 @@ inline bool isLand( const Square& s )          { return s.type == Square::LAND; 
 inline bool isWater( const Square& s )         { return s.type == Square::WATER; }
 inline bool notWater( const Square& s )        { return s.type != Square::WATER; }
 inline bool isAvailable( const Square& s )     { return s.isAvailable();         }
+inline bool isWaterOrFood( const Square& s )    { return s.food || s.isWater(); }
 
 
 #endif //SQUARE_H_
