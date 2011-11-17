@@ -299,6 +299,7 @@ namespace
         {
             // add up my_enemy_count for moved position
             Location loc   = map.getLocation( it->first, moves[ idx++ ] );
+
             int my_enemies = grid[ loc.row ][ loc.col ][ 1 ];
             my_enemies    += grid[ loc.row ][ loc.col ][ 2 ];
             my_enemies    += grid[ loc.row ][ loc.col ][ 3 ];
@@ -308,6 +309,10 @@ namespace
             my_enemies    += grid[ loc.row ][ loc.col ][ 7 ];
             my_enemies    += grid[ loc.row ][ loc.col ][ 8 ];
             my_enemies    += grid[ loc.row ][ loc.col ][ 9 ];
+            
+            Debug::stream() << "scoring: " << loc << std::endl
+                            << "     my_enemies: " << my_enemies << std::endl;
+
             
             // for each of my nearby_enemies within dist2 of 10 (they can step into our zone)
             bool my_ant_dies = false;
@@ -322,12 +327,18 @@ namespace
                     int enemy_enemies = grid[ enemy_loc.row ][ enemy_loc.col ][ MY_ANT_ID ];
                     if( my_enemies >= enemy_enemies ) my_ant_dies = true; 
                     if( enemy_enemies >= my_enemies ) dead_enemies.insert( enemy_loc );
+                    Debug::stream() << "    enemy " << enemy_loc <<  ": " << enemy_enemies << std::endl;
                 }
             }
             current_score -= static_cast<int>( my_ant_dies );
+            
+            Debug::stream() << "        current_score " << current_score << std::endl;
+
         }
 
         current_score += dead_enemies.size();
+        Debug::stream() << "    dead enemies " << dead_enemies.size() << std::endl;
+        Debug::stream() << "    final score  " << current_score << std::endl;
         return current_score;
     }
     
@@ -346,6 +357,7 @@ namespace
     {
         return static_cast<float>( rnd() )/ 4294967296.0f;
     }
+
 
 
     inline float lerp( float a, float b, float t )
@@ -441,7 +453,9 @@ void battle( Map& map,
     
     
     
+    //
     // create grid
+    // TODO: move this into init code
     //
     const unsigned height = map.height();
     const unsigned width  = map.width();
@@ -465,7 +479,7 @@ void battle( Map& map,
     setFillColor( 0, 0, 255, 0.1f );
     for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
     {
-        fillWithColor( grid, width, height, it->first, MY_ANT_ID , 1 );
+        fillPlusOne( grid, map, width, height, it->first, MY_ANT_ID, 1 );
         circle( it->first, 1, true );
     }
     
@@ -477,10 +491,22 @@ void battle( Map& map,
     }
     setFillColor( 0, 0, 0, 0.0f );
 
+
     //
-    // Run simulated annealing on the ants
+    // Divide into clusters
     //
-    const int MAX_ITERATIONS = 500;
+    std::vector< std::vector<Location> >( enemies.size() );
+    for( LocationSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
+    {
+
+    }
+
+
+
+    //
+    // Run simulated annealing on each cluster 
+    //
+    const int MAX_ITERATIONS = 1000;
 
     Directions cur_moves ( ally_enemies.size(), NONE );
     Directions best_moves( ally_enemies.size(), NONE );
@@ -538,13 +564,13 @@ void battle( Map& map,
         // Make the move
         occupied_squares.erase ( cur_loc );
         occupied_squares.insert( new_loc );
-        fill( grid, width, height, cur_loc, MY_ANT_ID, -1 );
-        fill( grid, width, height, new_loc, MY_ANT_ID, +1 );
+        fillPlusOne( grid, map, width, height, cur_loc, MY_ANT_ID, -1 );
+        fillPlusOne( grid, map, width, height, new_loc, MY_ANT_ID, +1 );
         cur_moves[ rant ] = new_move;
         
         // Check if we have a new best state
         const int new_score = score( map, ally_enemies, cur_moves, grid );
-        Debug::stream() << "Battle:      score: " << new_score << std::endl; 
+        Debug::stream() << "Battle:      score: " << new_score << " best: " << best_score << std::endl; 
         if( new_score > best_score || ( new_score == best_score && cur_move == NONE ) ) // Prefer movement
         {
             Debug::stream() << "Battle:  found new better score " << new_score << std::endl;
@@ -568,8 +594,8 @@ void battle( Map& map,
             Debug::stream() << "Battle:          rejecting transition" << cur_score << std::endl;
             occupied_squares.erase ( new_loc );
             occupied_squares.insert( cur_loc );
-            fill( grid, width, height, new_loc, MY_ANT_ID, -1 );
-            fill( grid, width, height, cur_loc, MY_ANT_ID, +1 );
+            fillPlusOne( grid, map, width, height, new_loc, MY_ANT_ID, -1 );
+            fillPlusOne( grid, map, width, height, cur_loc, MY_ANT_ID, +1 );
             cur_moves[ rant ] = cur_move;
         }
     }
