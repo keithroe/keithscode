@@ -75,7 +75,6 @@ namespace
     
     void fillWithColor( int*** grid, unsigned width, unsigned height, const Location& location, int ant_id, int inc)
     {
-        // TODO: only expand the zone in directions which do not lead to water
         Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
         grid[ x.row ][ x.col ][ ant_id ] += inc;
         tile( x );
@@ -198,7 +197,7 @@ namespace
 
     void fillPlusOne( int*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
     {
-        fillWithColor( grid, width, height, location, ant_id, inc);
+        fill( grid, width, height, location, ant_id, inc);
 
         // The four move locations
         Location x_n = clamp( Location( location.row-1, location.col+0 ), height, width );
