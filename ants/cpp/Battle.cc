@@ -1,6 +1,7 @@
 
 
 #include <cstring>
+#include <iterator>
 #include <map>
 
 #include "Ant.h"
@@ -195,9 +196,9 @@ namespace
         grid[ x.row ][ x.col ][ ant_id ] += inc;
     }
 
-    void fillPlusOne( int*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
+    void fillPlusOneWithColor( int*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
     {
-        fill( grid, width, height, location, ant_id, inc);
+        fillWithColor( grid, width, height, location, ant_id, inc);
 
         // The four move locations
         Location x_n = clamp( Location( location.row-1, location.col+0 ), height, width );
@@ -284,6 +285,80 @@ namespace
             Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
             grid[ x.row ][ x.col ][ ant_id ] += inc;
             tile( x );
+        }
+    }
+    void fillPlusOne( int*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
+    {
+        fill( grid, width, height, location, ant_id, inc);
+
+        // The four move locations
+        Location x_n = clamp( Location( location.row-1, location.col+0 ), height, width );
+        Location x_s = clamp( Location( location.row+1, location.col+0 ), height, width );
+        Location x_e = clamp( Location( location.row+0, location.col+1 ), height, width );
+        Location x_w = clamp( Location( location.row+0, location.col-1 ), height, width );
+
+        if( !isWaterOrFood( map( x_n ) ) )
+        {
+            Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row-3, location.col-0 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row-3, location.col+1 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+
+        if( !isWaterOrFood( map( x_s ) ) )
+        {
+            Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row+3, location.col-0 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row+3, location.col+1 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+        
+        if( !isWaterOrFood( map( x_w ) ) )
+        {
+            Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row+0, location.col-3 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row+1, location.col-3 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+            
+        if( !isWaterOrFood( map( x_e ) ) )
+        {
+            Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row+0, location.col+3 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            x = clamp( Location( location.row+1, location.col+3 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+
+        if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_n ) ) )
+        {
+            Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+        
+        if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_n ) ) )
+        {
+            Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+
+        if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_s ) ) )
+        {
+            Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
+        }
+
+        if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_s ) ) )
+        {
+            Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
+            grid[ x.row ][ x.col ][ ant_id ] += inc;
         }
     }
 
@@ -474,18 +549,17 @@ void battle( Map& map,
     //
     // Splat the ants into the grid
     //
-
     setFillColor( 0, 0, 255, 0.1f );
     for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
     {
-        fillPlusOne( grid, map, width, height, it->first, MY_ANT_ID, 1 );
+        fillPlusOneWithColor( grid, map, width, height, it->first, MY_ANT_ID, 1 );
         circle( it->first, 1, true );
     }
     
     setFillColor( 255, 0, 0, 0.1f );
     for( LocationSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
     {
-        fillPlusOne( grid, map, width, height, *it, map( *it ).ant_id, 1 );
+        fillPlusOneWithColor( grid, map, width, height, *it, map( *it ).ant_id, 1 );
         circle( *it, 1, true );
     }
     setFillColor( 0, 0, 0, 0.0f );
@@ -494,10 +568,72 @@ void battle( Map& map,
     //
     // Divide into clusters
     //
-    std::vector< std::vector<Location> >( enemies.size() );
-    for( LocationSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
-    {
+    LocationSet                clustered;
+    std::vector< Locations >   ally_clusters;
+    std::vector< LocationSet > enemy_clusters;
 
+    for( AntEnemies::const_iterator it0 = ally_enemies.begin(); it0 != ally_enemies.end(); ++it0 )
+    {
+        // Check if this ally is already clustered
+        if( clustered.find( it0->first ) != clustered.end() ) continue;
+
+        // If not, create a new cluster for it
+        Debug::stream() << "  creating new cluster for ally " << it0->first << std::endl;
+
+        std::copy( it0->second.begin(),
+                   it0->second.end(), 
+                   std::ostream_iterator<Location>( ( Debug::stream().file ), ", ") );
+        Debug::stream() << std::endl;
+
+        ally_clusters.push_back(  Locations() );
+        enemy_clusters.push_back( LocationSet() );
+        ally_clusters.back().push_back( it0->first );
+        std::copy( it0->second.begin(),
+                   it0->second.end(), 
+                   std::inserter( enemy_clusters.back(), enemy_clusters.back().end() ) );
+        clustered.insert( it0->first );
+
+        // Check if any other allies belong in this cluster
+        bool cluster_extended;
+        do
+        {
+            cluster_extended = false;
+            for( AntEnemies::const_iterator it1 = it0+1; it1 != ally_enemies.end(); ++it1 )
+            {
+                Location ally = it1->first;
+                if( clustered.find( ally ) != clustered.end() ) continue;
+                for( Locations::const_iterator enemy = it1->second.begin(); enemy != it1->second.end(); ++enemy )
+                {
+                    if( enemy_clusters.back().find( *enemy ) != enemy_clusters.back().end() )
+                    {
+                        clustered.insert ( ally );
+                        ally_clusters.back().push_back( ally );
+                        std::copy( it1->second.begin(),
+                                   it1->second.end(),
+                                   std::inserter( enemy_clusters.back(), enemy_clusters.back().end() ) );
+
+                        cluster_extended = true;
+                        break;
+                    }
+                }
+            }
+
+        } while( cluster_extended );
+    }
+
+    Debug::stream() << "found " << ally_clusters.size() << " clusters " << std::endl;
+    Debug::stream() << "CLUSTERS" << std::endl;
+    for( size_t i = 0; i < ally_clusters.size(); ++i )
+    {
+        Debug::stream() << "   ";
+        for( Locations::iterator it = ally_clusters[i].begin(); it != ally_clusters[i].end(); ++it )
+            Debug::stream() << " " << *it;
+        Debug::stream() << std::endl;;
+        
+        Debug::stream() << "       ";
+        for( LocationSet::iterator it = enemy_clusters[i].begin(); it != enemy_clusters[i].end(); ++it )
+            Debug::stream() << " " << *it;
+        Debug::stream() << std::endl;;
     }
 
 
@@ -526,6 +662,7 @@ void battle( Map& map,
     std::vector<int> transition_order( ally_enemies.size() );
     for( unsigned i = 0; i < ally_enemies.size(); ++i ) transition_order[i] = i;
     std::random_shuffle( transition_order.begin(), transition_order.end() );
+
 
     for( int i = 0; i < MAX_ITERATIONS; ++i )
     {
