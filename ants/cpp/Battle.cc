@@ -24,6 +24,132 @@ namespace
 
     typedef std::vector<Direction>                          Directions;
 
+    struct Score
+    {
+        Score() : kills( 0 ), kill_depths( 0 ) {}
+
+        bool operator<( const Score& s )const
+        {
+            return kills < s.kills ? true  :
+                   kills > s.kills ? false :
+                                     kill_depths < s.kill_depths;
+        }
+
+        bool operator==( const Score& s )const
+        {
+            return kills == s.kills && kill_depths == s.kill_depths;
+        }
+
+        bool operator>( const Score& s )const
+        {
+            return kills > s.kills ? true  :
+                   kills < s.kills ? false :
+                                     kill_depths > s.kill_depths;
+        }
+        
+        bool operator>=( const Score& s )const
+        {
+            return !( *this < s );
+        }
+
+        Score operator+( const Score& s )const
+        {
+            Score t;
+            t.kills       = kills + s.kills;
+            t.kill_depths = kill_depths + s.kill_depths;
+            return t;
+        }
+
+        void operator+=( const Score& s )
+        { *this = *this + s; }
+
+
+        int kills;
+        int kill_depths;
+    };
+
+    std::ostream& operator<<( std::ostream& out, const Score& s )
+    { out << s.kills << "." << s.kill_depths; return out; }
+
+    struct EnemyCount
+    {
+        EnemyCount() : a(0), b(0), c(0) {}
+        EnemyCount( int a, int b, int c ) : a(a), b(b), c(c) {}
+
+        void operator+=( const EnemyCount& s )
+        { a += s.a; b += s.b; c += s.c; }
+        
+        int sum()const { return a + b + c; }
+
+        int deepest()const      { return a ? 0 : b ? 1 : 2; }
+        int deepestEnemyCount()const { return a ? a : b ? b : c; }
+
+        bool beats( const EnemyCount& s )
+        {
+            //return sum() != s.sum() ? sum() < s.sum() :
+            //       ( a != s.a )     ? a < s.a         :
+            //       ( b != s.b )     ? b < s.b         :
+            //                          c <= s.c ;
+             
+            //return ( sum() != s.sum() ) ? sum() < s.sum() :
+            //                              deepest() <= s.deepest() && deepestEnemyCount() < s.deepestEnemyCount();
+            
+            Debug::stream() << "    " << *this << " beats? " << s << std::endl
+                            << "        " << sum() << ":" << s.sum() << std::endl
+                            << "        " << deepest() << ":" << s.deepest() << std::endl
+                            << "        " << deepestEnemyCount() << ":" << s.deepestEnemyCount() << std::endl;
+            return sum() < s.sum() && deepest() <= s.deepest() && deepestEnemyCount() < s.deepestEnemyCount();
+        }
+        bool beatsAlly( const EnemyCount& s )
+        {
+            //return sum() != s.sum() ? sum() < s.sum() :
+            //       ( a != s.a )     ? a < s.a         :
+            //       ( b != s.b )     ? b < s.b         :
+            //                          c <= s.c ;
+             
+            //return ( sum() != s.sum() ) ? sum() < s.sum() :
+            //                              deepest() <= s.deepest() && deepestEnemyCount() < s.deepestEnemyCount();
+            
+            return sum() <= s.sum();
+        }
+
+        bool operator<( const EnemyCount& s )
+        {
+            //return a < s.a ? true  : 
+            //       a > s.a ? false :
+            //       b < s.b ? true  : 
+            //       b > s.b ? false :
+            //       c < s.c ? true  : 
+            //                 false ;
+
+            //return ( a && s.a ) ? a < s.a :
+            //       ( b && s.b ) ? b < s.b :
+            //                      c < s.c ;
+
+            //bool sum_less       = sum() < s.sum(); 
+            //bool top_field_less = ( ( a || s.a ) && a != s.a ) ? a < s.a :
+            //                      ( ( b || s.b ) && b != s.b ) ? b < s.b :
+            //                                                     c < s.c ;
+
+            bool sum_less       = sum() < s.sum(); 
+            bool top_field_less = ( ( a && s.a ) && a != s.a ) ? a < s.a :
+                                  ( ( b && s.b ) && b != s.b ) ? b < s.b :
+                                                                 c < s.c ;
+            return sum_less && top_field_less;
+        }
+
+        bool operator>=( const EnemyCount& s )
+        {
+            return !( *this < s );
+        }
+
+
+        int a, b, c;
+    };
+
+    std::ostream& operator<<( std::ostream& out, const EnemyCount& s )
+    { out << s.a << "." << s.b << "." << s.c; return out; }
+
 
 
     struct AllEnemyAnts 
@@ -74,129 +200,129 @@ namespace
     
     typedef BF<AllEnemyAnts, BattlePeriphery> EnemyCombatants;
     
-    void fillWithColor( int*** grid, unsigned width, unsigned height, const Location& location, int ant_id, int inc)
+    void fillWithColor( EnemyCount*** grid, unsigned width, unsigned height, const Location& location, int ant_id, int inc)
     {
         Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row-2, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row-2, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
 
         x = clamp( Location( location.row-1, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row-1, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
 
         x = clamp( Location( location.row-0, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row-0, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
 
         x = clamp( Location( location.row+1, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         tile( x );
         x = clamp( Location( location.row+1, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
 
         x = clamp( Location( location.row+2, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row+2, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
         x = clamp( Location( location.row+2, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         tile( x );
     }
 
 
-    void fill( int*** grid, unsigned width, unsigned height, const Location& location, int ant_id, int inc)
+    void fill( EnemyCount*** grid, unsigned width, unsigned height, const Location& location, int ant_id, int inc)
     {
         Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row-2, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row-2, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
 
         x = clamp( Location( location.row-1, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row-1, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row-1, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row-1, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row-1, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
 
         x = clamp( Location( location.row-0, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row-0, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row-0, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row-0, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row-0, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
 
         x = clamp( Location( location.row+1, location.col-2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row+1, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row+1, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row+1, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].a += inc;
         x = clamp( Location( location.row+1, location.col+2 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
 
         x = clamp( Location( location.row+2, location.col-1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row+2, location.col-0 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
         x = clamp( Location( location.row+2, location.col+1 ), height, width );
-        grid[ x.row ][ x.col ][ ant_id ] += inc;
+        grid[ x.row ][ x.col ][ ant_id ].b += inc;
     }
 
-    void fillPlusOneWithColor( int*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
+    void fillPlusOneWithColor( EnemyCount*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
     {
         fillWithColor( grid, width, height, location, ant_id, inc);
 
@@ -209,26 +335,26 @@ namespace
         if( !isWaterOrFood( map( x_n ) ) )
         {
             Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row-3, location.col-0 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row-3, location.col+1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
 
         if( !isWaterOrFood( map( x_s ) ) )
         {
             Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row+3, location.col-0 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row+3, location.col+1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             
         }
@@ -236,58 +362,58 @@ namespace
         if( !isWaterOrFood( map( x_w ) ) )
         {
             Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row+0, location.col-3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row+1, location.col-3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
             
         if( !isWaterOrFood( map( x_e ) ) )
         {
             Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row+0, location.col+3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
             x = clamp( Location( location.row+1, location.col+3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
 
         if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_n ) ) )
         {
             Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
         
         if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_n ) ) )
         {
             Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
 
         if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_s ) ) )
         {
             Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
 
         if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_s ) ) )
         {
             Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             tile( x );
         }
     }
-    void fillPlusOne( int*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
+    void fillPlusOne( EnemyCount*** grid, const Map& map, int width, int height, const Location& location, int ant_id, int inc )
     {
         fill( grid, width, height, location, ant_id, inc);
 
@@ -300,73 +426,73 @@ namespace
         if( !isWaterOrFood( map( x_n ) ) )
         {
             Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row-3, location.col-0 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row-3, location.col+1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
 
         if( !isWaterOrFood( map( x_s ) ) )
         {
             Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row+3, location.col-0 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row+3, location.col+1 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
         
         if( !isWaterOrFood( map( x_w ) ) )
         {
             Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row+0, location.col-3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row+1, location.col-3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
             
         if( !isWaterOrFood( map( x_e ) ) )
         {
             Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row+0, location.col+3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
             x = clamp( Location( location.row+1, location.col+3 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
 
         if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_n ) ) )
         {
             Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
         
         if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_n ) ) )
         {
             Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
 
         if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_s ) ) )
         {
             Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
 
         if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_s ) ) )
         {
             Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
-            grid[ x.row ][ x.col ][ ant_id ] += inc;
+            grid[ x.row ][ x.col ][ ant_id ].c += inc;
         }
     }
 
 
-    int score( const Map& map, const AntEnemies& ant_enemies, const Directions& moves, int*** grid )
+    Score score( const Map& map, const AntEnemies& ant_enemies, const Directions& moves, EnemyCount*** grid )
     {
         LocationSet dead_enemies; 
-        int         current_score=0;
+        Score       current_score;
 
         int idx = 0;
         for( AntEnemies::const_iterator it = ant_enemies.begin(); it != ant_enemies.end(); ++it )
@@ -374,15 +500,15 @@ namespace
             // add up my_enemy_count for moved position
             Location loc   = map.getLocation( it->first, moves[ idx++ ] );
 
-            int my_enemies = grid[ loc.row ][ loc.col ][ 1 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 2 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 3 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 4 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 5 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 6 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 7 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 8 ];
-            my_enemies    += grid[ loc.row ][ loc.col ][ 9 ];
+            EnemyCount my_enemies = grid[ loc.row ][ loc.col ][ 1 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 2 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 3 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 4 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 5 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 6 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 7 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 8 ];
+            my_enemies += grid[ loc.row ][ loc.col ][ 9 ];
             
             Debug::stream() << "scoring: " << loc << std::endl
                             << "     my_enemies: " << my_enemies << std::endl;
@@ -390,6 +516,7 @@ namespace
             
             // for each of my nearby_enemies within dist2 of 10 (they can step into our zone)
             bool my_ant_dies = false;
+            int  depths = 0;
             const Locations& enemies = it->second;
             for( Locations::const_iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy )
             {
@@ -398,19 +525,26 @@ namespace
                 {
                     // Potentially in range.  Count this enemy's enemy count
                     // (for now approximate as just ant_id zero enemies)
-                    int enemy_enemies = grid[ enemy_loc.row ][ enemy_loc.col ][ MY_ANT_ID ];
-                    if( my_enemies >= enemy_enemies ) my_ant_dies = true; 
-                    if( enemy_enemies >= my_enemies ) dead_enemies.insert( enemy_loc );
-                    Debug::stream() << "    enemy " << enemy_loc <<  ": " << enemy_enemies << std::endl;
+                    EnemyCount enemy_enemies = grid[ enemy_loc.row ][ enemy_loc.col ][ MY_ANT_ID ];
+//                    if( my_enemies >= enemy_enemies ) my_ant_dies = true; 
+//                    if( enemy_enemies >= my_enemies ) dead_enemies.insert( enemy_loc );
+                    if( my_enemies.beats( enemy_enemies ) )
+                    { dead_enemies.insert( enemy_loc ); depths += ( 2 - my_enemies.deepest() ); }
+                    if( enemy_enemies.beatsAlly( my_enemies ) )
+                    { my_ant_dies = true; }
+                    Debug::stream() << "    enemy " << enemy_loc <<  ": " << enemy_enemies << std::endl
+                                    << "             my_ant_dies = " << my_ant_dies << std::endl
+                                    << "             enemy_dies  = " << ( enemy_enemies >= my_enemies ) << std::endl;
+                    
                 }
             }
-            current_score -= static_cast<int>( my_ant_dies );
+            current_score.kills -= static_cast<int>( my_ant_dies );
             
             Debug::stream() << "        current_score " << current_score << std::endl;
 
         }
 
-        current_score += dead_enemies.size();
+        current_score.kills += dead_enemies.size();
         Debug::stream() << "    dead enemies " << dead_enemies.size() << std::endl;
         Debug::stream() << "    final score  " << current_score << std::endl;
         return current_score;
@@ -441,7 +575,7 @@ namespace
 
 
     // temp must be in [0, 1]
-    float P( int old_score, int new_score, float temp )
+    float P( Score old_score, Score new_score, float temp )
     {
         // At temp 1.0 (max temp)
         //   score increase => p = 0.65
@@ -533,15 +667,14 @@ void battle( Map& map,
     //
     const unsigned height = map.height();
     const unsigned width  = map.width();
-    int*** grid; 
-    grid = new int**[ height ];
+    EnemyCount*** grid; 
+    grid = new EnemyCount**[ height ];
     for( unsigned i = 0; i < height; ++i )
     {
-        grid[i] = new int*[ width ];
+        grid[i] = new EnemyCount*[ width ];
         for( unsigned j = 0; j < width; ++j )
         {
-            grid[i][j] = new int[ 10 ];
-            memset( reinterpret_cast<void*>( grid[i][j] ), 0, 10*sizeof(unsigned) );
+            grid[i][j] = new EnemyCount[ 10 ];
         }
     }
     
@@ -645,8 +778,8 @@ void battle( Map& map,
 
     Directions cur_moves ( ally_enemies.size(), NONE );
     Directions best_moves( ally_enemies.size(), NONE );
-    int        cur_score  = score( map, ally_enemies, cur_moves, grid );
-    int        best_score = cur_score;
+    Score      cur_score  = score( map, ally_enemies, cur_moves, grid );
+    Score      best_score = cur_score;
 
     Debug::stream() << "Battle: initial score is " << cur_score << std::endl;
 
@@ -705,7 +838,7 @@ void battle( Map& map,
         cur_moves[ rant ] = new_move;
         
         // Check if we have a new best state
-        const int new_score = score( map, ally_enemies, cur_moves, grid );
+        const Score new_score = score( map, ally_enemies, cur_moves, grid );
         Debug::stream() << "Battle:      score: " << new_score << " best: " << best_score << std::endl; 
         if( new_score > best_score || ( new_score == best_score && cur_move == NONE ) ) // Prefer movement
         {
