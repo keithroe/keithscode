@@ -1,5 +1,5 @@
 CC=g++
-CFLAGS= -O3 -funroll-loops -Wall -Werror
+CFLAGS= -O3 -g -funroll-loops -Wall -Werror
 LDFLAGS= -lm
 
 HEADERS= Ant.h \
@@ -35,7 +35,7 @@ BFSTEST=bfstest
 DIFFTEST=difftest
 
 #Uncomment the following to enable debugging
-#CFLAGS += -g -DDEBUG
+CFLAGS += -DDEBUG
 #CFLAGS = -g -DDEBUG
 
 all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST) $(DIFFTEST)
