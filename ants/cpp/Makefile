@@ -65,7 +65,7 @@ zip:
 	-rm -rf ~/Desktop/cpp/
 	-rm -f ~/Desktop/cpp.zip
 	-cp -r ../cpp ~/Desktop
-	-rm ~/Desktop/*Test*
+	-rm ~/Desktop/cpp/*Test*
 
 .PHONY: all clean zip
 
