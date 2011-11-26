@@ -35,7 +35,7 @@ BFSTEST=bfstest
 DIFFTEST=difftest
 
 #Uncomment the following to enable debugging
-CFLAGS += -g -DDEBUG
+#CFLAGS += -g -DDEBUG
 #CFLAGS = -g -DDEBUG
 
 all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST) $(DIFFTEST)
@@ -65,6 +65,7 @@ zip:
 	-rm -rf ~/Desktop/cpp/
 	-rm -f ~/Desktop/cpp.zip
 	-cp -r ../cpp ~/Desktop
+	-rm ~/Desktop/*Test*
 
 .PHONY: all clean zip
 
