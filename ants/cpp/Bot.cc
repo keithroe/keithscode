@@ -8,6 +8,7 @@
 #include "Debug.h"
 #include "Path.h"
 #include "Square.h"
+#include <fstream>
 
 #include <algorithm>
 #include <cstdlib>
@@ -30,6 +31,21 @@ namespace
     {
         bool operator()( const Candidate& c0, const Candidate& c1 )
         { return c0.estimate > c1.estimate; }
+    };
+
+
+    struct FindEnemyAnts
+    {
+        FindEnemyAnts( std::vector<Location>& enemies ) : enemies( enemies ) {}
+
+        bool operator()( const BFNode* node )
+        {
+            if( node->square->ant_id > 0 )
+                enemies.push_back( node->loc );
+            return true;
+        }
+
+        std::vector<Location>& enemies;
     };
 
 
@@ -101,12 +117,17 @@ Bot::Bot()
 
 Bot::~Bot()
 {
+    std::cerr << " maximum time: " << m_max_time << "ms" << std::endl;
 }
 
 
 void Bot::playGame()
 {
     Debug::stream() << "Game started" << std::endl;
+    
+    //std::ifstream infile( "/Users/keithm/Code/keithscode/ants/fluxid_input_16824.txt", std::ifstream::in ); 
+    //if( infile.fail() ) throw "arrrggghhh";
+    //infile >> m_state;
     
     //reads the game parameters and sets up
     std::cin >> m_state;
@@ -117,6 +138,8 @@ void Bot::playGame()
 
     //continues making moves while the game is not over
     while( std::cin >> m_state )
+    //while( infile >> m_state )
+
     {
         m_state.updateVisionInformation();
         updateHillList();
@@ -203,8 +226,27 @@ void Bot::makeMoves()
         m_state.map().setPriority( *it, 1000 );
     }
     
+    // Defend base
+    for( State::Locations::const_iterator it = m_state.myHills().begin(); it != m_state.myHills().end(); ++it )
+    {
+        if( m_state.turn() > 30 ) m_state.map().setPriority( *it, 10 );
+
+        std::vector<Location> base_attackers;
+        FindEnemyAnts find_enemy_ants( base_attackers );
+        Always always;
+        BF<FindEnemyAnts, Always> bfs( m_state.map(), *it, find_enemy_ants, always );
+        bfs.setMaxDepth( 20 );
+        bfs.traverse();
+
+        // TODO: rally more intelligently, between enemies and base
+        if( base_attackers.size() > 0 )
+        {
+            Debug::stream() << " Rallying to base at " << *it << std::endl;
+            m_state.map().setPriority( *it, 100 );
+        }
+    }
     
-    int diffusion_steps = std::max( m_state.rows(), m_state.cols() ) / 2;
+    int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( diffusion_steps );
     Debug::stream() << m_state.map() << std::endl;
 
