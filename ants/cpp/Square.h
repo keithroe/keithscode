@@ -18,7 +18,8 @@ struct Square;
 //  Helpers
 //
 
-// These are predicates for BFS searches
+typedef bool (*SquarePredicate)( const Square& );
+
 bool hasAnt( const Square& s );
 bool hasAvailableAnt( const Square& s );
 bool hasEnemyAnt( const Square& s );
@@ -65,8 +66,10 @@ struct Square
     bool  visible;              ///< Is this square visible to any ants?
     bool  food;                 ///< Does this square contain food 
     int   ant_id;               ///< Ant player id, -1 if none
+    int   new_ant_id;           ///< Ant player id, -1 if none
     int   hill_id;              ///< Hill player id, -1 if none
     Ant*  ant;                  ///< Ant data if present, NULL otherwise
+    Ant*  new_ant;              ///< Ant data if present, NULL otherwise
     float priority;
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
@@ -78,8 +81,10 @@ inline Square::Square()
       visible( false ),
       food( false ),
       ant_id( -1 ),
+      new_ant_id( -1 ),
       hill_id( -1 ),
       ant( NULL ),
+      new_ant( NULL ),
       priority( 0.0f )
 {
 }
@@ -91,8 +96,10 @@ inline void Square::reset()
     visible     = false;
     food        = false;
     ant_id      = -1;
+    new_ant_id  = -1;
     hill_id     = -1;
     ant         = NULL;
+    new_ant     = NULL;
     priority    = 0.0f;
 
     deadAnts.clear();
@@ -108,7 +115,7 @@ inline void Square::setVisible()
 
 inline bool Square::isAvailable()const
 {
-    return ant_id < 0 && hill_id != 0 && !food && type != WATER; 
+    return ant_id < 0 && new_ant_id < 0 && hill_id != 0 && !food && type != WATER; 
 }
 
 
@@ -143,13 +150,14 @@ inline std::ostream& operator<<( std::ostream& os, const Square& s )
        << " visible:" << ( s.visible ? "true" : "false" )
        << " food:"    << ( s.food    ? "true" : "false" )
        << " ant_id:"  << s.ant_id 
+       << " new_ant_id:"  << s.new_ant_id 
        << " hill_id:" << s.hill_id 
        << " priority:" << s.priority; 
     return os;
 }
 
 
-inline bool hasAnt( const Square& s )          { return s.ant_id == 0;           }
+inline bool hasAnt( const Square& s )          { return s.ant_id == 0 || s.new_ant_id == 0; }
 inline bool hasEnemyAnt( const Square& s )     { return s.ant_id >  0;           }
 inline bool hasFood( const Square& s )         { return s.food;                  }
 inline bool hasEnemyHill( const Square& s )    { return s.hill_id > 0;           }
@@ -157,7 +165,9 @@ inline bool isLand( const Square& s )          { return s.type == Square::LAND; 
 inline bool isWater( const Square& s )         { return s.type == Square::WATER; }
 inline bool notWater( const Square& s )        { return s.type != Square::WATER; }
 inline bool isAvailable( const Square& s )     { return s.isAvailable();         }
-inline bool isWaterOrFood( const Square& s )    { return s.food || s.isWater(); }
+inline bool isVisible( const Square& s )       { return s.visible;               }
+inline bool notVisible( const Square& s )      { return !s.visible;              }
+inline bool isWaterOrFood( const Square& s )   { return s.food || s.isWater();   }
 
 
 #endif //SQUARE_H_

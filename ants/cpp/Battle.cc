@@ -98,7 +98,7 @@ namespace
                             << "        " << sum() << ":" << s.sum() << std::endl
                             << "        " << deepest() << ":" << s.deepest() << std::endl
                             << "        " << deepestEnemyCount() << ":" << s.deepestEnemyCount() << std::endl;
-            return sum() < s.sum() && deepest() <= s.deepest() && deepestEnemyCount() < s.deepestEnemyCount();
+            return sum() <= s.sum() && deepest() <= s.deepest() && deepestEnemyCount() <= s.deepestEnemyCount();
         }
         bool beatsAlly( const EnemyCount& s )
         {
@@ -534,7 +534,7 @@ namespace
                     { my_ant_dies = true; }
                     Debug::stream() << "    enemy " << enemy_loc <<  ": " << enemy_enemies << std::endl
                                     << "             my_ant_dies = " << my_ant_dies << std::endl
-                                    << "             enemy_dies  = " << ( enemy_enemies >= my_enemies ) << std::endl;
+                                    << "             enemy_dies  = " << my_enemies.beats( enemy_enemies ) << std::endl;
                     
                 }
             }

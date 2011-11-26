@@ -176,6 +176,8 @@ void Bot::makeMoves()
     // Prioritize map
     // TODO: Add priority for not visible
     //
+
+    m_state.map().updatePriority( 5, notVisible );
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
         std::vector<Location> neighbors;
@@ -193,7 +195,7 @@ void Bot::makeMoves()
         if( battle_ants.find( *it ) != battle_ants.end() )
             m_state.map().setPriority( (*it)->location, 50 );
         else
-            m_state.map().setPriority( (*it)->location, -10 );
+            m_state.map().setPriority( (*it)->location, -5 );
     }
 
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )

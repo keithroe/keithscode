@@ -31,6 +31,7 @@ public:
     Direction getDirection( const Location &loc0, const Location& loc1 )const;
 
     void getNeighbors( const Location& loc, std::vector<Location>& neighbors )const;
+    
 
     template<class Predicate>
     void getNeighbors( const Location& loc, Predicate pred, std::vector<Location>& neighbors )const;
@@ -41,6 +42,8 @@ public:
 
     void makeMove( const Location &loc, Direction direction );
     void makeMove( const Location &loc0, const Location& loc1 );
+
+    void updatePriority( float amount, SquarePredicate pred );
 
     void setPriority( const Location& loc, float priority )
     { rangeCheck( loc.row, loc.col ); m_priorities0[ loc.row ][ loc.col ] = priority; }

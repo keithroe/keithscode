@@ -148,7 +148,6 @@ void Map::getNeighbors( const Location& loc, std::vector<Location>& neighbors )c
     neighbors.push_back( getLocation( loc, WEST  ) );
 }
 
-
 void Map::getDxDy( const Location& loc0, const Location& loc1, int& dx, int& dy )const
 {
 
@@ -191,8 +190,8 @@ int Map::distance2( const Location& loc0, const Location& loc1 )const
 void Map::makeMove( const Location &loc, Direction direction )
 {
     Location new_loc = getLocation( loc, direction );
-    m_grid[ new_loc.row ][ new_loc.col ].ant_id = m_grid[loc.row][loc.col].ant_id;
-    m_grid[ new_loc.row ][ new_loc.col ].ant    = m_grid[loc.row][loc.col].ant;
+    m_grid[ new_loc.row ][ new_loc.col ].new_ant_id = m_grid[loc.row][loc.col].ant_id;
+    m_grid[ new_loc.row ][ new_loc.col ].new_ant    = m_grid[loc.row][loc.col].ant;
     m_grid[ loc.row     ][ loc.col     ].ant_id = -1;
     m_grid[ loc.row     ][ loc.col     ].ant    = NULL;
 }
@@ -200,8 +199,8 @@ void Map::makeMove( const Location &loc, Direction direction )
 
 void Map::makeMove( const Location &loc0, const Location& loc1 )
 {
-    m_grid[ loc1.row ][ loc1.col ].ant_id = m_grid[ loc0.row ][ loc0.col ].ant_id;
-    m_grid[ loc1.row ][ loc1.col ].ant    = m_grid[ loc0.row ][ loc0.col ].ant;
+    m_grid[ loc1.row ][ loc1.col ].new_ant_id = m_grid[ loc0.row ][ loc0.col ].ant_id;
+    m_grid[ loc1.row ][ loc1.col ].new_ant    = m_grid[ loc0.row ][ loc0.col ].ant;
     m_grid[ loc0.row ][ loc0.col ].ant_id = -1;
     m_grid[ loc0.row ][ loc0.col ].ant    = NULL;
 }
@@ -237,6 +236,13 @@ Location Map::computeCentroid( const std::vector<Location>& locations )const
     if( y < 0            ) y += m_height;
     
     return Location( static_cast<int>( y+0.5f ), static_cast<int>( x+0.5f ) );
+}
+
+void Map::updatePriority( float amount, SquarePredicate pred )
+{
+    for( unsigned int i = 0; i < m_height; ++i )
+        for( unsigned int j = 0; j < m_width; ++j )
+            if( pred( m_grid[i][j] ) ) m_priorities0[i][j] += amount;
 }
 
 
