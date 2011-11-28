@@ -229,7 +229,7 @@ void Bot::makeMoves()
     // Defend base
     for( State::Locations::const_iterator it = m_state.myHills().begin(); it != m_state.myHills().end(); ++it )
     {
-        if( m_state.turn() > 30 ) m_state.map().setPriority( *it, 10 );
+        //if( m_state.turn() > 30 ) m_state.map().setPriority( *it, 10 );
 
         std::vector<Location> base_attackers;
         FindEnemyAnts find_enemy_ants( base_attackers );
@@ -246,9 +246,13 @@ void Bot::makeMoves()
         }
     }
     
+    
+    Debug::stream() << "Before diffusion" << std::endl
+                    << m_state.map() << std::endl;
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( diffusion_steps );
-    Debug::stream() << m_state.map() << std::endl;
+    Debug::stream() << "After diffusion" << std::endl
+                    << m_state.map() << std::endl;
 
     //
     // Now make moves for individual ants
