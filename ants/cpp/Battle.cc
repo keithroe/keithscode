@@ -26,25 +26,29 @@ namespace
 
     struct Score
     {
-        Score() : kills( 0 ), kill_depths( 0 ) {}
+        Score() : net_deaths( 0 ), ally_deaths( 0 ), attack_depths( 0 ) {}
 
         bool operator<( const Score& s )const
         {
-            return kills < s.kills ? true  :
-                   kills > s.kills ? false :
-                                     kill_depths < s.kill_depths;
+            return net_deaths  < s.net_deaths  ? true  :
+                   net_deaths  > s.net_deaths  ? false :
+                   ally_deaths > s.ally_deaths ? true  :
+                   ally_deaths < s.ally_deaths ? false :
+                   attack_depths < s.attack_depths;
         }
 
         bool operator==( const Score& s )const
         {
-            return kills == s.kills && kill_depths == s.kill_depths;
+            return net_deaths == s.net_deaths && ally_deaths == s.ally_deaths && attack_depths == s.attack_depths;
         }
 
         bool operator>( const Score& s )const
         {
-            return kills > s.kills ? true  :
-                   kills < s.kills ? false :
-                                     kill_depths > s.kill_depths;
+            return net_deaths  > s.net_deaths  ? true  :
+                   net_deaths  < s.net_deaths  ? false :
+                   ally_deaths < s.ally_deaths ? true  :
+                   ally_deaths > s.ally_deaths ? false :
+                   attack_depths > s.attack_depths;
         }
         
         bool operator>=( const Score& s )const
@@ -55,8 +59,9 @@ namespace
         Score operator+( const Score& s )const
         {
             Score t;
-            t.kills       = kills + s.kills;
-            t.kill_depths = kill_depths + s.kill_depths;
+            t.net_deaths       = net_deaths    + s.net_deaths;
+            t.ally_deaths      = ally_deaths   + t.ally_deaths;
+            t.attack_depths    = attack_depths + s.attack_depths;
             return t;
         }
 
@@ -64,12 +69,13 @@ namespace
         { *this = *this + s; }
 
 
-        int kills;
-        int kill_depths;
+        int net_deaths;     // enemy_kills - ally_deaths
+        int ally_deaths;    // ally deaths
+        int attack_depths;  // depth of attacking ants
     };
 
     std::ostream& operator<<( std::ostream& out, const Score& s )
-    { out << s.kills << "." << s.kill_depths; return out; }
+    { out << s.net_deaths << "." << s.ally_deaths << "." << s.attack_depths; return out; }
 
     struct EnemyCount
     {
@@ -98,6 +104,7 @@ namespace
                             << "        " << sum() << ":" << s.sum() << std::endl
                             << "        " << deepest() << ":" << s.deepest() << std::endl
                             << "        " << deepestEnemyCount() << ":" << s.deepestEnemyCount() << std::endl;
+            //return sum() <= s.sum() && deepest() <= s.deepest() && deepestEnemyCount() <= s.deepestEnemyCount();
             return sum() <= s.sum() && deepest() <= s.deepest() && deepestEnemyCount() <= s.deepestEnemyCount();
         }
         bool beatsAlly( const EnemyCount& s )
@@ -110,7 +117,8 @@ namespace
             //return ( sum() != s.sum() ) ? sum() < s.sum() :
             //                              deepest() <= s.deepest() && deepestEnemyCount() < s.deepestEnemyCount();
             
-            return sum() <= s.sum();
+            //return sum() <= s.sum();
+            return deepestEnemyCount() <= s.deepestEnemyCount() || sum() <= s.sum();
         }
 
         bool operator<( const EnemyCount& s )
@@ -538,13 +546,14 @@ namespace
                     
                 }
             }
-            current_score.kills -= static_cast<int>( my_ant_dies );
+            current_score.net_deaths  -= static_cast<int>( my_ant_dies );
+            current_score.ally_deaths += static_cast<int>( my_ant_dies );
             
             Debug::stream() << "        current_score " << current_score << std::endl;
 
         }
 
-        current_score.kills += dead_enemies.size();
+        current_score.net_deaths += dead_enemies.size();
         Debug::stream() << "    dead enemies " << dead_enemies.size() << std::endl;
         Debug::stream() << "    final score  " << current_score << std::endl;
         return current_score;

@@ -276,12 +276,15 @@ void Map::diffusePriority( unsigned iterations )
         m_priorities1 = temp;
     }
     */
+
+    const unsigned w = m_width;
+    const unsigned h = m_height;
     for( unsigned int k = 0; k < iterations; ++k )
     {
         // Diffuse the internal nodes first
-        for( unsigned i = 1u; i < m_height-1; ++i )
+        for( unsigned i = 1u; i < h-1; ++i )
         {
-            for( unsigned j = 1u; j < m_width-1; ++j )
+            for( unsigned j = 1u; j < w-1; ++j )
             {
                 if( !m_grid[ i ][ j ].isLand() ) continue;
                 float sum       = m_priorities0[ i ][ j ];
@@ -294,55 +297,60 @@ void Map::diffusePriority( unsigned iterations )
             }
         }
 
-        // Now do less efficient outside ring
-        for( unsigned i = 1u; i < m_height-1; ++i )
+        // Now do outside ring
+        for( unsigned i = 1u; i < h-1; ++i )
         {
-            if( !m_grid[ i ][ 0 ].isLand() ) continue;
-            float sum         = m_priorities0[ i ][ 0 ];
-            float num_nodes   = 1.0f;
-            if( m_grid[ i+0 ][ m_width-1 ].isLand() ) { sum += m_priorities0[ i+0 ][ m_width-1 ]; num_nodes += 1.0f; }
-            if( m_grid[ i+0 ][ 1         ].isLand() ) { sum += m_priorities0[ i+0 ][ 1         ]; num_nodes += 1.0f; }
-            if( m_grid[ i+1 ][ 0         ].isLand() ) { sum += m_priorities0[ i+1 ][ 0         ]; num_nodes += 1.0f; }
-            if( m_grid[ i-1 ][ 0         ].isLand() ) { sum += m_priorities0[ i-1 ][ 0         ]; num_nodes += 1.0f; }
-            m_priorities1[ i ][ 0 ] = sum / num_nodes; 
+            if( m_grid[ i ][ 0 ].isLand() )
+            {
+                float sum         = m_priorities0[ i ][ 0 ];
+                float num_nodes   = 1.0f;
+                if( m_grid[ i+0 ][ w-1 ].isLand() ) { sum += m_priorities0[ i+0 ][ w-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ 1   ].isLand() ) { sum += m_priorities0[ i+0 ][ 1   ]; num_nodes += 1.0f; }
+                if( m_grid[ i+1 ][ 0   ].isLand() ) { sum += m_priorities0[ i+1 ][ 0   ]; num_nodes += 1.0f; }
+                if( m_grid[ i-1 ][ 0   ].isLand() ) { sum += m_priorities0[ i-1 ][ 0   ]; num_nodes += 1.0f; }
+                m_priorities1[ i ][ 0 ] = sum / num_nodes; 
+            }
             
-            if( !m_grid[ i ][ m_width-1 ].isLand() ) continue;
-            sum       = m_priorities0[ i ][ m_width-1 ];
-            num_nodes = 1.0f;
-            if( m_grid[ i+0 ][ m_width-2 ].isLand() ) { sum += m_priorities0[ i+0 ][ m_width-0 ]; num_nodes += 1.0f; }
-            if( m_grid[ i+0 ][ 0         ].isLand() ) { sum += m_priorities0[ i+0 ][ 0         ]; num_nodes += 1.0f; }
-            if( m_grid[ i+1 ][ m_width-1 ].isLand() ) { sum += m_priorities0[ i+1 ][ m_width-1 ]; num_nodes += 1.0f; }
-            if( m_grid[ i-1 ][ m_width-1 ].isLand() ) { sum += m_priorities0[ i-1 ][ m_width-1 ]; num_nodes += 1.0f; }
-            m_priorities1[ i ][ m_width-1 ] = sum / num_nodes; 
+            if( m_grid[ i ][ w-1 ].isLand() )
+            {
+                float sum       = m_priorities0[ i ][ w-1 ];
+                float num_nodes = 1.0f;
+                if( m_grid[ i+0 ][ w-2 ].isLand() ) { sum += m_priorities0[ i+0 ][ w-0 ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ 0   ].isLand() ) { sum += m_priorities0[ i+0 ][ 0   ]; num_nodes += 1.0f; }
+                if( m_grid[ i+1 ][ w-1 ].isLand() ) { sum += m_priorities0[ i+1 ][ w-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ i-1 ][ w-1 ].isLand() ) { sum += m_priorities0[ i-1 ][ w-1 ]; num_nodes += 1.0f; }
+                m_priorities1[ i ][ w-1 ] = sum / num_nodes; 
+            }
+
         }
 
-        for( unsigned j = 1u; j < m_width-1; ++j )
+        for( unsigned j = 1u; j < w-1; ++j )
         {
-            const Square& sqr0 = m_grid[ 0 ][ j ];
-            if( !sqr0.isLand() ) continue;
-            float sum         = m_priorities0[ 0 ][ j ];
-            float num_nodes   = 1.0f;
-            if( m_grid[ 0          ][ j-1 ].isLand() ) { sum += m_priorities0[ 0          ][ j-1 ]; num_nodes += 1.0f; }
-            if( m_grid[ 0          ][ j+1 ].isLand() ) { sum += m_priorities0[ 0          ][ j+1 ]; num_nodes += 1.0f; }
-            if( m_grid[ m_height-1 ][ j+0 ].isLand() ) { sum += m_priorities0[ m_height-1 ][ j+0 ]; num_nodes += 1.0f; }
-            if( m_grid[ 1          ][ j+0 ].isLand() ) { sum += m_priorities0[ 1          ][ j+0 ]; num_nodes += 1.0f; }
-            m_priorities1[ 0 ][ j ] = sum / num_nodes; 
+            if( m_grid[ 0 ][ j ].isLand() )
+            {
+                float sum         = m_priorities0[ 0 ][ j ];
+                float num_nodes   = 1.0f;
+                if( m_grid[ 0   ][ j-1 ].isLand() ) { sum += m_priorities0[ 0   ][ j-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ 0   ][ j+1 ].isLand() ) { sum += m_priorities0[ 0   ][ j+1 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-1 ][ j+0 ].isLand() ) { sum += m_priorities0[ h-1 ][ j+0 ]; num_nodes += 1.0f; }
+                if( m_grid[ 1   ][ j+0 ].isLand() ) { sum += m_priorities0[ 1   ][ j+0 ]; num_nodes += 1.0f; }
+                m_priorities1[ 0 ][ j ] = sum / num_nodes; 
+            }
             
-            const Square& sqr1 = m_grid[ m_height-1 ][ j ];
-            if( !sqr1.isLand() ) continue;
-            sum       = m_priorities0[  m_height-1 ][ j ];
-            num_nodes = 1.0f;
-            if( m_grid[ m_height-1 ][ j-1 ].isLand() ) { sum += m_priorities0[ m_height-1 ][ j-1 ]; num_nodes += 1.0f; }
-            if( m_grid[ m_height-1 ][ j+1 ].isLand() ) { sum += m_priorities0[ m_height-1 ][ j+1 ]; num_nodes += 1.0f; }
-            if( m_grid[ m_height-2 ][ j+0 ].isLand() ) { sum += m_priorities0[ m_height-2 ][ j+0 ]; num_nodes += 1.0f; }
-            if( m_grid[ 0          ][ j+0 ].isLand() ) { sum += m_priorities0[ 0          ][ j+0 ]; num_nodes += 1.0f; }
-            m_priorities1[  m_height-1 ][ j ] = sum / num_nodes; 
+            if( !m_grid[ h-1 ][ j ].isLand() )
+            {
+                float sum       = m_priorities0[  h-1 ][ j ];
+                float num_nodes = 1.0f;
+                if( m_grid[ h-1 ][ j-1 ].isLand() ) { sum += m_priorities0[ h-1 ][ j-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-1 ][ j+1 ].isLand() ) { sum += m_priorities0[ h-1 ][ j+1 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-2 ][ j+0 ].isLand() ) { sum += m_priorities0[ h-2 ][ j+0 ]; num_nodes += 1.0f; }
+                if( m_grid[ 0   ][ j+0 ].isLand() ) { sum += m_priorities0[ 0   ][ j+0 ]; num_nodes += 1.0f; }
+                m_priorities1[  h-1 ][ j ] = sum / num_nodes; 
+            }
         }
 
 
         // four corners
-        const unsigned w = m_width;
-        const unsigned h = m_height;
         if( m_grid[ 0 ][ 0 ].isLand() )
         {
             float sum         = m_priorities0[ 0 ][ 0 ];
