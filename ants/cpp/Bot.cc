@@ -249,7 +249,7 @@ void Bot::makeMoves()
     
     Debug::stream() << "Before diffusion" << std::endl
                     << m_state.map() << std::endl;
-    int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
+   int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( diffusion_steps );
     Debug::stream() << "After diffusion" << std::endl
                     << m_state.map() << std::endl;
