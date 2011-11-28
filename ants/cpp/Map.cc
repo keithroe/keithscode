@@ -286,14 +286,16 @@ void Map::diffusePriority( unsigned iterations )
         {
             for( unsigned j = 1u; j < w-1; ++j )
             {
-                if( !m_grid[ i ][ j ].isLand() ) continue;
-                float sum       = m_priorities0[ i ][ j ];
-                float num_nodes = 1.0f;
-                if( m_grid[ i+0 ][ j-1 ].isLand() ) { sum += m_priorities0[ i+0 ][ j-1 ]; num_nodes += 1.0f; }
-                if( m_grid[ i+0 ][ j+1 ].isLand() ) { sum += m_priorities0[ i+0 ][ j+1 ]; num_nodes += 1.0f; }
-                if( m_grid[ i+1 ][ j+0 ].isLand() ) { sum += m_priorities0[ i+1 ][ j+0 ]; num_nodes += 1.0f; }
-                if( m_grid[ i-1 ][ j+0 ].isLand() ) { sum += m_priorities0[ i-1 ][ j+0 ]; num_nodes += 1.0f; }
-                m_priorities1[ i ][ j ] = sum / num_nodes; 
+                if( m_grid[ i ][ j ].isLand() )
+                {
+                    float sum       = m_priorities0[ i ][ j ];
+                    float num_nodes = 1.0f;
+                    if( m_grid[ i+0 ][ j-1 ].isLand() ) { sum += m_priorities0[ i+0 ][ j-1 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i+0 ][ j+1 ].isLand() ) { sum += m_priorities0[ i+0 ][ j+1 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i+1 ][ j+0 ].isLand() ) { sum += m_priorities0[ i+1 ][ j+0 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i-1 ][ j+0 ].isLand() ) { sum += m_priorities0[ i-1 ][ j+0 ]; num_nodes += 1.0f; }
+                    m_priorities1[ i ][ j ] = sum / num_nodes; 
+                }
             }
         }
 
@@ -315,7 +317,7 @@ void Map::diffusePriority( unsigned iterations )
             {
                 float sum       = m_priorities0[ i ][ w-1 ];
                 float num_nodes = 1.0f;
-                if( m_grid[ i+0 ][ w-2 ].isLand() ) { sum += m_priorities0[ i+0 ][ w-0 ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ w-2 ].isLand() ) { sum += m_priorities0[ i+0 ][ w-2 ]; num_nodes += 1.0f; }
                 if( m_grid[ i+0 ][ 0   ].isLand() ) { sum += m_priorities0[ i+0 ][ 0   ]; num_nodes += 1.0f; }
                 if( m_grid[ i+1 ][ w-1 ].isLand() ) { sum += m_priorities0[ i+1 ][ w-1 ]; num_nodes += 1.0f; }
                 if( m_grid[ i-1 ][ w-1 ].isLand() ) { sum += m_priorities0[ i-1 ][ w-1 ]; num_nodes += 1.0f; }
@@ -337,7 +339,7 @@ void Map::diffusePriority( unsigned iterations )
                 m_priorities1[ 0 ][ j ] = sum / num_nodes; 
             }
             
-            if( !m_grid[ h-1 ][ j ].isLand() )
+            if( m_grid[ h-1 ][ j ].isLand() )
             {
                 float sum       = m_priorities0[  h-1 ][ j ];
                 float num_nodes = 1.0f;
