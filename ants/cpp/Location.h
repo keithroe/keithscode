@@ -46,6 +46,9 @@ struct Location
 
     bool operator==(const Location& other )
     { return row == other.row && col == other.col; }
+    
+    bool operator!=(const Location& other )
+    { return row != other.row || col != other.col; }
 };
 
 
