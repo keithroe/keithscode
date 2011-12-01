@@ -119,7 +119,7 @@ namespace
             //                              deepest() <= s.deepest() && deepestEnemyCount() < s.deepestEnemyCount();
             
             //return sum() <= s.sum();
-            return deepestEnemyCount() <= s.deepestEnemyCount() || sum() <= s.sum();
+            return deepestEnemyCount() <= s.deepestEnemyCount() || sum() < s.sum();
         }
 
         bool operator<( const EnemyCount& s )
@@ -650,7 +650,7 @@ namespace
         Direction best_move1 = NONE;
         Location  best_loc0 = ally0;
         Location  best_loc1 = ally1;
-        int best_ally_dies = 2, best_enemy_dies = 0, best_distance = 1000;
+        int best_ally_dies = 10, best_enemy_dies = 0, best_distance = 1000;
 
         for( int i = 0; i < 5; ++i )
         {
@@ -668,10 +668,13 @@ namespace
                 Debug::stream() << "    trying " << moved_ally0 << "," << moved_ally1 
                                 << " new allydies:" << ally_dies << " enemydies:" << enemy_dies
                                 << " distance:" << distance << std::endl;
-                if( ( best_ally_dies > 0 && ally_dies == 0 )                                            ||
-                    ( best_ally_dies > 0 && enemy_dies - ally_dies > best_enemy_dies - best_ally_dies ) ||
-                    ( ally_dies == best_ally_dies && enemy_dies >  best_enemy_dies )                    ||
-                    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_distance ) )  
+                // too passive
+                //if( ( best_ally_dies > 0 && ally_dies == 0 )                                            ||
+                //    ( best_ally_dies > 0 && enemy_dies - ally_dies > best_enemy_dies - best_ally_dies ) ||
+                //    ( ally_dies == best_ally_dies && enemy_dies >  best_enemy_dies )                    ||
+                //    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_distance ) )  
+                if( enemy_dies - ally_dies > best_enemy_dies - best_ally_dies         ||
+                  ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_distance ) )  
                 {
                     best_enemy_dies = enemy_dies;
                     best_ally_dies  = ally_dies;
