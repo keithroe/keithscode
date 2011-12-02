@@ -13,6 +13,8 @@ struct Location;
 void battle( Map& map,
              const std::vector<Ant*>& ants,
              const std::vector<Location>& enemy_ants,
-             std::set<Ant*>& assigned );
+             std::set<Ant*>& assigned,
+             std::set<Location>& enemies
+             );
 
 #endif // BATTLE_H_
