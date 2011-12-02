@@ -44,10 +44,10 @@ struct Location
 
     int  hash()const { return ( row << 16  ) + col; }
 
-    bool operator==(const Location& other )
+    bool operator==(const Location& other )const
     { return row == other.row && col == other.col; }
     
-    bool operator!=(const Location& other )
+    bool operator!=(const Location& other )const
     { return row != other.row || col != other.col; }
 };
 

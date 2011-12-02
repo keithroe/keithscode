@@ -30,11 +30,19 @@ namespace
 
         bool operator<( const Score& s )const
         {
-            return net_deaths  < s.net_deaths  ? true  :
-                   net_deaths  > s.net_deaths  ? false :
-                   ally_deaths > s.ally_deaths ? true  :
-                   ally_deaths < s.ally_deaths ? false :
+#ifdef DEFENSIVE
+            return ally_deaths   > s.ally_deaths   ? true  :
+                   ally_deaths   < s.ally_deaths   ? false :
+                   net_deaths    < s.net_deaths    ? true  :
+                   net_deaths    > s.net_deaths    ? false :
                    attack_depths < s.attack_depths;
+#else
+            return net_deaths    < s.net_deaths    ? true  :
+                   net_deaths    > s.net_deaths    ? false :
+                   attack_depths < s.attack_depths ? true  :
+                   attack_depths > s.attack_depths ? false :
+                   ally_deaths   > s.ally_deaths;
+#endif
         }
 
         bool operator==( const Score& s )const
@@ -44,11 +52,19 @@ namespace
 
         bool operator>( const Score& s )const
         {
-            return net_deaths  > s.net_deaths  ? true  :
-                   net_deaths  < s.net_deaths  ? false :
-                   ally_deaths < s.ally_deaths ? true  :
-                   ally_deaths > s.ally_deaths ? false :
+#ifdef DEFENSIVE
+            return ally_deaths   < s.ally_deaths   ? true  :
+                   ally_deaths   > s.ally_deaths   ? false :
+                   net_deaths    > s.net_deaths    ? true  :
+                   net_deaths    < s.net_deaths    ? false :
                    attack_depths > s.attack_depths;
+#else
+            return net_deaths    > s.net_deaths    ? true  :
+                   net_deaths    < s.net_deaths    ? false :
+                   attack_depths > s.attack_depths ? true  :
+                   attack_depths < s.attack_depths ? false :
+                   ally_deaths   < s.ally_deaths;
+#endif
         }
         
         bool operator>=( const Score& s )const
@@ -87,7 +103,7 @@ namespace
         
         int sum()const { return a + b + c; }
 
-        int deepest()const      { return a ? 0 : b ? 1 : 2; }
+        int deepest()const      { return a ? 3 : b ? 2 : 1; }
         int deepestEnemyCount()const { return a ? a : b ? b : c; }
 
         bool beats( const EnemyCount& s )
@@ -536,7 +552,7 @@ namespace
                     // (for now approximate as just ant_id zero enemies)
                     EnemyCount enemy_enemies = grid[ enemy_loc.row ][ enemy_loc.col ][ MY_ANT_ID ];
                     if( my_enemies.beats( enemy_enemies ) )
-                    { dead_enemies.insert( enemy_loc ); depths += ( 2 - my_enemies.deepest() ); }
+                    { dead_enemies.insert( enemy_loc ); depths +=  my_enemies.deepest(); }
                     if( enemy_enemies.beatsAlly( my_enemies ) )
                     { my_ant_dies = true; }
                     Debug::stream() << "    enemy " << enemy_loc <<  ": " << enemy_enemies << std::endl
@@ -650,7 +666,7 @@ namespace
         Direction best_move1 = NONE;
         Location  best_loc0 = ally0;
         Location  best_loc1 = ally1;
-        int best_ally_dies = 10, best_enemy_dies = 0, best_distance = 1000;
+        int best_ally_dies = 10, best_enemy_dies = 0, best_dist = 1000, best_ally_dist = 1000;
 
         for( int i = 0; i < 5; ++i )
         {
@@ -664,6 +680,7 @@ namespace
                         continue;
                 int ally_dies, enemy_dies, distance;
                 countDeaths( moved_ally0, moved_ally1, enemy, map, ally_dies, enemy_dies, distance );
+                int ally_dist = map.distance2( moved_ally1, moved_ally0 );
 
                 Debug::stream() << "    trying " << moved_ally0 << "," << moved_ally1 
                                 << " new allydies:" << ally_dies << " enemydies:" << enemy_dies
@@ -672,17 +689,29 @@ namespace
                 //if( ( best_ally_dies > 0 && ally_dies == 0 )                                            ||
                 //    ( best_ally_dies > 0 && enemy_dies - ally_dies > best_enemy_dies - best_ally_dies ) ||
                 //    ( ally_dies == best_ally_dies && enemy_dies >  best_enemy_dies )                    ||
-                //    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_distance ) )  
+                //    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_dist ) )  
+
+                /*
                 if( enemy_dies - ally_dies > best_enemy_dies - best_ally_dies         ||
-                  ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_distance ) )  
+                  ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist <  best_ally_dist ) ||
+                  ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist == best_ally_dist && 
+                       distance < best_dist ) )  
+                */
+                
+                if( ally_dies < best_ally_dies  ||
+                  ( ally_dies == best_ally_dies && enemy_dies > best_enemy_dies ) ||
+                  ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist <  best_ally_dist ) ||
+                  ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist ==  best_ally_dist  && 
+                       distance < best_dist ) )
                 {
                     best_enemy_dies = enemy_dies;
                     best_ally_dies  = ally_dies;
-                    best_distance   = distance;
-                    best_move0 = static_cast<Direction>( i );
-                    best_move1 = static_cast<Direction>( j );
-                    best_loc0  = moved_ally0;
-                    best_loc1  = moved_ally1;
+                    best_dist       = distance;
+                    best_ally_dist  = distance;
+                    best_move0      = static_cast<Direction>( i );
+                    best_move1      = static_cast<Direction>( j );
+                    best_loc0       = moved_ally0;
+                    best_loc1       = moved_ally1;
                 }
             }
         }
@@ -736,7 +765,7 @@ namespace
         const float t = new_score > old_score ? 1.0f : 
                         new_score < old_score ? 0.0f : 
                         0.5f;
-        const float offset = lerp( 0.0f, 0.35f, temp );
+        const float offset = lerp( 0.0f, 0.5f, temp );
         return lerp( 0.0f+offset, 1.0f-offset, t );
 
     }
@@ -746,7 +775,8 @@ namespace
 void battle( Map& map,
              const std::vector<Ant*>& ants,
              const std::vector<Location>& enemy_ants,
-             std::set<Ant*>& assigned )
+             std::set<Ant*>& assigned,
+             std::set<Location>& enemies)
 {
 
     //
@@ -795,7 +825,7 @@ void battle( Map& map,
     //
     // Gather all enemies seen
     //
-    LocationSet enemies;
+    //LocationSet enemies;
     for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
     {
         const Locations& ant_enemies = it->second;

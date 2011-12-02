@@ -169,7 +169,8 @@ void Bot::makeMoves()
     //
     Debug::stream() << " Assigning battle tasks..." << std::endl;
     std::set<Ant*> battle_ants;
-    battle( m_state.map(), m_state.myAnts(), m_state.enemyAnts(), battle_ants );
+    std::set<Location> enemy_ants;
+    battle( m_state.map(), m_state.myAnts(), m_state.enemyAnts(), battle_ants, enemy_ants );
     available.remove_if( AntInSet( battle_ants ) );
 
     //
@@ -197,10 +198,9 @@ void Bot::makeMoves()
 
     //
     // Prioritize map
-    // TODO: Add priority for not visible
     //
 
-    m_state.map().updatePriority( 5, notVisible );
+    m_state.map().updatePriority( 1, notVisible );
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
         std::vector<Location> neighbors;
@@ -216,9 +216,14 @@ void Bot::makeMoves()
         // TODO: more principled choice of weights (based on view dist??), no magic numbers
         //
         if( battle_ants.find( *it ) != battle_ants.end() )
-            m_state.map().setPriority( (*it)->location, 50 );
+            m_state.map().setPriority( (*it)->location,  0 );
         else
             m_state.map().setPriority( (*it)->location, -5 );
+    }
+    
+    for( LocationSet::iterator it = enemy_ants.begin(); it != enemy_ants.end(); ++it )
+    {
+        m_state.map().setPriority( *it, 100 );
     }
 
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
@@ -249,7 +254,7 @@ void Bot::makeMoves()
     
     Debug::stream() << "Before diffusion" << std::endl
                     << m_state.map() << std::endl;
-   int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
+    int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( diffusion_steps );
     Debug::stream() << "After diffusion" << std::endl
                     << m_state.map() << std::endl;

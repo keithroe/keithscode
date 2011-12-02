@@ -109,6 +109,8 @@ Location Map::getLocation( const Location &loc, Direction direction )const
     
 Direction Map::getDirection( const Location &loc0, const Location& loc1 )const
 {
+    if( loc0 == loc1 ) return NONE;
+
     int dx = loc1.col - loc0.col;
     //if( dx ==  1 || dx + m_width == 1 ) return EAST;
     //if( dx == -1 || dx - m_width == 1 ) return WEST;
