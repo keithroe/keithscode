@@ -5,6 +5,7 @@
 #include <set>
 
 class Location;
+class Battle;
 
 ///
 /// This struct represents your bot in the game of Ants
@@ -35,6 +36,8 @@ private:
     /// Check if this ant should move to attack a hill.  return true if ant assigned a path 
     bool attackHills( Ant* ant );
     
+    void makeAssignments();
+
     void assignToFood( std::set<Ant*>& assigned, unsigned max_dist, bool override_hills );
 
     /// Move ant according to diffused map priorities
@@ -42,12 +45,15 @@ private:
     void makeUncheckedMove( Ant* ant );
 
     typedef std::set<Location>  LocationSet;
+    typedef std::set<Ant*>      AntSet;
 
     LocationSet        m_enemy_hills;
     LocationSet        m_targeted_food;
 
     float              m_max_time;
     State              m_state;
+
+    Battle*            m_battle;
 };
 
 #endif //BOT_H_

@@ -416,12 +416,13 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
         {
             const Square& square = map.m_grid[ i ][ j ];
             os << ' ';
-            if     ( square.food         ) os << 'f';
-            else if( square.ant_id >=0   ) os << static_cast<char>( 'a' + square.ant_id );
-            else if( square.hill_id >= 0 ) os << static_cast<char>( 'A' + square.hill_id );
-            else if( square.isWater()    ) os << 'w';
-            else if( square.isUnknown()  ) os << '?';
-            else if( square.isLand()     ) os << (square.visible ? ' ' : '.');
+            if     ( square.food           ) os << 'f';
+            else if( square.ant_id >=0     ) os << static_cast<char>( 'a' + square.ant_id );
+            else if( square.new_ant_id >=0 ) os << static_cast<char>( 'a' + square.new_ant_id );
+            else if( square.hill_id >= 0   ) os << static_cast<char>( 'A' + square.hill_id );
+            else if( square.isWater()      ) os << 'w';
+            else if( square.isUnknown()    ) os << '?';
+            else if( square.isLand()       ) os << (square.visible ? ' ' : '.');
         }
         os << std::endl;
     }
