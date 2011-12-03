@@ -381,9 +381,9 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
     for( int i = 0; i < 5; ++i )
     {
         Location moved_ally0 = m_map.getLocation( ally0, static_cast<Direction>( i ) ); 
-        if( !m_map( moved_ally0 ).isAvailable() && moved_ally0 != ally1 )
+        if( !m_map( moved_ally0 ).isAvailable() && moved_ally0 != ally1 && i != NONE )
             continue;
-        for( int j = 0; j < 5; ++j )
+        for( int j = 0; j < 5; ++j && i != NONE )
         {
             Location moved_ally1 = m_map.getLocation( ally1, static_cast<Direction>( j ) ); 
             if( moved_ally1 == moved_ally0 || ( !m_map( moved_ally1 ).isAvailable() && moved_ally1 != ally0 ) )
