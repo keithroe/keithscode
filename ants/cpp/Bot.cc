@@ -97,7 +97,7 @@ namespace
 
     struct AntInSet
     {
-        AntInSet( std::set<Ant*>& ant_set ) : ant_set( ant_set ) {}
+        AntInSet( const std::set<Ant*>& ant_set ) : ant_set( ant_set ) {}
         bool operator()( Ant* ant ) { return ant_set.find( ant ) != ant_set.end(); }
 
         const std::set<Ant*>& ant_set;
@@ -110,7 +110,8 @@ namespace
 //
 
 Bot::Bot()
-    : m_max_time( 0.0f )
+    : m_max_time( 0.0f ),
+      m_battle( 0 )
 {
 }
 
@@ -135,11 +136,11 @@ void Bot::playGame()
     endTurn();
 
     Debug::stream() << m_state << std::endl;
+    m_battle = new Battle( m_state.map() );
 
     //continues making moves while the game is not over
     while( std::cin >> m_state )
     //while( infile >> m_state )
-
     {
         m_state.updateVisionInformation();
         updateHillList();
@@ -154,6 +155,10 @@ void Bot::makeMoves()
 {
     Debug::stream() << " ===============================================" << std::endl; 
     Debug::stream() << " turn " << m_state.turn() << ":" << std::endl;
+    Debug::stream() << "Before moves " << std::endl
+                    << m_state.map() << std::endl;
+
+    makeAssignments();
 
     std::list<Ant*> available( m_state.myAnts().begin(), m_state.myAnts().end() );
 
@@ -168,10 +173,8 @@ void Bot::makeMoves()
     // Assign ants to attack/defend locally 
     //
     Debug::stream() << " Assigning battle tasks..." << std::endl;
-    std::set<Ant*> battle_ants;
-    std::set<Location> enemy_ants;
-    battle( m_state.map(), m_state.myAnts(), m_state.enemyAnts(), battle_ants, enemy_ants );
-    available.remove_if( AntInSet( battle_ants ) );
+    m_battle->solve( m_state.myAnts(), m_state.enemyAnts() );
+    available.remove_if( AntInSet( m_battle->getAllies() ) );
 
     //
     // Assign ants to very nearby food with high priority
@@ -215,13 +218,13 @@ void Bot::makeMoves()
     {
         // TODO: more principled choice of weights (based on view dist??), no magic numbers
         //
-        if( battle_ants.find( *it ) != battle_ants.end() )
+        if( m_battle->getAllies().find( *it ) != m_battle->getAllies().end() )
             m_state.map().setPriority( (*it)->location,  0 );
         else
             m_state.map().setPriority( (*it)->location, -5 );
     }
     
-    for( LocationSet::iterator it = enemy_ants.begin(); it != enemy_ants.end(); ++it )
+    for( LocationSet::iterator it = m_battle->getEnemies().begin(); it != m_battle->getEnemies().end(); ++it )
     {
         m_state.map().setPriority( *it, 100 );
     }
@@ -252,27 +255,27 @@ void Bot::makeMoves()
     }
     
     
-    Debug::stream() << "Before diffusion" << std::endl
-                    << m_state.map() << std::endl;
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( diffusion_steps );
-    Debug::stream() << "After diffusion" << std::endl
-                    << m_state.map() << std::endl;
 
     //
     // Now make moves for individual ants
     //
-    std::for_each( battle_ants.begin(), battle_ants.end(),
+    std::for_each( m_battle->getAllies().begin(),
+                   m_battle->getAllies().end(),
                    std::bind1st( std::mem_fun( &Bot::makeUncheckedMove), this ) );
     Debug::stream() << " Making moves (path or map based )... " << std::endl;
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
     {
         // Battle ants have already been moved
-        if( battle_ants.find( *it ) == battle_ants.end() )
+        if( m_battle->getAllies().find( *it ) == m_battle->getAllies().end() )
             makeMove( *it );
     }
     //std::for_each( m_state.myAnts().begin(), m_state.myAnts().end(),
     //               std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
+    
+    Debug::stream() << "After moves " << std::endl
+                    << m_state.map() << std::endl;
 }
 
 
@@ -510,6 +513,11 @@ bool Bot::checkValidPath( Ant* ant )
     }
 
     return true;
+}
+
+
+void Bot::makeAssignments()
+{
 }
 
 

@@ -5,18 +5,27 @@
 #include "Path.h"
 #include "Location.h"
 
+#include <string>
 #include <ostream>
 
 class Ant
 {
 public:
-    Ant( const Location& location )
-        : location( location ) {}
+    enum Assignment
+    {
+        NONE=0,
+        EXPLORE,
+        DEFEND,
+        ATTACK,
+        NUM_ASSIGNMENTS
+    };
 
-    bool     available()const;
+    Ant( const Location& location );
 
-    Location location;
-    Path     path;
+    Location   location;   //< Current location of ant
+    Assignment assignment; //< What is this ants job
+    Location   goal;       //< Destination for this ant
+    Path       path;       //< Path to destination
 
 private:
     Ant& operator=( Ant& );
@@ -24,10 +33,28 @@ private:
 };
 
 
-inline bool Ant::available()const
+inline Ant::Ant( const Location& location )
+    : location( location ),
+      assignment( NONE ),
+      goal( location )
 {
-    return path.empty();
 }
+
+
+
+inline std::string assignmentString( Ant::Assignment assignment )
+{
+    static const char* assign2string [ Ant::NUM_ASSIGNMENTS ] = 
+    {
+        "NONE",
+        "EXPLORE",
+        "DEFEND",
+        "ATTACK"
+    };
+
+    return assign2string[ static_cast<int>( assignment ) ];
+}
+
 
 inline std::ostream& operator<<( std::ostream& out, const Ant& ant )
 {
