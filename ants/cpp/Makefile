@@ -35,7 +35,7 @@ BFSTEST=bfstest
 DIFFTEST=difftest
 
 #Uncomment the following to enable debugging
-CFLAGS += -DDEBUG
+#CFLAGS += -DDEBUG
 #CFLAGS = -g -DDEBUG
 
 all: $(OBJECTS) $(MYBOT) $(ASTARTEST) $(BFSTEST) $(DIFFTEST)

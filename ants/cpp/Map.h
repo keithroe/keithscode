@@ -13,6 +13,14 @@
 class Map
 {
 public:
+    enum PriorityType
+    {
+        EXPLORE=0,
+        ATTACK,
+        DEFENSE,
+        NUM_PRIORITY_TYPES
+    };
+
     Map();
     Map( unsigned height, unsigned width);
 
@@ -46,10 +54,10 @@ public:
     void updatePriority( float amount, SquarePredicate pred );
 
     void setPriority( const Location& loc, float priority )
-    { rangeCheck( loc.row, loc.col ); m_priorities0[ loc.row ][ loc.col ] = priority; }
+    { rangeCheck( loc.row, loc.col ); m_priorities[ loc.row ][ loc.col ] = priority; }
     
     float getPriority( const Location& loc )const
-    { rangeCheck( loc.row, loc.col ); return m_priorities0[ loc.row ][ loc.col ]; }
+    { rangeCheck( loc.row, loc.col ); return m_priorities[ loc.row ][ loc.col ]; }
 
     Square& operator()( const Location& loc )
     { rangeCheck( loc.row, loc.col ); return m_grid[loc.row][loc.col]; }
@@ -79,8 +87,8 @@ private:
     unsigned m_width;
     Square** m_grid;
 
-    float**  m_priorities0;
-    float**  m_priorities1;
+    float**  m_priorities;
+    float**  m_scratch;
 
 };
     
