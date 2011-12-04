@@ -44,23 +44,44 @@ namespace
         bool                 found_enemy;
     };
 
-
-    struct BattlePeriphery
+    struct AnyEnemyAnts 
     {
-        BattlePeriphery( const Map& map, const Location& origin ) 
-            : map( map ), origin( origin ) {}
+        AnyEnemyAnts( int ant_id ) : ant_id( ant_id ), found_enemy( false ) {}
+
+        bool operator()( const BFNode* node )
+        { 
+            int other_ant_id = node->square->ant_id;
+            if( other_ant_id >= 0 && other_ant_id != ant_id  )
+            {
+                found_enemy = true;
+                return false;
+            }
+            return true;
+        }
+        
+        const int  ant_id;
+        bool       found_enemy;
+    };
+
+
+
+    struct WithinDistance2 
+    {
+        WithinDistance2( const Map& map, const Location& origin, int dist2 ) 
+            : map( map ), origin( origin ), dist2( dist2 ) {}
 
         bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
         {
-            // TODO: magic number -- compute this from attackrad2
-            return map.distance2( origin, location ) <= 17;
+            return map.distance2( origin, location ) <= dist2;
         }
         const Map&     map;
         const Location origin;
+        const int      dist2;
     };
 
     
-    typedef BF<AllEnemyAnts, BattlePeriphery> EnemyCombatants;
+    typedef BF<AllEnemyAnts, WithinDistance2> EnemyCombatants;
+    typedef BF<AnyEnemyAnts, WithinDistance2> AnyEnemyCombatants;
     
 
 
@@ -498,10 +519,24 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     AntEnemies ally_enemies;
     for( Ants::const_iterator it = ants.begin(); it != ants.end(); ++it )
     {
-        Location location = (*it )->location;
-        AllEnemyAnts    enemy_ants( location, MY_ANT_ID, ally_enemies );
-        BattlePeriphery periphery( m_map, location );
-        EnemyCombatants bfs( m_map, location, enemy_ants, periphery );
+        // Search from the ant's next step if ant has a path assigned to it
+        Ant*     ant             = *it;
+        Location search_location = ant->location;
+        if( !ant->path.empty() )
+        {
+            Location next_loc = m_map.getLocation( search_location, ant->path.nextStep() );
+            if( m_map( next_loc ).isAvailable() )
+            {
+                AnyEnemyAnts    any_enemy_ants( MY_ANT_ID );
+                WithinDistance2 within_10( m_map, next_loc, 10 );
+                AnyEnemyCombatants bfs( m_map, next_loc, any_enemy_ants, within_10);
+                bfs.traverse();
+                if( !any_enemy_ants.found_enemy ) continue;
+            }
+        }
+        AllEnemyAnts    enemy_ants( search_location, MY_ANT_ID, ally_enemies );
+        WithinDistance2 within_battle_range( m_map, search_location, 17 );
+        EnemyCombatants bfs( m_map, search_location, enemy_ants, within_battle_range );
 
         //Debug::stream() << "Battle: searching from " << location << std::endl;
         bfs.traverse();
