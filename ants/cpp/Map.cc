@@ -13,29 +13,19 @@ Map::Map()
     : m_height( 0u ),
       m_width( 0u  ),
       m_grid( 0u ),
-      m_priorities( 0u ),
       m_scratch( 0u )
 {
+    for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+        m_priorities[ j ] = 0u;
 }
 
 
 Map::Map( unsigned height, unsigned width)
     : m_height( height ),
-      m_width( width )
+      m_width( width ),
+      m_grid( 0u )
 {
-    // TODO: should probably make these by flat arrays that are tiled for memory coherency
-    m_grid        = new Square*[ m_height ];
-    m_priorities = new float*[ m_height ];
-    m_scratch = new float*[ m_height ];
-    for( unsigned int i = 0; i < m_height; ++i )
-    {
-          m_grid[ i ]       = new Square[ m_width ];
-          m_priorities[ i ] = new float[ m_width ];
-          m_scratch[ i ]    = new float[ m_width ];
-          memset( m_priorities[ i ], 0, m_width*sizeof( float ) );
-          memset( m_scratch[ i ], 0, m_width*sizeof( float ) );
-    }
-
+    resize( m_height, m_width );
 }
 
 
@@ -47,26 +37,35 @@ void Map::resize( unsigned height, unsigned width )
         for( unsigned int i = 0; i < m_height; ++i )
         {
             delete [] m_grid[i];
-            delete [] m_priorities[i];
             delete [] m_scratch[i];
+            for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+                delete [] m_priorities[j][i];
         }
         delete m_grid;
-        delete m_priorities;
         delete m_scratch;
+        for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+            delete m_priorities[ j ];
     }
 
-    m_height      = height;
-    m_width       = width;
+    m_height = height;
+    m_width  = width;
+    
     m_grid        = new Square*[ m_height ];
-    m_priorities  = new float*[ m_height ];
     m_scratch     = new float*[ m_height ];
+    for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+        m_priorities[ j ]  = new float*[ m_height ];
+
     for( unsigned int i = 0; i < m_height; ++i )
     {
           m_grid[ i ]       = new Square[ m_width ];
-          m_priorities[ i ] = new float[ m_width ];
           m_scratch[ i ]    = new float[ m_width ];
-          memset( m_priorities[ i ], 0, m_width*sizeof( float ) );
           memset( m_scratch[ i ], 0, m_width*sizeof( float ) );
+
+          for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+          {
+              m_priorities[ j ][ i ] = new float[ m_width ];
+              memset( m_priorities[ j ][ i ], 0, m_width*sizeof( float ) );
+          }
     }
 }
 
@@ -77,15 +76,19 @@ Map::~Map()
     for( unsigned i = 0; i < m_height; ++i )
     {
         delete [] m_grid[i];
-        delete [] m_priorities[i];
         delete [] m_scratch[i];
+        for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+            delete [] ( m_priorities[j][i] );
     }
-    delete m_grid;
-    delete m_priorities;
-    delete m_scratch;
+    delete [] m_grid;
+    delete [] m_scratch;
+    for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+        delete [] m_priorities[ j ];
 
     m_grid = 0u;
-    m_priorities = m_scratch = 0u;
+    m_scratch = 0u;
+    for( int j = 0; j < NUM_PRIORITY_TYPES; ++j )
+        m_priorities[ j ] = 0u;
 }
 
 
@@ -95,7 +98,8 @@ void Map::reset()
         for( unsigned j = 0u; j < m_width; ++j )
         {
             m_grid[ i ][ j ].reset();
-            m_priorities[ i ][ j ] = 0u;
+            for( int p = 0; p < NUM_PRIORITY_TYPES; ++p )
+                m_priorities[ p ][ i ][ j ] = 0u;
         }
 
 }
@@ -240,20 +244,23 @@ Location Map::computeCentroid( const std::vector<Location>& locations )const
     return Location( static_cast<int>( y+0.5f ), static_cast<int>( x+0.5f ) );
 }
 
-void Map::updatePriority( float amount, SquarePredicate pred )
+void Map::updatePriority( PriorityType type, float amount, SquarePredicate pred )
 {
     for( unsigned int i = 0; i < m_height; ++i )
         for( unsigned int j = 0; j < m_width; ++j )
-            if( pred( m_grid[i][j] ) ) m_priorities[i][j] += amount;
+            if( pred( m_grid[i][j] ) ) m_priorities[ type ][i][j] += amount;
 }
 
 
-void Map::diffusePriority( unsigned iterations )
+void Map::diffusePriority( PriorityType type, unsigned iterations )
 {
     const unsigned w = m_width;
     const unsigned h = m_height;
+
     for( unsigned int k = 0; k < iterations; ++k )
     {
+        float** priorities = m_priorities[ type ];
+
         // Diffuse the internal nodes first
         for( unsigned i = 1u; i < h-1; ++i )
         {
@@ -261,12 +268,12 @@ void Map::diffusePriority( unsigned iterations )
             {
                 if( m_grid[ i ][ j ].isLand() )
                 {
-                    float sum       = m_priorities[ i ][ j ];
+                    float sum       = priorities[ i ][ j ];
                     float num_nodes = 1.0f;
-                    if( m_grid[ i+0 ][ j-1 ].isLand() ) { sum += m_priorities[ i+0 ][ j-1 ]; num_nodes += 1.0f; }
-                    if( m_grid[ i+0 ][ j+1 ].isLand() ) { sum += m_priorities[ i+0 ][ j+1 ]; num_nodes += 1.0f; }
-                    if( m_grid[ i+1 ][ j+0 ].isLand() ) { sum += m_priorities[ i+1 ][ j+0 ]; num_nodes += 1.0f; }
-                    if( m_grid[ i-1 ][ j+0 ].isLand() ) { sum += m_priorities[ i-1 ][ j+0 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i+0 ][ j-1 ].isLand() ) { sum += priorities[ i+0 ][ j-1 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i+0 ][ j+1 ].isLand() ) { sum += priorities[ i+0 ][ j+1 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i+1 ][ j+0 ].isLand() ) { sum += priorities[ i+1 ][ j+0 ]; num_nodes += 1.0f; }
+                    if( m_grid[ i-1 ][ j+0 ].isLand() ) { sum += priorities[ i-1 ][ j+0 ]; num_nodes += 1.0f; }
                     m_scratch[ i ][ j ] = sum / num_nodes; 
                 }
             }
@@ -277,23 +284,23 @@ void Map::diffusePriority( unsigned iterations )
         {
             if( m_grid[ i ][ 0 ].isLand() )
             {
-                float sum         = m_priorities[ i ][ 0 ];
+                float sum         = priorities[ i ][ 0 ];
                 float num_nodes   = 1.0f;
-                if( m_grid[ i+0 ][ w-1 ].isLand() ) { sum += m_priorities[ i+0 ][ w-1 ]; num_nodes += 1.0f; }
-                if( m_grid[ i+0 ][ 1   ].isLand() ) { sum += m_priorities[ i+0 ][ 1   ]; num_nodes += 1.0f; }
-                if( m_grid[ i+1 ][ 0   ].isLand() ) { sum += m_priorities[ i+1 ][ 0   ]; num_nodes += 1.0f; }
-                if( m_grid[ i-1 ][ 0   ].isLand() ) { sum += m_priorities[ i-1 ][ 0   ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ w-1 ].isLand() ) { sum += priorities[ i+0 ][ w-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ 1   ].isLand() ) { sum += priorities[ i+0 ][ 1   ]; num_nodes += 1.0f; }
+                if( m_grid[ i+1 ][ 0   ].isLand() ) { sum += priorities[ i+1 ][ 0   ]; num_nodes += 1.0f; }
+                if( m_grid[ i-1 ][ 0   ].isLand() ) { sum += priorities[ i-1 ][ 0   ]; num_nodes += 1.0f; }
                 m_scratch[ i ][ 0 ] = sum / num_nodes; 
             }
             
             if( m_grid[ i ][ w-1 ].isLand() )
             {
-                float sum       = m_priorities[ i ][ w-1 ];
+                float sum       = priorities[ i ][ w-1 ];
                 float num_nodes = 1.0f;
-                if( m_grid[ i+0 ][ w-2 ].isLand() ) { sum += m_priorities[ i+0 ][ w-2 ]; num_nodes += 1.0f; }
-                if( m_grid[ i+0 ][ 0   ].isLand() ) { sum += m_priorities[ i+0 ][ 0   ]; num_nodes += 1.0f; }
-                if( m_grid[ i+1 ][ w-1 ].isLand() ) { sum += m_priorities[ i+1 ][ w-1 ]; num_nodes += 1.0f; }
-                if( m_grid[ i-1 ][ w-1 ].isLand() ) { sum += m_priorities[ i-1 ][ w-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ w-2 ].isLand() ) { sum += priorities[ i+0 ][ w-2 ]; num_nodes += 1.0f; }
+                if( m_grid[ i+0 ][ 0   ].isLand() ) { sum += priorities[ i+0 ][ 0   ]; num_nodes += 1.0f; }
+                if( m_grid[ i+1 ][ w-1 ].isLand() ) { sum += priorities[ i+1 ][ w-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ i-1 ][ w-1 ].isLand() ) { sum += priorities[ i-1 ][ w-1 ]; num_nodes += 1.0f; }
                 m_scratch[ i ][ w-1 ] = sum / num_nodes; 
             }
 
@@ -303,23 +310,23 @@ void Map::diffusePriority( unsigned iterations )
         {
             if( m_grid[ 0 ][ j ].isLand() )
             {
-                float sum         = m_priorities[ 0 ][ j ];
+                float sum         = priorities[ 0 ][ j ];
                 float num_nodes   = 1.0f;
-                if( m_grid[ 0   ][ j-1 ].isLand() ) { sum += m_priorities[ 0   ][ j-1 ]; num_nodes += 1.0f; }
-                if( m_grid[ 0   ][ j+1 ].isLand() ) { sum += m_priorities[ 0   ][ j+1 ]; num_nodes += 1.0f; }
-                if( m_grid[ h-1 ][ j+0 ].isLand() ) { sum += m_priorities[ h-1 ][ j+0 ]; num_nodes += 1.0f; }
-                if( m_grid[ 1   ][ j+0 ].isLand() ) { sum += m_priorities[ 1   ][ j+0 ]; num_nodes += 1.0f; }
+                if( m_grid[ 0   ][ j-1 ].isLand() ) { sum += priorities[ 0   ][ j-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ 0   ][ j+1 ].isLand() ) { sum += priorities[ 0   ][ j+1 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-1 ][ j+0 ].isLand() ) { sum += priorities[ h-1 ][ j+0 ]; num_nodes += 1.0f; }
+                if( m_grid[ 1   ][ j+0 ].isLand() ) { sum += priorities[ 1   ][ j+0 ]; num_nodes += 1.0f; }
                 m_scratch[ 0 ][ j ] = sum / num_nodes; 
             }
             
             if( m_grid[ h-1 ][ j ].isLand() )
             {
-                float sum       = m_priorities[  h-1 ][ j ];
+                float sum       = priorities[  h-1 ][ j ];
                 float num_nodes = 1.0f;
-                if( m_grid[ h-1 ][ j-1 ].isLand() ) { sum += m_priorities[ h-1 ][ j-1 ]; num_nodes += 1.0f; }
-                if( m_grid[ h-1 ][ j+1 ].isLand() ) { sum += m_priorities[ h-1 ][ j+1 ]; num_nodes += 1.0f; }
-                if( m_grid[ h-2 ][ j+0 ].isLand() ) { sum += m_priorities[ h-2 ][ j+0 ]; num_nodes += 1.0f; }
-                if( m_grid[ 0   ][ j+0 ].isLand() ) { sum += m_priorities[ 0   ][ j+0 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-1 ][ j-1 ].isLand() ) { sum += priorities[ h-1 ][ j-1 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-1 ][ j+1 ].isLand() ) { sum += priorities[ h-1 ][ j+1 ]; num_nodes += 1.0f; }
+                if( m_grid[ h-2 ][ j+0 ].isLand() ) { sum += priorities[ h-2 ][ j+0 ]; num_nodes += 1.0f; }
+                if( m_grid[ 0   ][ j+0 ].isLand() ) { sum += priorities[ 0   ][ j+0 ]; num_nodes += 1.0f; }
                 m_scratch[  h-1 ][ j ] = sum / num_nodes; 
             }
         }
@@ -328,52 +335,51 @@ void Map::diffusePriority( unsigned iterations )
         // four corners
         if( m_grid[ 0 ][ 0 ].isLand() )
         {
-            float sum         = m_priorities[ 0 ][ 0 ];
+            float sum         = priorities[ 0 ][ 0 ];
             float num_nodes   = 1.0f;
-            if( m_grid[ 0   ][ w-1 ].isLand() ) { sum += m_priorities[ 0   ][ w-1 ]; num_nodes += 1.0f; }
-            if( m_grid[ 0   ][ 1   ].isLand() ) { sum += m_priorities[ 0   ][ 1   ]; num_nodes += 1.0f; }
-            if( m_grid[ h-1 ][ 0   ].isLand() ) { sum += m_priorities[ h-1 ][ 0   ]; num_nodes += 1.0f; }
-            if( m_grid[ 1   ][ 0   ].isLand() ) { sum += m_priorities[ 1   ][ 0   ]; num_nodes += 1.0f; }
+            if( m_grid[ 0   ][ w-1 ].isLand() ) { sum += priorities[ 0   ][ w-1 ]; num_nodes += 1.0f; }
+            if( m_grid[ 0   ][ 1   ].isLand() ) { sum += priorities[ 0   ][ 1   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ 0   ].isLand() ) { sum += priorities[ h-1 ][ 0   ]; num_nodes += 1.0f; }
+            if( m_grid[ 1   ][ 0   ].isLand() ) { sum += priorities[ 1   ][ 0   ]; num_nodes += 1.0f; }
             m_scratch[ 0 ][ 0 ] = sum / num_nodes; 
         }
         
         if( m_grid[ 0 ][ w-1 ].isLand() )
         {
-            float sum         = m_priorities[ 0 ][ w-1 ];
+            float sum         = priorities[ 0 ][ w-1 ];
             float num_nodes   = 1.0f;
-            if( m_grid[ 0   ][ w-2 ].isLand() ) { sum += m_priorities[ 0   ][ w-2 ]; num_nodes += 1.0f; }
-            if( m_grid[ 0   ][ 0   ].isLand() ) { sum += m_priorities[ 0   ][ 0   ]; num_nodes += 1.0f; }
-            if( m_grid[ h-1 ][ w   ].isLand() ) { sum += m_priorities[ h-1 ][ w   ]; num_nodes += 1.0f; }
-            if( m_grid[ 1   ][ w   ].isLand() ) { sum += m_priorities[ 1   ][ w   ]; num_nodes += 1.0f; }
+            if( m_grid[ 0   ][ w-2 ].isLand() ) { sum += priorities[ 0   ][ w-2 ]; num_nodes += 1.0f; }
+            if( m_grid[ 0   ][ 0   ].isLand() ) { sum += priorities[ 0   ][ 0   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ w   ].isLand() ) { sum += priorities[ h-1 ][ w   ]; num_nodes += 1.0f; }
+            if( m_grid[ 1   ][ w   ].isLand() ) { sum += priorities[ 1   ][ w   ]; num_nodes += 1.0f; }
             m_scratch[ 0 ][ w-1 ] = sum / num_nodes; 
         }
 
         if( m_grid[ h-1 ][ 0 ].isLand() )
         {
-            float sum         = m_priorities[ h-1 ][ 0 ];
+            float sum         = priorities[ h-1 ][ 0 ];
             float num_nodes   = 1.0f;
-            if( m_grid[ h-1 ][ w-1 ].isLand() ) { sum += m_priorities[ h-1 ][ w-1 ]; num_nodes += 1.0f; }
-            if( m_grid[ h-1 ][ 1   ].isLand() ) { sum += m_priorities[ h-1 ][ 1   ]; num_nodes += 1.0f; }
-            if( m_grid[ h-2 ][ 0   ].isLand() ) { sum += m_priorities[ h-2 ][ 0   ]; num_nodes += 1.0f; }
-            if( m_grid[ 0   ][ 0   ].isLand() ) { sum += m_priorities[ 0   ][ 0   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ w-1 ].isLand() ) { sum += priorities[ h-1 ][ w-1 ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ 1   ].isLand() ) { sum += priorities[ h-1 ][ 1   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-2 ][ 0   ].isLand() ) { sum += priorities[ h-2 ][ 0   ]; num_nodes += 1.0f; }
+            if( m_grid[ 0   ][ 0   ].isLand() ) { sum += priorities[ 0   ][ 0   ]; num_nodes += 1.0f; }
             m_scratch[ h-1 ][ 0 ] = sum / num_nodes; 
         }
 
         if( m_grid[ h-1 ][ w-1 ].isLand() )
         {
-            float sum         = m_priorities[ h-1 ][ w-1 ];
+            float sum         = priorities[ h-1 ][ w-1 ];
             float num_nodes   = 1.0f;
-            if( m_grid[ h-1 ][ w-2 ].isLand() ) { sum += m_priorities[ h-1 ][ w-2 ]; num_nodes += 1.0f; }
-            if( m_grid[ h-1 ][ 0   ].isLand() ) { sum += m_priorities[ h-1 ][ 0   ]; num_nodes += 1.0f; }
-            if( m_grid[ h-2 ][ w   ].isLand() ) { sum += m_priorities[ h-2 ][ w   ]; num_nodes += 1.0f; }
-            if( m_grid[ 0   ][ w   ].isLand() ) { sum += m_priorities[ 0   ][ w   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ w-2 ].isLand() ) { sum += priorities[ h-1 ][ w-2 ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ 0   ].isLand() ) { sum += priorities[ h-1 ][ 0   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-2 ][ w   ].isLand() ) { sum += priorities[ h-2 ][ w   ]; num_nodes += 1.0f; }
+            if( m_grid[ 0   ][ w   ].isLand() ) { sum += priorities[ 0   ][ w   ]; num_nodes += 1.0f; }
             m_scratch[ h-1 ][ w-1 ] = sum / num_nodes; 
         }
 
-
-        float** temp = m_priorities;
-        m_priorities = m_scratch;
-        m_scratch = temp;
+        // Swap buffers
+        m_priorities[ type ] = m_scratch;
+        m_scratch            = priorities;
     }
 }
 
@@ -397,23 +403,28 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
         }
         os << std::endl;
     }
-    os << "------------------------------------------------------------------" << std::endl;
-
-    for( unsigned i = 0u; i < map.m_height; ++i )
+    for( int p = 0; p < Map::NUM_PRIORITY_TYPES; ++p )
     {
-        for( unsigned j = 0u; j < map.m_width; ++j )
+        os << "------------------------------------------------------------------" << std::endl;
+
+        float** priorities = map.m_priorities[ p ];
+
+        for( unsigned i = 0u; i < map.m_height; ++i )
         {
-            const Square& square = map.m_grid[ i ][ j ];
-            os << ' ';
-            os << std::fixed << std::setw( 8 ) << std::setprecision( 2 ) << map.m_priorities[ i ][ j ]; 
-            if     ( square.food         ) os << 'f';
-            else if( square.ant_id >=0   ) os << static_cast<char>( 'a' + square.ant_id );
-            else if( square.hill_id >= 0 ) os << static_cast<char>( 'A' + square.hill_id );
-            else if( square.isWater()    ) os << 'w';
-            else if( square.isUnknown()  ) os << '?';
-            else if( square.isLand()     ) os << (square.visible ? ' ' : '.');
+            for( unsigned j = 0u; j < map.m_width; ++j )
+            {
+                const Square& square = map.m_grid[ i ][ j ];
+                os << ' ';
+                os << std::fixed << std::setw( 8 ) << std::setprecision( 2 ) << priorities[ i ][ j ]; 
+                if     ( square.food         ) os << 'f';
+                else if( square.ant_id >=0   ) os << static_cast<char>( 'a' + square.ant_id );
+                else if( square.hill_id >= 0 ) os << static_cast<char>( 'A' + square.hill_id );
+                else if( square.isWater()    ) os << 'w';
+                else if( square.isUnknown()  ) os << '?';
+                else if( square.isLand()     ) os << (square.visible ? ' ' : '.');
+            }
+            os << std::endl;
         }
-        os << std::endl;
     }
 
     return os;

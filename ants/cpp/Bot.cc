@@ -203,14 +203,14 @@ void Bot::makeMoves()
     // Prioritize map
     //
 
-    m_state.map().updatePriority( 1, notVisible );
+    m_state.map().updatePriority( Map::EXPLORE, 1, notVisible );
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
         std::vector<Location> neighbors;
         m_state.map().getNeighbors( *it, isLand, neighbors );
         for( std::vector<Location>::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
         {
-          m_state.map().setPriority( *it, 100 );
+          m_state.map().setPriority( Map::EXPLORE, *it, 100 );
         }
     }
 
@@ -219,19 +219,19 @@ void Bot::makeMoves()
         // TODO: more principled choice of weights (based on view dist??), no magic numbers
         //
         if( m_battle->getAllies().find( *it ) != m_battle->getAllies().end() )
-            m_state.map().setPriority( (*it)->location,  0 );
+            m_state.map().setPriority( Map::EXPLORE, (*it)->location,  0 );
         else
-            m_state.map().setPriority( (*it)->location, -5 );
+            m_state.map().setPriority( Map::EXPLORE, (*it)->location, -10 );
     }
     
     for( LocationSet::iterator it = m_battle->getEnemies().begin(); it != m_battle->getEnemies().end(); ++it )
     {
-        m_state.map().setPriority( *it, 100 );
+        m_state.map().setPriority( Map::EXPLORE, *it, 100 );
     }
 
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
-        m_state.map().setPriority( *it, 1000 );
+        m_state.map().setPriority( Map::EXPLORE, *it, 1000 );
     }
     
     // Defend base
@@ -250,13 +250,13 @@ void Bot::makeMoves()
         if( base_attackers.size() > 0 )
         {
             Debug::stream() << " Rallying to base at " << *it << std::endl;
-            m_state.map().setPriority( *it, 100 );
+            m_state.map().setPriority( Map::EXPLORE, *it, 100 );
         }
     }
     
     
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
-    m_state.map().diffusePriority( diffusion_steps );
+    m_state.map().diffusePriority( Map::EXPLORE, diffusion_steps );
 
     //
     // Now make moves for individual ants
@@ -421,12 +421,12 @@ void Bot::makeMove( Ant* ant )
 
         Debug::stream() << "    checking " << neighbors.size() << "neighbors" << std::endl;
         Location move_loc  = *( neighbors.begin() );
-        float max_priority = m_state.map().getPriority( move_loc );
+        float max_priority = m_state.map().getPriority( Map::EXPLORE, move_loc );
         Debug::stream() << "      starting with weight " << max_priority << " to " << move_loc << std::endl;
         for( std::vector<Location>::iterator it = neighbors.begin()+1; it != neighbors.end(); ++it )
         {
             Location neighbor_loc = *it;
-            float neighbor_priority = m_state.map().getPriority( neighbor_loc );
+            float neighbor_priority = m_state.map().getPriority( Map::EXPLORE, neighbor_loc );
             Debug::stream() << "      checking weight " << neighbor_priority<< " to " << neighbor_loc<< std::endl;
             if( neighbor_priority > max_priority )
             {
