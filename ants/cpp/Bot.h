@@ -49,6 +49,7 @@ private:
 
     LocationSet        m_enemy_hills;
     LocationSet        m_targeted_food;
+    LocationSet        m_hills_under_attack;
 
     float              m_max_time;
     State              m_state;

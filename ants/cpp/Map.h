@@ -5,8 +5,11 @@
 #include "Direction.h"
 #include "Square.h"
 #include "Location.h"
+
 #include <cassert>
 #include <ostream>
+#include <vector>
+#include <string>
 
 
 
@@ -61,6 +64,9 @@ public:
     void updatePriority( PriorityType type, float amount, SquarePredicate pred );
     void diffusePriority( PriorityType type, unsigned iterations );
 
+    void setDistanceTarget( PriorityType type, const Location& loc, int max_depth );
+    void computeDistanceMap( PriorityType type );
+
     Square& operator()( const Location& loc )
     { rangeCheck( loc.row, loc.col ); return m_grid[loc.row][loc.col]; }
 
@@ -79,6 +85,8 @@ public:
 
     Location computeCentroid( const std::vector<Location>& location )const;
     
+    static std::string priorityTypeString( PriorityType type );
+
     friend std::ostream& operator<<(std::ostream& os, const Map& map);
 
 private:
@@ -90,6 +98,9 @@ private:
 
     float**  m_priorities[ NUM_PRIORITY_TYPES ];
     float**  m_scratch;
+
+    typedef std::vector< std::pair<Location, int> > DistanceTargets;
+    DistanceTargets m_attack_targets;
 
 };
     

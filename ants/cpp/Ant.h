@@ -13,10 +13,11 @@ class Ant
 public:
     enum Assignment
     {
-        NONE=0,
-        EXPLORE,
-        DEFEND,
+        EXPLORE=0,
         ATTACK,
+        DEFENSE,
+        STATIC_DEFENSE,
+        NONE,
         NUM_ASSIGNMENTS
     };
 
@@ -35,7 +36,7 @@ private:
 
 inline Ant::Ant( const Location& location )
     : location( location ),
-      assignment( NONE ),
+      assignment( EXPLORE ),
       goal( location )
 {
 }
@@ -46,10 +47,11 @@ inline std::string assignmentString( Ant::Assignment assignment )
 {
     static const char* assign2string [ Ant::NUM_ASSIGNMENTS ] = 
     {
-        "NONE",
         "EXPLORE",
-        "DEFEND",
         "ATTACK"
+        "DEFENSE",
+        "STATIC_DEFENSE",
+        "NONE",
     };
 
     return assign2string[ static_cast<int>( assignment ) ];
