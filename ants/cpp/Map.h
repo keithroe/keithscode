@@ -15,9 +15,9 @@ class Map
 public:
     enum PriorityType
     {
-        EXPLORE=0,
-        ATTACK,
-        DEFENSE,
+        EXPLORE=0,         // non-visible squares, frontier, other ants(negative)
+        ATTACK,            // enemy hills, battle hot spots ( distance based )
+        DEFENSE,           // ally hills, battle hot spots ( distance based )
         NUM_PRIORITY_TYPES
     };
 
@@ -51,13 +51,15 @@ public:
     void makeMove( const Location &loc, Direction direction );
     void makeMove( const Location &loc0, const Location& loc1 );
 
-    void updatePriority( float amount, SquarePredicate pred );
 
-    void setPriority( const Location& loc, float priority )
-    { rangeCheck( loc.row, loc.col ); m_priorities[ loc.row ][ loc.col ] = priority; }
+    void setPriority( PriorityType type, const Location& loc, float priority )
+    { rangeCheck( loc.row, loc.col ); m_priorities[ type ][ loc.row ][ loc.col ] = priority; }
     
-    float getPriority( const Location& loc )const
-    { rangeCheck( loc.row, loc.col ); return m_priorities[ loc.row ][ loc.col ]; }
+    float getPriority( PriorityType type, const Location& loc )const
+    { rangeCheck( loc.row, loc.col ); return m_priorities[ type ][ loc.row ][ loc.col ]; }
+
+    void updatePriority( PriorityType type, float amount, SquarePredicate pred );
+    void diffusePriority( PriorityType type, unsigned iterations );
 
     Square& operator()( const Location& loc )
     { rangeCheck( loc.row, loc.col ); return m_grid[loc.row][loc.col]; }
@@ -74,7 +76,6 @@ public:
     void rangeCheck( unsigned row, unsigned col )const
     { assert( row < m_height &&  col < m_width ); }
 
-    void diffusePriority( unsigned iterations );
 
     Location computeCentroid( const std::vector<Location>& location )const;
     
@@ -87,7 +88,7 @@ private:
     unsigned m_width;
     Square** m_grid;
 
-    float**  m_priorities;
+    float**  m_priorities[ NUM_PRIORITY_TYPES ];
     float**  m_scratch;
 
 };
