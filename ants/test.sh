@@ -25,7 +25,7 @@ hunter="python tools/sample_bots/python/HunterBot.py"
 
 #python tools/playgame.py "./MyBot" "${shylux}" "${malazan}" "${umbc}" --map_file tools/maps/multi_hill_maze/maze_04p_01.map --log_dir game_logs --turns 1000  --player_seed 7 --verbose -e
 
-#python tools/playgame.py "./MyBot" "${shylux}"  "${umbc}" "${malazan}" --map_file tools/maps/cell_maze/cell_maze_p04_01.map --log_dir game_logs --turns 1000  --player_seed 7 --verbose -e
 
-python tools/playgame.py "./MyBot" "${shylux}"  "${umbc}" "${malazan}" --map_file tools/maps/multi_hill_maze/maze_04p_02.map --log_dir game_logs --turns 500  --player_seed 7 --verbose -e
+#python tools/playgame.py "./MyBot" "${shylux}"  "${umbc}" "${malazan}" --map_file tools/maps/multi_hill_maze/maze_04p_02.map --log_dir game_logs --turns 500  --player_seed 7 --verbose -e
 
+python tools/playgame.py "./MyBot" "${shylux}"  "${umbc}" "${malazan}" --map_file tools/maps/cell_maze/cell_maze_p04_01.map --log_dir game_logs --turns 500  --player_seed 7 --verbose -e

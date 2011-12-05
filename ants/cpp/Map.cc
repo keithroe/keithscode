@@ -2,6 +2,7 @@
 #include "Debug.h"
 #include "Location.h"
 #include "Map.h"
+#include "BF.h"
 
 #include <cmath>
 #include <cstdlib>
@@ -9,6 +10,52 @@
 #include <iomanip>
 #include <ostream>
     
+
+namespace
+{
+    
+    struct CompareMaxDist
+    {
+        bool operator()( const std::pair<Location, int>& t0, const std::pair<Location, int>& t1 ) 
+        {
+            return t0.second != 0 && t0.second < t1.second;
+        }
+    };
+
+
+    struct MarkDistance 
+    {
+        MarkDistance( float** map ) : map( map ) {}
+
+        bool operator()( const BFNode* node )
+        {
+            Location node_loc = node->loc;
+            if( map[ node_loc.row ][ node_loc.col ] == 0.0f ) 
+                map[ node_loc.row ][ node_loc.col ] = node->depth;
+
+            return true;
+        }
+
+        float** map;
+    };
+    
+
+    struct WithinDistance 
+    {
+        WithinDistance( unsigned distance ) : distance( distance ) {}
+
+        bool operator()( const BFNode* current, const Location& neighbor_location, const Square& neighbor_square )
+        {
+            return ( distance == 0 || current->depth+1 <= distance ) && neighbor_square.isLand();
+        }
+
+        const unsigned distance;
+    };
+
+    typedef BF<MarkDistance, WithinDistance> ComputeDistance;
+}
+
+
 Map::Map()
     : m_height( 0u ),
       m_width( 0u  ),
@@ -102,6 +149,7 @@ void Map::reset()
                 m_priorities[ p ][ i ][ j ] = 0u;
         }
 
+    m_attack_targets.clear();
 }
 
 
@@ -244,8 +292,40 @@ Location Map::computeCentroid( const std::vector<Location>& locations )const
     return Location( static_cast<int>( y+0.5f ), static_cast<int>( x+0.5f ) );
 }
 
+
+void Map::setDistanceTarget( PriorityType type, const Location& loc, int max_depth )
+{ 
+    rangeCheck( loc.row, loc.col );
+    assert( type == ATTACK );
+    m_attack_targets.push_back( std::make_pair( loc, max_depth ) );
+}
+
+
+void Map::computeDistanceMap( PriorityType type )
+{
+    assert( type == ATTACK );
+
+    if( m_attack_targets.empty() ) return;
+
+    // sort by max_distance
+    std::sort( m_attack_targets.begin(), m_attack_targets.end(), CompareMaxDist() );
+
+    for( DistanceTargets::iterator it = m_attack_targets.begin(); it != m_attack_targets.end(); ++it )
+    {
+        MarkDistance mark_distance( m_priorities[type] );
+        WithinDistance within_distance( it->second );
+        ComputeDistance compute_distance( *this, it->first, mark_distance, within_distance );
+        compute_distance.setMaxDepth( 1000 );
+        compute_distance.traverse();
+
+    }
+}
+
+
 void Map::updatePriority( PriorityType type, float amount, SquarePredicate pred )
 {
+    assert( type == EXPLORE );
+
     for( unsigned int i = 0; i < m_height; ++i )
         for( unsigned int j = 0; j < m_width; ++j )
             if( pred( m_grid[i][j] ) ) m_priorities[ type ][i][j] += amount;
@@ -254,6 +334,8 @@ void Map::updatePriority( PriorityType type, float amount, SquarePredicate pred 
 
 void Map::diffusePriority( PriorityType type, unsigned iterations )
 {
+    assert( type == EXPLORE );
+
     const unsigned w = m_width;
     const unsigned h = m_height;
 
@@ -405,7 +487,8 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
     }
     for( int p = 0; p < Map::NUM_PRIORITY_TYPES; ++p )
     {
-        os << "------------------------------------------------------------------" << std::endl;
+        os << Map::priorityTypeString( static_cast<Map::PriorityType>( p ) ) << std::endl
+           << "------------------------------------------------------------------" << std::endl;
 
         float** priorities = map.m_priorities[ p ];
 
@@ -416,12 +499,13 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
                 const Square& square = map.m_grid[ i ][ j ];
                 os << ' ';
                 os << std::fixed << std::setw( 8 ) << std::setprecision( 2 ) << priorities[ i ][ j ]; 
-                if     ( square.food         ) os << 'f';
-                else if( square.ant_id >=0   ) os << static_cast<char>( 'a' + square.ant_id );
-                else if( square.hill_id >= 0 ) os << static_cast<char>( 'A' + square.hill_id );
-                else if( square.isWater()    ) os << 'w';
-                else if( square.isUnknown()  ) os << '?';
-                else if( square.isLand()     ) os << (square.visible ? ' ' : '.');
+                if     ( square.food           ) os << 'f';
+                else if( square.ant_id >=0     ) os << static_cast<char>( 'a' + square.ant_id );
+                else if( square.new_ant_id >=0 ) os << static_cast<char>( 'a' + square.new_ant_id );
+                else if( square.hill_id >= 0   ) os << static_cast<char>( 'A' + square.hill_id );
+                else if( square.isWater()      ) os << 'w';
+                else if( square.isUnknown()    ) os << '?';
+                else if( square.isLand()       ) os << (square.visible ? ' ' : '.');
             }
             os << std::endl;
         }
@@ -430,4 +514,15 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
     return os;
 }
 
+std::string Map::priorityTypeString( PriorityType type )
+{
+    static const char* type2string[ NUM_PRIORITY_TYPES ] =
+    {
+        "EXPLORE",
+        "ATTACK",
+        "DEFENSE"
+    };
+
+    return type2string[ type ];
+}
 

@@ -19,6 +19,8 @@
 
 namespace 
 {
+    typedef std::vector< Location > Locations;
+
     struct Candidate
     {
         int        estimate;
@@ -94,7 +96,6 @@ namespace
 
     typedef  BF<FindFoodAnt, Always> FindNearestAnt;
 
-
     struct AntInSet
     {
         AntInSet( const std::set<Ant*>& ant_set ) : ant_set( ant_set ) {}
@@ -155,8 +156,6 @@ void Bot::makeMoves()
 {
     Debug::stream() << " ===============================================" << std::endl; 
     Debug::stream() << " turn " << m_state.turn() << ":" << std::endl;
-    Debug::stream() << "Before moves " << std::endl
-                    << m_state.map() << std::endl;
 
     makeAssignments();
 
@@ -216,23 +215,20 @@ void Bot::makeMoves()
 
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
     {
-        // TODO: more principled choice of weights (based on view dist??), no magic numbers
-        //
-        if( m_battle->getAllies().find( *it ) != m_battle->getAllies().end() )
-            m_state.map().setPriority( Map::EXPLORE, (*it)->location,  0 );
-        else
-            m_state.map().setPriority( Map::EXPLORE, (*it)->location, -10 );
+        //if( m_battle->getAllies().find( *it ) == m_battle->getAllies().end() )
+        m_state.map().setPriority( Map::EXPLORE, (*it)->location, -10 );
     }
     
     for( LocationSet::iterator it = m_battle->getEnemies().begin(); it != m_battle->getEnemies().end(); ++it )
     {
-        m_state.map().setPriority( Map::EXPLORE, *it, 100 );
+    //    m_state.map().setDistanceTarget( Map::ATTACK, *it, 15 );
     }
 
     for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
     {
-        m_state.map().setPriority( Map::EXPLORE, *it, 1000 );
+        m_state.map().setDistanceTarget( Map::ATTACK, *it, 0 );
     }
+    m_state.map().computeDistanceMap( Map::ATTACK );
     
     // Defend base
     for( State::Locations::const_iterator it = m_state.myHills().begin(); it != m_state.myHills().end(); ++it )
@@ -250,10 +246,14 @@ void Bot::makeMoves()
         if( base_attackers.size() > 0 )
         {
             Debug::stream() << " Rallying to base at " << *it << std::endl;
-            m_state.map().setPriority( Map::EXPLORE, *it, 100 );
+            m_state.map().setPriority( Map::DEFENSE, *it, 100 );
         }
+
+        m_hills_under_attack.insert( *it );
     }
     
+    Debug::stream() << "Before moves " << std::endl
+                    << m_state.map() << std::endl;
     
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( Map::EXPLORE, diffusion_steps );
@@ -271,8 +271,6 @@ void Bot::makeMoves()
         if( m_battle->getAllies().find( *it ) == m_battle->getAllies().end() )
             makeMove( *it );
     }
-    //std::for_each( m_state.myAnts().begin(), m_state.myAnts().end(),
-    //               std::bind1st( std::mem_fun( &Bot::makeMove), this ) );
     
     Debug::stream() << "After moves " << std::endl
                     << m_state.map() << std::endl;
@@ -284,6 +282,7 @@ void Bot::endTurn()
     if( m_state.turn() > 0 )
         m_state.reset();
     m_state.endTurn();
+    m_hills_under_attack.clear();
 
     const float turn_time = m_state.timer().getTime();
     m_max_time = turn_time > m_max_time ? turn_time : m_max_time;
@@ -303,6 +302,10 @@ void Bot::battle( std::set<Ant*>& assigned )
 
 bool Bot::attackHills( Ant* ant )
 {
+    //
+    // TODO: can probably bump down the search radius for hills since we have hill_dist map now
+    //
+    
     Debug::stream() << "  Checking for battle " << std::endl;
 
     // TODO: experiment to see if we want to ignore previous paths (always keep paths to hills)
@@ -414,6 +417,10 @@ void Bot::makeMove( Ant* ant )
     //
     else
     {
+        // Leave static defenders alone
+        if( ant->assignment == Ant::STATIC_DEFENSE )
+            return;
+
         Debug::stream() << "  No valid goal based path - following weights" << std::endl;
         std::vector<Location> neighbors;
         m_state.map().getNeighbors( cur_location, isAvailable, neighbors );
@@ -421,22 +428,43 @@ void Bot::makeMove( Ant* ant )
 
         Debug::stream() << "    checking " << neighbors.size() << "neighbors" << std::endl;
         Location move_loc  = *( neighbors.begin() );
-        float max_priority = m_state.map().getPriority( Map::EXPLORE, move_loc );
-        Debug::stream() << "      starting with weight " << max_priority << " to " << move_loc << std::endl;
-        for( std::vector<Location>::iterator it = neighbors.begin()+1; it != neighbors.end(); ++it )
-        {
-            Location neighbor_loc = *it;
-            float neighbor_priority = m_state.map().getPriority( Map::EXPLORE, neighbor_loc );
-            Debug::stream() << "      checking weight " << neighbor_priority<< " to " << neighbor_loc<< std::endl;
-            if( neighbor_priority > max_priority )
-            {
-                max_priority = neighbor_priority;
-                move_loc     = neighbor_loc;
-            }
-        }
 
-        Debug::stream() << "    moving " << ant->location << " to " << move_loc << " prio " << max_priority
-                        << std::endl;
+        if( ant->assignment == Ant::EXPLORE )
+        {
+            float max_priority = m_state.map().getPriority( Map::EXPLORE, move_loc );
+            Debug::stream() << "      starting EXPLORE weight " << max_priority << " to " << move_loc << std::endl;
+            for( std::vector<Location>::iterator it = neighbors.begin()+1; it != neighbors.end(); ++it )
+            {
+                Location neighbor_loc = *it;
+                float neighbor_priority = m_state.map().getPriority( Map::EXPLORE, neighbor_loc );
+                Debug::stream() << "      checking weight " << neighbor_priority<< " to " << neighbor_loc<< std::endl;
+                if( neighbor_priority > max_priority )
+                {
+                    max_priority = neighbor_priority;
+                    move_loc     = neighbor_loc;
+                }
+            }
+
+            Debug::stream() << "    moving " << ant->location << " to " << move_loc << " prio " << max_priority
+                            << std::endl;
+        } else if( ant->assignment == Ant::ATTACK ) {
+            float min_distance = m_state.map().getPriority( Map::ATTACK, move_loc );
+            Debug::stream() << "      starting ATTACK distance " << min_distance << " to " << move_loc << std::endl;
+            for( std::vector<Location>::iterator it = neighbors.begin()+1; it != neighbors.end(); ++it )
+            {
+                Location neighbor_loc = *it;
+                float neighbor_distance = m_state.map().getPriority( Map::ATTACK, neighbor_loc );
+                Debug::stream() << "      checking distance " << neighbor_distance << " to " << neighbor_loc << std::endl;
+                if( neighbor_distance < min_distance )
+                {
+                    min_distance = neighbor_distance;
+                    move_loc     = neighbor_loc;
+                }
+            }
+
+            Debug::stream() << "    moving " << ant->location << " to " << move_loc << " dist " << min_distance 
+                            << std::endl;
+        }
 
         m_state.makeMove( ant, move_loc );
     }
@@ -515,9 +543,152 @@ bool Bot::checkValidPath( Ant* ant )
     return true;
 }
 
+void findStaticAnt( const Map& map, const Location& hill, const Location& defense_position )
+{
+    if( map( defense_position ).ant_id == 0 )
+    {
+        map( defense_position ).ant->assignment = Ant::STATIC_DEFENSE;
+        map( defense_position ).ant->path.reset();
+        return;
+    }
+
+    Locations neighbors;
+    map.getNeighbors( defense_position, hasAnt, neighbors );
+
+    // Check if an ant is on neighboring square 
+    for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
+    {
+        Location neighbor = *it;
+        Ant*     ant      = map( neighbor ).ant;
+        if( ant->assignment != Ant::STATIC_DEFENSE ||
+            ant->path.destination() == defense_position )
+        {
+            ant->assignment = Ant::STATIC_DEFENSE;
+            ant->path.assign( defense_position, map.getDirection( neighbor, defense_position ) );
+            return;
+        }
+    }
+    
+    // Grab spawning ant if one exists
+    if( map( hill ).ant_id == 0 && 
+        map( hill ).ant->assignment != Ant::STATIC_DEFENSE  )
+    {
+        Ant* ant = map( hill ).ant;
+        Direction dir0 = hill.row - defense_position.row == 1 ? NORTH : SOUTH;
+        Direction dir1 = hill.col - defense_position.col == 1 ? WEST  : EAST;
+        
+        Location loc = map.getLocation( hill, dir0 );
+        if( map( loc ).isAvailable() )
+        {
+            ant->assignment = Ant::STATIC_DEFENSE;
+            std::vector<Direction> dirs;
+            dirs.push_back( dir0 );
+            dirs.push_back( dir1 );
+            ant->path.assign( defense_position, dirs.begin(), dirs.end() );
+        }
+
+        loc = map.getLocation( hill, dir1 );
+        if( map( loc ).isAvailable() )
+        {
+            ant->assignment = Ant::STATIC_DEFENSE;
+            std::vector<Direction> dirs;
+            dirs.push_back( dir1 );
+            dirs.push_back( dir0 );
+            ant->path.assign( defense_position, dirs.begin(), dirs.end() );
+        }
+    }
+}
+
 
 void Bot::makeAssignments()
 {
+    int num_ants = m_state.myAnts().size();
+    int num_ants_per_base = num_ants / m_state.myHills().size();
+    int static_ants_per_base = num_ants_per_base >= 64 ? 4 :
+                               num_ants_per_base >= 48 ? 3 :
+                               num_ants_per_base >= 32 ? 2 :
+                               num_ants_per_base >= 16 ? 1 :
+                               0;
+
+    // Static defense assignments first
+    if( static_ants_per_base > 0 )
+    {
+        for( State::Locations::const_iterator it = m_state.myHills().begin(); it != m_state.myHills().end(); ++it )
+        {
+            const Location hill_east = m_state.map().getLocation( *it, EAST );
+            const Location defender0 = m_state.map().getLocation( hill_east, NORTH );
+            findStaticAnt( m_state.map(), *it, defender0 );
+
+            if( static_ants_per_base <= 1 ) continue;
+            
+            const Location defender1 = m_state.map().getLocation( hill_east, SOUTH );
+            findStaticAnt( m_state.map(), *it, defender1 );
+            
+            if( static_ants_per_base <= 2 ) continue;
+
+            const Location hill_west = m_state.map().getLocation( *it, WEST );
+            const Location defender2 = m_state.map().getLocation( hill_west, NORTH );
+            findStaticAnt( m_state.map(), *it, defender2 );
+            
+            if( static_ants_per_base <= 3 ) continue;
+
+            Location defender3 = m_state.map().getLocation( hill_west, SOUTH );
+            findStaticAnt( m_state.map(), *it, defender3 );
+        }
+    }
+
+    if( m_enemy_hills.empty() )
+    {
+        for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+        {
+            Ant* ant = *it;
+            if( ant->assignment != Ant::STATIC_DEFENSE )
+                ant->assignment = Ant::EXPLORE;
+        }
+    }
+    else
+    {
+        for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+        {
+            Ant* ant = *it;
+            if( ant->assignment != Ant::STATIC_DEFENSE )
+                ant->assignment = Ant::ATTACK;
+        }
+    }
+
+#ifdef VISUALIZER
+    setFillColor( 0, 255, 0, 0.2 );
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        Ant* ant = *it;
+        if( ant->assignment == Ant::EXPLORE )
+            circle( ant->location, 1, true );
+    }
+
+    setFillColor( 255, 0, 0, 0.2 );
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        Ant* ant = *it;
+        if( ant->assignment == Ant::ATTACK )
+            circle( ant->location, 1, true );
+    }
+    
+    setFillColor( 0, 0, 255, 0.2 );
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        Ant* ant = *it;
+        if( ant->assignment == Ant::DEFENSE )
+            circle( ant->location, 1, true );
+    }
+    
+    setFillColor( 255, 255, 0, 0.2 );
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        Ant* ant = *it;
+        if( ant->assignment == Ant::STATIC_DEFENSE )
+            circle( ant->location, 1, true );
+    }
+#endif
 }
 
 

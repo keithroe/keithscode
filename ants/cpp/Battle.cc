@@ -658,12 +658,12 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         {
 
             Debug::stream() << "    ally: " << it->first << std::endl;
-            circle( it->first, 1, true );
+            //circle( it->first, 1, true );
             const Locations& enemies = it->second;
             for( Locations::const_iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy )
             {
                 Debug::stream() << "        enemy: " << *enemy << std::endl;
-                circle( *enemy, 1, true );
+                //circle( *enemy, 1, true );
             }
         }
     }
