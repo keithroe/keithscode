@@ -35,7 +35,7 @@ BFSTEST=bfstest
 DIFFTEST=difftest
 
 #Uncomment the following to enable debugging
-#CFLAGS += -DVISUALIZER
+CFLAGS += -DVISUALIZER
 #CFLAGS += -DDEBUG
 #CFLAGS = -g -DDEBUG
 

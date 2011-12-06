@@ -19,7 +19,8 @@
 
 namespace 
 {
-    typedef std::vector< Location > Locations;
+    typedef std::vector<Location> Locations;
+    typedef std::set<Ant*>        AntSet;
 
     struct Candidate
     {
@@ -84,6 +85,35 @@ namespace
         bool   found_ant;
     };
 
+    struct AttackAnts
+    {
+        AttackAnts( AntSet& assigned, int num_ants )  
+            : assigned( assigned ), num_ants( num_ants ), ants_found( 0 ) {}
+
+        bool operator()( const BFNode* node )
+        {
+            // TODO: for now, ignore assigned -- might need to be changed
+            //       might also make this probabilistic so we retain explore ants in area 
+            if( node->square->ant_id == 0 )
+            {
+                Ant* cur_ant = node->square->ant;
+                if( cur_ant->assignment != Ant::STATIC_DEFENSE &&
+                    cur_ant->assignment != Ant::DEFENSE )
+                {
+                    assigned.insert( cur_ant );
+                    cur_ant->assignment = Ant::ATTACK;
+                    ++ants_found;
+                    if( ants_found >= num_ants )
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        AntSet&   assigned;
+        const int num_ants;
+        int       ants_found;
+    };
 
     struct Always
     {
@@ -606,12 +636,15 @@ void Bot::makeAssignments()
     int num_ants_per_base    = num_ants;
     int static_ants_per_base = 0;
     if( !m_state.myHills().empty() )
+    {
         num_ants_per_base    = num_ants / m_state.myHills().size();
         static_ants_per_base = num_ants_per_base >= 64 ? 4 :
                                num_ants_per_base >= 48 ? 3 :
                                num_ants_per_base >= 32 ? 2 :
                                num_ants_per_base >= 16 ? 1 :
                                0;
+    }
+
 
     // Static defense assignments first
     if( static_ants_per_base > 0 )
@@ -640,14 +673,43 @@ void Bot::makeAssignments()
         }
     }
 
-    if( m_enemy_hills.empty() )
+    int max_explore_ants = ( m_state.rows() / 16 ) * ( m_state.cols() / 16 ); 
+    int max_defense_ants = m_hills_under_attack.size()  * 16; 
+    int explore_ants = std::min( max_explore_ants, num_ants / 2 );
+    int defense_ants = std::min( max_defense_ants, num_ants / 8 );
+    int attack_ants  = num_ants - explore_ants - defense_ants;
+    
+    Debug::stream() << "Assigning ants:" << std::endl
+                    << "    total_ants    : " << num_ants << std::endl
+                    << "    enemy_hills   : " << m_enemy_hills.size() << std::endl
+                    << "    attacked_hills: " << m_hills_under_attack.size() << std::endl
+                    << "    explore_ants  : " << explore_ants << std::endl
+                    << "    defense_ants  : " << defense_ants << std::endl
+                    << "    attack_ants   : " << attack_ants << std::endl;
+    AntSet assigned;
+    if( !m_enemy_hills.empty() )
     {
+        int ants_per_enemy_hill = attack_ants / m_enemy_hills.size();
+        AntSet assigned;
+
+        // Find the n closest ants to the target and assign them to attack
+        for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
+        {
+            AttackAnts attack_ants( assigned, ants_per_enemy_hill );
+            Always     always;
+            BF<AttackAnts, Always> find_attack_ants( m_state.map(), *it, attack_ants, always );
+            find_attack_ants.setMaxDepth( 500 );
+            find_attack_ants.traverse();
+        }
+        Debug::stream() << "        assigned ants: " << assigned.size() << std::endl;
+
         for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
         {
             Ant* ant = *it;
-            if( ant->assignment != Ant::STATIC_DEFENSE )
+            if( ant->assignment != Ant::STATIC_DEFENSE && assigned.find( ant ) == assigned.end() )
                 ant->assignment = Ant::EXPLORE;
         }
+
     }
     else
     {
@@ -655,7 +717,7 @@ void Bot::makeAssignments()
         {
             Ant* ant = *it;
             if( ant->assignment != Ant::STATIC_DEFENSE )
-                ant->assignment = Ant::ATTACK;
+                ant->assignment = Ant::EXPLORE;
         }
     }
 
