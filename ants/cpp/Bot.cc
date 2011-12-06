@@ -96,6 +96,7 @@ namespace
             if( node->square->ant_id == 0 )
             {
                 Ant* cur_ant = node->square->ant;
+                Debug::stream() << "   found ant: " << cur_ant << std::endl;
                 if( cur_ant->assignment != Ant::STATIC_DEFENSE &&
                     cur_ant->assignment != Ant::DEFENSE )
                 {
@@ -258,8 +259,10 @@ void Bot::makeMoves()
     //
     // Attack hills 
     //
+    /*
     Debug::stream() << " Assigning hill-attack tasks... " << std::endl;
     available.remove_if( std::bind1st( std::mem_fun( &Bot::attackHills ), this ) );
+    */
     
     //
     // Assign ants to farther food with lower
@@ -728,8 +731,7 @@ void Bot::makeAssignments()
 
 
     // 
-    // TODO: - make assignments more persistant.
-    //       - attack ants should know which hill they were attacking so they
+    // TODO: - attack ants should know which hill they were attacking so they
     //         can be reassigned when hill falls.
     //       - better distribution of explore ants chosen.
     //       - make non-explore ants only get VERY nearby food
@@ -737,8 +739,6 @@ void Bot::makeAssignments()
     //       - can explore algoriithm punish cul-de-sacs?
     //       - rethink attackHills function which A*s ants all nearby ants to hills
     //         (can probably do away with it)
-    //       - Make battle function ignore STATIC_DEFENSE ants
-    //       - Multiple start state BF for attacking multiple enemy hills
     //
     Debug::stream() << "Assigning ants:" << std::endl
                     << "    total_ants    : " << num_ants << std::endl
@@ -794,9 +794,9 @@ void Bot::makeAssignments()
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
     {
         Ant* ant = *it;
-        if( ant->assignment != Ant::STATIC_DEFENSE                &&
-            assigned_attack.find( ant ) == assigned_defense.end() && 
-            assigned_attack.find( ant ) == assigned_attack.end() )
+        if( ant->assignment != Ant::STATIC_DEFENSE                                              &&
+            assigned_defense.find( ant ) == assigned_defense.end()                              && 
+            ( m_enemy_hills_changed && assigned_attack.find( ant ) == assigned_attack.end() ) )
             ant->assignment = Ant::EXPLORE;
     }
 
