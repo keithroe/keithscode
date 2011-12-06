@@ -498,7 +498,7 @@ std::ostream& operator<<( std::ostream &os, const Map& map )
             {
                 const Square& square = map.m_grid[ i ][ j ];
                 os << ' ';
-                os << std::fixed << std::setw( 8 ) << std::setprecision( 2 ) << priorities[ i ][ j ]; 
+                os << std::fixed << std::setw( 8 ) << std::setprecision( 3 ) << priorities[ i ][ j ]; 
                 if     ( square.food           ) os << 'f';
                 else if( square.ant_id >=0     ) os << static_cast<char>( 'a' + square.ant_id );
                 else if( square.new_ant_id >=0 ) os << static_cast<char>( 'a' + square.new_ant_id );
