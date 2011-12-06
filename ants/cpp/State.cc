@@ -51,6 +51,13 @@ void State::reset()
 
 void State::makeMove( Ant* ant, Direction direction )
 {
+    if( direction == NONE )
+    {
+        m_my_prev_ants[ ant->location ] = ant;
+        Debug::stream() << " setting my_prev_ants[ " << ant->location << "] to " << *ant << std::endl;
+        return;
+    }
+
     cout << "o " << ant->location.row << " " << ant->location.col << " " << DIRECTION_CHAR[direction] << endl;
     m_map.makeMove( ant->location, direction );
     
@@ -65,12 +72,20 @@ void State::makeMove( Ant* ant, Direction direction )
 void State::makeMove( Ant* ant, const Location& loc )
 {
     Direction dir = m_map.getDirection( ant->location, loc );
+    if( dir == NONE )
+    {
+        m_my_prev_ants[ ant->location ] = ant;
+        Debug::stream() << " setting my_prev_ants[ " << ant->location << "] to " << *ant << std::endl;
+        return;
+    }
 
     cout << "o " << ant->location.row << " " << ant->location.col << " " << DIRECTION_CHAR[dir] << endl;
     m_map.makeMove( ant->location, loc );
 
     m_my_prev_ants[ loc ] = ant;
     ant->location = loc;
+    
+    Debug::stream() << " setting my_prev_ants[ " << loc << "] to " << *ant << std::endl;
 }
 
 
@@ -254,6 +269,7 @@ istream& operator>>(istream &is, State &state)
                     State::AntHash::iterator prev_ant = state.m_my_prev_ants.find( loc );
                     if(  prev_ant == state.m_my_prev_ants.end() )
                     {
+                        Debug::stream() << " CREATING NEW ANT!!! at " << loc << std::endl;
                         ant = new Ant( loc );
                     }
                     else

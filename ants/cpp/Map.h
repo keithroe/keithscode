@@ -18,7 +18,7 @@ class Map
 public:
     enum PriorityType
     {
-        EXPLORE=0,         // non-visible squares, frontier, other ants(negative)
+        EXPLORE=0,         // non-visible squares, frontier, ants(negative)
         ATTACK,            // enemy hills, battle hot spots ( distance based )
         DEFENSE,           // ally hills, battle hot spots ( distance based )
         NUM_PRIORITY_TYPES
