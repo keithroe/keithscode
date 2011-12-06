@@ -92,7 +92,10 @@ class BF
 {
 public:
     BF( Map& map, const Location& start_loc, Action& action, ValidNeighbor& valid_neighbor );
+    BF( Map& map, Action& action, ValidNeighbor& valid_neighbor );
     ~BF();
+
+    void addStartLocation( const Location& start_loc );
 
     void setMaxDepth( unsigned depth ) { m_max_depth = depth; }
 
@@ -154,6 +157,18 @@ BF<Action, ValidNeighbor>::BF( Map& map,
 
 
 template< class Action, class ValidNeighbor >
+BF<Action, ValidNeighbor>::BF( Map& map,
+                             Action& action,
+                             ValidNeighbor& valid_neighbor )
+  : m_map( map ),
+    m_action( action ),
+    m_valid_neighbor( valid_neighbor ),
+    m_max_depth( 25u )
+{
+}
+
+
+template< class Action, class ValidNeighbor >
 BF<Action, ValidNeighbor>::~BF()
 {
     for( BFNodeQueue::iterator it = m_open.begin(); it != m_open.end(); ++it )
@@ -163,6 +178,13 @@ BF<Action, ValidNeighbor>::~BF()
     for( LocationToBFNode::iterator it = m_closed.begin(); it != m_closed.end(); ++it )
         delete it->second;
     m_closed.clear();
+}
+
+
+template< class Action, class ValidNeighbor >
+void BF<Action, ValidNeighbor>::addStartLocation( const Location& start_loc )
+{
+    m_open.push_back( new BFNode( start_loc, &m_map( start_loc ), NONE, 0u, NULL ) );
 }
 
 

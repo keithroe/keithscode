@@ -296,22 +296,24 @@ Location Map::computeCentroid( const std::vector<Location>& locations )const
 void Map::setDistanceTarget( PriorityType type, const Location& loc, int max_depth )
 { 
     rangeCheck( loc.row, loc.col );
-    assert( type == ATTACK );
+    assert( type == ATTACK || type == DEFENSE );
     m_attack_targets.push_back( std::make_pair( loc, max_depth ) );
 }
 
 
 void Map::computeDistanceMap( PriorityType type )
 {
-    assert( type == ATTACK );
+    assert( type == ATTACK || type == DEFENSE );
 
     if( m_attack_targets.empty() ) return;
 
     // sort by max_distance
     std::sort( m_attack_targets.begin(), m_attack_targets.end(), CompareMaxDist() );
-
-    for( DistanceTargets::iterator it = m_attack_targets.begin(); it != m_attack_targets.end(); ++it )
+    
+    DistanceTargets::iterator it;
+    for( it = m_attack_targets.begin(); it != m_attack_targets.end(); ++it )
     {
+        if( it->second == 0 ) break;
         MarkDistance mark_distance( m_priorities[type] );
         WithinDistance within_distance( it->second );
         ComputeDistance compute_distance( *this, it->first, mark_distance, within_distance );
@@ -319,6 +321,16 @@ void Map::computeDistanceMap( PriorityType type )
         compute_distance.traverse();
 
     }
+
+    MarkDistance    mark_distance( m_priorities[type] );
+    WithinDistance  within_distance( 0 );
+    ComputeDistance compute_distance( *this, mark_distance, within_distance );
+    compute_distance.setMaxDepth( 1000 );
+    for( ; it != m_attack_targets.end(); ++it )
+    {
+        compute_distance.addStartLocation( it->first );
+    }
+    compute_distance.traverse();
 }
 
 

@@ -48,6 +48,7 @@ private:
     typedef std::set<Ant*>      AntSet;
 
     LocationSet        m_enemy_hills;
+    bool               m_enemy_hills_changed;
     LocationSet        m_targeted_food;
     LocationSet        m_hills_under_attack;
 

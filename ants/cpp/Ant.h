@@ -48,10 +48,10 @@ inline std::string assignmentString( Ant::Assignment assignment )
     static const char* assign2string [ Ant::NUM_ASSIGNMENTS ] = 
     {
         "EXPLORE",
-        "ATTACK"
+        "ATTACK",
         "DEFENSE",
         "STATIC_DEFENSE",
-        "NONE",
+        "NONE"
     };
 
     return assign2string[ static_cast<int>( assignment ) ];
@@ -60,7 +60,7 @@ inline std::string assignmentString( Ant::Assignment assignment )
 
 inline std::ostream& operator<<( std::ostream& out, const Ant& ant )
 {
-    out << ant.location << ": " << ant.path;
+    out << ant.location << ": " << assignmentString( ant.assignment ) << " path: " << ant.path;
     return out;
 }
 
