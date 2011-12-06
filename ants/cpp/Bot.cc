@@ -679,6 +679,18 @@ void Bot::makeAssignments()
     int defense_ants = std::min( max_defense_ants, num_ants / 8 );
     int attack_ants  = num_ants - explore_ants - defense_ants;
     
+    // 
+    // TODO: - make assignments more persistant.
+    //       - attack ants should know which hill they were attacking so they
+    //         can be reassigned when hill falls.
+    //       - better distribution of explore ants chosen.
+    //       - make non-explore ants only get VERY nearby food
+    //       - make explore ants avoid battles
+    //       - can explore algoriithm punish cul-de-sacs?
+    //       - rethink attackHills function which A*s ants all nearby ants to hills
+    //         (can probably do away with it)
+    //       - Make battle function ignore STATIC_DEFENSE ants
+    //
     Debug::stream() << "Assigning ants:" << std::endl
                     << "    total_ants    : " << num_ants << std::endl
                     << "    enemy_hills   : " << m_enemy_hills.size() << std::endl

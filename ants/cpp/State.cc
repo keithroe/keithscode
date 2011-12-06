@@ -140,8 +140,6 @@ ostream& operator<<(ostream &os, const State &state)
        << "  Load time   : " << state.m_load_time << std::endl
        << "  Turn time   : " << state.m_turn_time << std::endl;
 
-    os << state.m_map << std::endl;
-    
     /*
     // Print out frontier map
     os << "============================" << std::endl;
