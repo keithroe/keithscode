@@ -519,9 +519,13 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     AntEnemies ally_enemies;
     for( Ants::const_iterator it = ants.begin(); it != ants.end(); ++it )
     {
-        // Search from the ant's next step if ant has a path assigned to it
         Ant*     ant             = *it;
         Location search_location = ant->location;
+
+        // Do not move static defense ants
+        if( ant->assignment == Ant::STATIC_DEFENSE ) continue;
+
+        // Search from the ant's next step if ant has a path assigned to it
         if( !ant->path.empty() )
         {
             Location next_loc = m_map.getLocation( search_location, ant->path.nextStep() );

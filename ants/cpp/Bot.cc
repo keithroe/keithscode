@@ -679,6 +679,23 @@ void Bot::makeAssignments()
     int defense_ants = std::min( max_defense_ants, num_ants / 8 );
     int attack_ants  = num_ants - explore_ants - defense_ants;
     
+    int cur_explore_ants        = 0;
+    int cur_defense_ants        = 0;
+    int cur_attack_ants         = 0;
+    int cur_static_defense_ants = 0;
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        switch ( (*it)->assignment )
+        {
+            case Ant::EXPLORE:         ++cur_explore_ants;         break;
+            case Ant::DEFENSE:         ++cur_defense_ants;         break;
+            case Ant::ATTACK:          ++cur_attack_ants;          break;
+            case Ant::STATIC_DEFENSE:  ++cur_static_defense_ants;  break;
+            default:                                               break;
+        }
+    }
+
+
     // 
     // TODO: - make assignments more persistant.
     //       - attack ants should know which hill they were attacking so they
@@ -690,6 +707,7 @@ void Bot::makeAssignments()
     //       - rethink attackHills function which A*s ants all nearby ants to hills
     //         (can probably do away with it)
     //       - Make battle function ignore STATIC_DEFENSE ants
+    //       - Multiple start state BF for attacking multiple enemy hills
     //
     Debug::stream() << "Assigning ants:" << std::endl
                     << "    total_ants    : " << num_ants << std::endl
