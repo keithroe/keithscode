@@ -603,8 +603,11 @@ void findStaticAnt( const Map& map, const Location& hill, const Location& defens
 void Bot::makeAssignments()
 {
     int num_ants = m_state.myAnts().size();
-    int num_ants_per_base = num_ants / m_state.myHills().size();
-    int static_ants_per_base = num_ants_per_base >= 64 ? 4 :
+    int num_ants_per_base    = num_ants;
+    int static_ants_per_base = 0;
+    if( !m_state.myHills().empty() )
+        num_ants_per_base    = num_ants / m_state.myHills().size();
+        static_ants_per_base = num_ants_per_base >= 64 ? 4 :
                                num_ants_per_base >= 48 ? 3 :
                                num_ants_per_base >= 32 ? 2 :
                                num_ants_per_base >= 16 ? 1 :
