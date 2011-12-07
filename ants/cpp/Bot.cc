@@ -100,7 +100,7 @@ namespace
             if( node->square->ant_id == 0 )
             {
                 Ant* cur_ant = node->square->ant;
-                Debug::stream() << "   found ant: " << cur_ant << std::endl;
+                //Debug::stream() << "   found ant: " << cur_ant << std::endl;
                 if( cur_ant->assignment != Ant::STATIC_DEFENSE &&
                     cur_ant->assignment != Ant::DEFENSE )
                 {
@@ -544,6 +544,7 @@ void Bot::makeMove( Ant* ant )
 void Bot::updateHillList()
 {
     m_enemy_hills_changed = false;
+
     // Add in all visible hills -- duplicates will be ignored
     for( Locations::const_iterator it = m_state.enemyHills().begin(); it != m_state.enemyHills().end(); ++it )
         m_enemy_hills_changed |=  m_enemy_hills.insert( *it ).second;
@@ -740,9 +741,7 @@ void Bot::makeAssignments()
 
 
     // 
-    // TODO: - attack ants should know which hill they were attacking so they
-    //         can be reassigned when hill falls.
-    //       - better distribution of explore ants chosen.
+    // TODO: - better distribution of explore ants chosen.
     //       - make non-explore ants only get VERY nearby food
     //       - make explore ants avoid battles
     //       - can explore algoriithm punish cul-de-sacs?
@@ -779,27 +778,24 @@ void Bot::makeAssignments()
     }
 
     AntSet assigned_attack;
-    bool   attack_ants_updated = false;
-    if( !m_enemy_hills.empty() )
+    bool attack_ants_updated = m_enemy_hills_changed;
+    if( !m_enemy_hills.empty() && ( m_enemy_hills_changed || cur_attack_ants < 2*attack_ants/3 ) )
     {
-        if( m_enemy_hills_changed || cur_attack_ants < 2*attack_ants/3 )
+        attack_ants_updated = true;
+        Debug::stream() << " m_enemy_hills_changed  " << m_enemy_hills_changed << std::endl;
+
+        int ants_per_enemy_hill = attack_ants / m_enemy_hills.size();
+
+        // Find the n closest ants to the target and assign them to attack
+        for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
         {
-            attack_ants_updated = true;
-            Debug::stream() << " attack_ants_updated = true " << std::endl;
-
-            int ants_per_enemy_hill = attack_ants / m_enemy_hills.size();
-
-            // Find the n closest ants to the target and assign them to attack
-            for( LocationSet::iterator it = m_enemy_hills.begin(); it != m_enemy_hills.end(); ++it )
-            {
-                AttackAnts attack_ants( assigned_attack, ants_per_enemy_hill );
-                Always     always;
-                BF<AttackAnts, Always> find_attack_ants( m_state.map(), *it, attack_ants, always );
-                find_attack_ants.setMaxDepth( 500 );
-                find_attack_ants.traverse();
-            }
-            Debug::stream() << "        assigned " << assigned_attack.size() << " attack ants " << std::endl;
+            AttackAnts attack_ants( assigned_attack, ants_per_enemy_hill );
+            Always     always;
+            BF<AttackAnts, Always> find_attack_ants( m_state.map(), *it, attack_ants, always );
+            find_attack_ants.setMaxDepth( 500 );
+            find_attack_ants.traverse();
         }
+        Debug::stream() << "        assigned " << assigned_attack.size() << " attack ants " << std::endl;
     }
 
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
@@ -810,9 +806,9 @@ void Bot::makeAssignments()
         if( ant->assignment == Ant::STATIC_DEFENSE || assigned_defense.find( ant ) != assigned_defense.end() )
             continue; 
 
-        // Only update attack ants if enemy_hills_changed
+        // Only update attack ants if enemy_hills_changed or we had a reassignment of attack ants
         if( ant->assignment == Ant::ATTACK && 
-            ( assigned_attack.find( ant ) != assigned_attack.end() || !attack_ants_updated ) )
+            ( !attack_ants_updated || assigned_attack.find( ant ) != assigned_attack.end() ) )
             continue;
         
         ant->assignment = Ant::EXPLORE;
