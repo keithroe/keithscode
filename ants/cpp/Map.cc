@@ -46,7 +46,9 @@ namespace
 
         bool operator()( const BFNode* current, const Location& neighbor_location, const Square& neighbor_square )
         {
-            return ( distance == 0 || current->depth+1 <= distance ) && neighbor_square.isLand();
+            return ( distance == 0 || current->depth+1 <= distance ) &&
+                   neighbor_square.isLand()                          &&
+                   neighbor_square.hill_id != 0;
         }
 
         const unsigned distance;
@@ -296,14 +298,14 @@ Location Map::computeCentroid( const std::vector<Location>& locations )const
 void Map::setDistanceTarget( PriorityType type, const Location& loc, int max_depth )
 { 
     rangeCheck( loc.row, loc.col );
-    assert( type == ATTACK || type == DEFENSE );
+    assert( type == ATTACK );
     m_attack_targets.push_back( std::make_pair( loc, max_depth ) );
 }
 
 
 void Map::computeDistanceMap( PriorityType type )
 {
-    assert( type == ATTACK || type == DEFENSE );
+    assert( type == ATTACK );
 
     if( m_attack_targets.empty() ) return;
 
@@ -336,7 +338,7 @@ void Map::computeDistanceMap( PriorityType type )
 
 void Map::updatePriority( PriorityType type, float amount, SquarePredicate pred )
 {
-    assert( type == EXPLORE );
+    assert( type == EXPLORE || type == DEFENSE );
 
     for( unsigned int i = 0; i < m_height; ++i )
         for( unsigned int j = 0; j < m_width; ++j )
@@ -346,7 +348,7 @@ void Map::updatePriority( PriorityType type, float amount, SquarePredicate pred 
 
 void Map::diffusePriority( PriorityType type, unsigned iterations )
 {
-    assert( type == EXPLORE );
+    assert( type == EXPLORE || type == DEFENSE );
 
     const unsigned w = m_width;
     const unsigned h = m_height;
