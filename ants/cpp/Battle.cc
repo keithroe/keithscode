@@ -357,6 +357,7 @@ void Battle::solve1v1( const Location& ally, const Location& enemy )
 
     Ant* ant = m_map( ally ).ant;
     ant->path.assign( away_loc, away, Path::ATTACK );
+    m_map( away_loc ).assigned = true;
     m_allies.insert( ant );
 
     //Debug::stream() << "Battle:      solve1v1 moving ant " << ally << " in " << DIRECTION_CHAR[ away ] << std::endl;
@@ -370,20 +371,25 @@ void Battle::countDeaths( const Location& ally0, const Location& ally1, const Lo
     int dist0           = m_map.distance2( ally0, enemy );
     int dist1           = m_map.distance2( ally1, enemy );
     int allies_in_range = static_cast<int>( dist0 <= 5 ) +
-        static_cast<int>( dist1 <= 5 );
+                          static_cast<int>( dist1 <= 5 );
     enemy_deaths = static_cast<int>( allies_in_range >= 1 );
     ally_deaths  = static_cast<int>( allies_in_range == 1 );
     distance     = dist0 + dist1;
 
+    Debug::stream() << "      epos: " << enemy << " edeaths: " << enemy_deaths << " mydeaths: " << ally_deaths 
+                    << " allyinrange: " << allies_in_range << " d0: " << dist0 << " d1: " << dist1 << std::endl;
     for( int i = 0; i < 4; ++i )
     {
         Location moved_enemy = m_map.getLocation( enemy, static_cast<Direction>( i ) ); 
+        if( m_map( moved_enemy ).isWater() ) continue; // TODO: should cache the available directions, pass into func
         int dist0           = m_map.distance2( ally0, moved_enemy );
         int dist1           = m_map.distance2( ally1, moved_enemy );
         int allies_in_range = static_cast<int>( dist0 <= 5 ) +
-            static_cast<int>( dist1 <= 5 );
+                              static_cast<int>( dist1 <= 5 );
         enemy_deaths += static_cast<int>( allies_in_range >= 1 );
         ally_deaths  += static_cast<int>( allies_in_range == 1 );
+        Debug::stream() << "      epos: " << moved_enemy << " edeaths: " << enemy_deaths << " mydeaths: " << ally_deaths
+                        << " allyinrange: " << allies_in_range << " d0: " << dist0 << " d1: " << dist1 << std::endl;
         distance     += dist0 + dist1;
     }
 }
@@ -391,7 +397,7 @@ void Battle::countDeaths( const Location& ally0, const Location& ally1, const Lo
 
 void Battle::solve2v1( const Location& ally0, const Location& ally1, const Location& enemy )
 {
-    //Debug::stream() << "solve2v1 " << ally0 << "," << ally1 << " vs " << enemy << std::endl;
+    Debug::stream() << "solve2v1 " << ally0 << "," << ally1 << " vs " << enemy << std::endl;
 
     Direction best_move0 = NONE;
     Direction best_move1 = NONE;
@@ -403,19 +409,27 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
     {
         Location moved_ally0 = m_map.getLocation( ally0, static_cast<Direction>( i ) ); 
         if( !m_map( moved_ally0 ).isAvailable() && moved_ally0 != ally1 && i != NONE )
+        {
+            Debug::stream() << "    ally0 location " << moved_ally0 << " not available:" << std::endl
+                            << "        " << m_map( moved_ally0 ) << std::endl;
             continue;
+        }
         for( int j = 0; j < 5; ++j && i != NONE )
         {
             Location moved_ally1 = m_map.getLocation( ally1, static_cast<Direction>( j ) ); 
             if( moved_ally1 == moved_ally0 || ( !m_map( moved_ally1 ).isAvailable() && moved_ally1 != ally0 ) )
+            {
+                Debug::stream() << "    ally1 location " << moved_ally1 << " not available:" << std::endl
+                                << "        " << m_map( moved_ally0 ) << std::endl;
                 continue;
-            int ally_dies, enemy_dies, distance;
-            countDeaths( moved_ally0, moved_ally1, enemy, ally_dies, enemy_dies, distance );
+            }
+            int ally_dies, enemy_dies, dist;
+            countDeaths( moved_ally0, moved_ally1, enemy, ally_dies, enemy_dies, dist );
             int ally_dist = m_map.distance2( moved_ally1, moved_ally0 );
 
-            //Debug::stream() << "    trying " << moved_ally0 << "," << moved_ally1 
-            //    << " new allydies:" << ally_dies << " enemydies:" << enemy_dies
-            //    << " distance:" << distance << std::endl;
+            Debug::stream() << "    trying " << moved_ally0 << "," << moved_ally1 
+                << " new allydies:" << ally_dies << " enemydies:" << enemy_dies
+                << " allydist: " << ally_dist << " dist:" << dist << std::endl;
             // too passive
             //if( ( best_ally_dies > 0 && ally_dies == 0 )                                            ||
             //    ( best_ally_dies > 0 && enemy_dies - ally_dies > best_enemy_dies - best_ally_dies ) ||
@@ -424,21 +438,19 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
 
             /*
                if( enemy_dies - ally_dies > best_enemy_dies - best_ally_dies         ||
-               ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist <  best_ally_dist ) ||
-               ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist == best_ally_dist && 
+               ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_distance <  best_ally_dist ) ||
+               ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_distance == best_ally_dist && 
                distance < best_dist ) )  
                */
 
             if( ally_dies < best_ally_dies  ||
-                    ( ally_dies == best_ally_dies && enemy_dies > best_enemy_dies ) ||
-                    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist <  best_ally_dist ) ||
-                    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_dist ==  best_ally_dist  && 
-                      distance < best_dist ) )
+              ( ally_dies == best_ally_dies && enemy_dies > best_enemy_dies ) ||
+              ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && dist <  best_dist ) )
             {
                 best_enemy_dies = enemy_dies;
                 best_ally_dies  = ally_dies;
-                best_dist       = distance;
-                best_ally_dist  = distance;
+                best_dist       = dist;
+                best_ally_dist  = ally_dist;
                 best_move0      = static_cast<Direction>( i );
                 best_move1      = static_cast<Direction>( j );
                 best_loc0       = moved_ally0;
@@ -447,21 +459,24 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
         }
     }
 
-    //Debug::stream() << " moving " << ally0 << " in " << DIRECTION_CHAR[ best_move0 ] << std::endl
-    //    << " moving " << ally1 << " in " << DIRECTION_CHAR[ best_move1 ] << std::endl;
+    Debug::stream() << " moving " << ally0 << " in " << DIRECTION_CHAR[ best_move0 ] << std::endl
+                    << " moving " << ally1 << " in " << DIRECTION_CHAR[ best_move1 ] << std::endl;
     Ant* ant = m_map( ally0 ).ant;
     ant->path.assign( best_loc0, best_move0, Path::ATTACK );
+    m_map( best_loc0 ).assigned = true;
     m_allies.insert( ant );
 
     ant = m_map( ally1 ).ant;
     ant->path.assign( best_loc1, best_move1, Path::ATTACK );
+    m_map( best_loc1 ).assigned = true;
     m_allies.insert( ant );
 }
 
 
 
-Battle::Battle( Map& map )
-    : m_map( map )
+Battle::Battle( Map& map, LocationSet& targeted_food )
+    : m_map( map ),
+      m_targeted_food( targeted_food )
 {
     //
     // create m_grid
@@ -519,36 +534,40 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     AntEnemies ally_enemies;
     for( Ants::const_iterator it = ants.begin(); it != ants.end(); ++it )
     {
+        Debug::stream() << "Pre-processing ant " << *it << std::endl;
         Ant*     ant             = *it;
         Location search_location = ant->location;
 
         // Do not move static defense ants
         if( ant->assignment == Ant::STATIC_DEFENSE ) continue;
 
-        // Search from the ant's next step if ant has a path assigned to it
-        if( !ant->path.empty() )
+        // If ant has a high priority path target, see if it can avoid battle 
+        if( !ant->path.empty() && 
+          ( ant->path.goal() == Path::HILL || ant->path.goal() == Path::FOOD ) )
         {
             Location next_loc = m_map.getLocation( search_location, ant->path.nextStep() );
-            if( m_map( next_loc ).isAvailable() )
-            {
-                AnyEnemyAnts    any_enemy_ants( MY_ANT_ID );
-                WithinDistance2 within_10( m_map, next_loc, 10 );
-                AnyEnemyCombatants bfs( m_map, next_loc, any_enemy_ants, within_10);
-                bfs.traverse();
-                if( !any_enemy_ants.found_enemy ) continue;
-            }
+            AnyEnemyAnts    any_enemy_ants( MY_ANT_ID );
+            WithinDistance2 within_10( m_map, next_loc, 10 );
+            AnyEnemyCombatants bfs( m_map, next_loc, any_enemy_ants, within_10);
+            bfs.traverse();
+            if( !any_enemy_ants.found_enemy ) continue;
+
+            if( ant->path.goal() == Path::FOOD )
+                m_targeted_food.erase( ant->path.destination() );
+            ant->path.reset();
+            m_map( next_loc ).assigned = false;
         }
+
         AllEnemyAnts    enemy_ants( search_location, MY_ANT_ID, ally_enemies );
         WithinDistance2 within_battle_range( m_map, search_location, 17 );
         EnemyCombatants bfs( m_map, search_location, enemy_ants, within_battle_range );
 
-        //Debug::stream() << "Battle: searching from " << location << std::endl;
         bfs.traverse();
     }
 
     if( ally_enemies.empty() ) return; // No potential battles found
 
-    //Debug::stream() << "Battle:   found " << ally_enemies.size() << " ally ants in battle" << std::endl;
+    Debug::stream() << "Battle:   found " << ally_enemies.size() << " ally ants in battle" << std::endl;
 
     //
     // Gather all enemies seen
@@ -617,7 +636,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 std::inserter( enemy_cluster, enemy_cluster.end() ) );
 
 
-        //Debug::stream() << " creating new cluster for ant at " << it0->first << std::endl;
+        Debug::stream() << " creating new cluster for ant at " << it0->first << std::endl;
 
         // Check if any other allies belong in this cluster
         bool cluster_extended;
@@ -657,16 +676,16 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         setFillColor( i%3 == 0 ? 0 : rnd()%256,
                 i%3 == 1 ? 0 : rnd()%256,
                 i%3 == 2 ? 0 : rnd()%256, 0.3f );
-        //Debug::stream() << " cluster: " << i << std::endl;
+        Debug::stream() << " cluster: " << i << std::endl;
         for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
         {
 
-            //Debug::stream() << "    ally: " << it->first << std::endl;
+            Debug::stream() << "    ally: " << it->first << std::endl;
             //circle( it->first, 1, true );
             const Locations& enemies = it->second;
             for( Locations::const_iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy )
             {
-                //Debug::stream() << "        enemy: " << *enemy << std::endl;
+                Debug::stream() << "        enemy: " << *enemy << std::endl;
                 //circle( *enemy, 1, true );
             }
         }
@@ -676,8 +695,8 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     for( size_t i = 0; i < clusters.size(); ++i )
     {
         const AntEnemies& cluster = clusters[i];
-        //const LocationSet& enemies = enemy_clusters[i];
-        //Debug::stream() << "running cluster of size " << cluster.size() << " vs " << enemies.size() << std::endl;
+        const LocationSet& enemies = enemy_clusters[i];
+        Debug::stream() << "running cluster of size " << cluster.size() << " vs " << enemies.size() << std::endl;
 
         //
         // Check for special small cases to solve by exhaustive search
@@ -685,11 +704,42 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
 
         if( cluster.size() == 1 )
         {
+            const Location     ally    = cluster[0].first;
+            
+            // See if this ant can follow its low priority path
+            Ant* ant = m_map( ally ).ant;
+            if( !ant->path.empty() ) 
+            {
+                Location next_loc = m_map.getLocation( ant->location, ant->path.nextStep() );
+                AnyEnemyAnts    any_enemy_ants( MY_ANT_ID );
+                WithinDistance2 within_10( m_map, next_loc, 10 );
+                AnyEnemyCombatants bfs( m_map, next_loc, any_enemy_ants, within_10);
+                bfs.traverse();
+                if( !any_enemy_ants.found_enemy ) continue;
+
+                ant->path.reset();
+                m_map( next_loc ).assigned = false;
+            }
+
+            // Special case 1v1 battles
             const LocationSet& enemies = enemy_clusters[i];
             if( enemies.size() == 1 )
             {
-                solve1v1( cluster[0].first, *enemies.begin() );
+                solve1v1( ally, *enemies.begin() );
                 continue;
+            }
+
+        }
+
+        // No further attempts to honor pre-existing paths
+        for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
+        {
+            Ant* ant = m_map( it->first ).ant;
+            if( !ant->path.empty() )
+            {
+                Location next_loc = m_map.getLocation( ant->location, ant->path.nextStep() );
+                ant->path.reset();
+                m_map( next_loc ).assigned = false;
             }
         }
 
@@ -810,7 +860,9 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         {
             Location ant_location = cluster[i].first;
             Ant* ant = m_map( ant_location ).ant;
-            ant->path.assign( m_map.getLocation( ant_location, best_moves[i] ), best_moves[i], Path::ATTACK );
+            Location new_location = m_map.getLocation( ant_location, best_moves[i] );
+            ant->path.assign( new_location, best_moves[i], Path::ATTACK );
+            m_map( new_location ).assigned = true; 
             m_allies.insert( ant );
 
             //Debug::stream() << "Battle:     moving ant " << ant_location << " in " << DIRECTION_CHAR[ best_moves[i] ]

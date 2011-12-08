@@ -44,6 +44,7 @@ public:
     const Map&            map() const              { return m_map;           }
           Map&            map()                    { return m_map;           }
     const Ants&           myAnts()const            { return m_my_ants;       }
+          Ants&           myAnts()                 { return m_my_ants;       }
     const Locations&      enemyAnts()const         { return m_enemy_ants;    }
     const Locations&      myHills()const           { return m_my_hills;      }
     const Locations&      enemyHills()const        { return m_enemy_hills;   }

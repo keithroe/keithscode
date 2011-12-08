@@ -200,7 +200,6 @@ bool BF<Action, ValidNeighbor>::step()
 {
     BFNode* current =  m_open.front();
 
-    //Debugstream() << "  Checking " << current->loc << std::endl;
     //
     // Check to see if we have reached our goal
     //
@@ -215,19 +214,15 @@ bool BF<Action, ValidNeighbor>::step()
     //
     // Process all neighbors
     //
-    if( current->depth < m_max_depth )
+    if( current->depth < m_max_depth /*&& ( m_map( current->loc ).isTraversable() || current->depth == 0 ) */ )
     {
         for( int i = 0; i < NUM_DIRECTIONS; ++i )
         {
             const Location neighbor_loc = m_map.getLocation( current->loc, static_cast<Direction>( i ) );
-            //Debugstream() << "    Checking  neighbor " << neighbor_loc  << std::endl;
             
-            /*
             // Check if the neighbor is available to be traversed
-            if( !m_map( neighbor_loc ).isAvailable() ) 
-            */
-
-            if( !m_map( neighbor_loc ).isLand() || !m_valid_neighbor( current, neighbor_loc, m_map( neighbor_loc ) ) )
+            if( !m_map( neighbor_loc ).isLand() ||
+                !m_valid_neighbor( current, neighbor_loc, m_map( neighbor_loc ) ) )
             {
                 //Debugstream() << "      not avail " << std::endl;
                 continue;
