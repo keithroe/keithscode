@@ -21,7 +21,7 @@ public:
     typedef std::vector<Direction>                          Directions;
 
 
-    Battle( Map& map );
+    Battle( Map& map, LocationSet& targeted_food );
     ~Battle();
              
     void solve( const Ants& ants, const Locations& enemy_ants );
@@ -85,6 +85,7 @@ private:
                       int& ally_deaths, int& enemy_deaths, int& distance )const;
 
     Map&          m_map;
+    LocationSet&  m_targeted_food;    //< So we can remove targeted food if ant reassigned
 
     AntSet        m_allies;  //< Allies used in battle
     LocationSet   m_enemies; //< Enemies used in battle

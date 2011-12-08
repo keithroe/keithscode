@@ -38,7 +38,10 @@ private:
     
     void makeAssignments();
 
-    void assignToFood( std::set<Ant*>& assigned, unsigned max_dist, bool override_hills );
+    void assignToHillAttack( unsigned max_dist );
+    void assignToFood( unsigned max_dist, bool allow_overrides );
+    void assignToMapPath( Ant* ant );
+    void findStaticAnt( const Location& hill, const Location& defense_position );
 
     /// Move ant according to diffused map priorities
     void makeMove( Ant* ant  );

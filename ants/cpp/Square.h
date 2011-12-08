@@ -54,6 +54,7 @@ struct Square
     bool isAvailable()const;
     bool isWater()const;
     bool isLand()const;
+    bool isTraversable()const;
     bool isUnknown()const;
 
     static std::string typeString( Type c );
@@ -70,7 +71,7 @@ struct Square
     int   hill_id;              ///< Hill player id, -1 if none
     Ant*  ant;                  ///< Ant data if present, NULL otherwise
     Ant*  new_ant;              ///< Ant data if present, NULL otherwise
-    float priority;
+    bool  assigned;
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
 };
@@ -85,7 +86,7 @@ inline Square::Square()
       hill_id( -1 ),
       ant( NULL ),
       new_ant( NULL ),
-      priority( 0.0f )
+      assigned( false )
 {
 }
 
@@ -100,7 +101,7 @@ inline void Square::reset()
     hill_id     = -1;
     ant         = NULL;
     new_ant     = NULL;
-    priority    = 0.0f;
+    assigned    = false;
 
     deadAnts.clear();
 };
@@ -115,7 +116,7 @@ inline void Square::setVisible()
 
 inline bool Square::isAvailable()const
 {
-    return ant_id < 0 && new_ant_id < 0 && hill_id != 0 && !food && type != WATER; 
+    return ant_id < 0 && new_ant_id < 0 && hill_id != 0 && !assigned && !food && type != WATER; 
 }
 
 
@@ -128,6 +129,12 @@ inline bool Square::isWater()const
 inline bool Square::isLand()const
 {
     return type == LAND; 
+}
+
+
+inline bool Square::isTraversable()const
+{
+    return type == LAND && hill_id != 0; 
 }
 
 
@@ -148,11 +155,11 @@ inline std::ostream& operator<<( std::ostream& os, const Square& s )
 {
     os << Square::typeString( s.type )
        << " visible:" << ( s.visible ? "true" : "false" )
-       << " food:"    << ( s.food    ? "true" : "false" )
-       << " ant_id:"  << s.ant_id 
-       << " new_ant_id:"  << s.new_ant_id 
+       << " food:" << ( s.food    ? "true" : "false" )
+       << " ant_id:" << s.ant_id 
+       << " new_ant_id:" << s.new_ant_id 
        << " hill_id:" << s.hill_id 
-       << " priority:" << s.priority; 
+       << " assigned:" << s.assigned; 
     return os;
 }
 
