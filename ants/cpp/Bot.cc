@@ -287,7 +287,7 @@ void Bot::makeMoves()
     m_state.map().diffusePriority( Map::DEFENSE, 35 );
 
     for( Locations::iterator it = base_attackers.begin(); it != base_attackers.end(); ++it )
-        m_state.map().setPriority( Map::DEFENSE, *it, 200 );
+        m_state.map().setPriority( Map::DEFENSE, *it, 1000 );
     for( LocationSet::iterator it = m_hills_under_attack.begin(); it != m_hills_under_attack.end(); ++it )
         m_state.map().setPriority( Map::DEFENSE, *it, -200 );
     m_state.map().diffusePriority( Map::DEFENSE, 15 );
