@@ -160,8 +160,16 @@ namespace
         }
     };
 
+    struct NotHill 
+    {
+        bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
+        {
+            return neighbor.hill_id != 0;
+        }
+    };
 
-    typedef  BF<FindFoodAnt, Always> FindNearestFoodAnt;
+
+    typedef  BF<FindFoodAnt, NotHill> FindNearestFoodAnt;
     
 }
 
@@ -392,8 +400,8 @@ void Bot::assignToFood( unsigned max_dist, bool allow_overrides )
             continue;
         }
         FindFoodAnt    find_ant( m_targeted_food, allow_overrides );
-        Always         always;
-        FindNearestFoodAnt find_nearest_ant( m_state.map(), *it, find_ant, always );
+        NotHill        not_hill;
+        FindNearestFoodAnt find_nearest_ant( m_state.map(), *it, find_ant, not_hill );
         find_nearest_ant.setMaxDepth( max_dist );
         find_nearest_ant.traverse();
 
