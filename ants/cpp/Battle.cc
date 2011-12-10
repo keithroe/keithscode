@@ -44,6 +44,7 @@ namespace
         bool                 found_enemy;
     };
 
+
     struct AnyEnemyAnts 
     {
         AnyEnemyAnts( int ant_id ) : ant_id( ant_id ), found_enemy( false ) {}
@@ -122,51 +123,106 @@ void Battle::fill( const Location& location, int ant_id, int inc)
     const unsigned width  = m_map.width();
 
     Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-2, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-2, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
 
     x = clamp( Location( location.row-1, location.col-2 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-1, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-1, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-1, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-1, location.col+2 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
 
     x = clamp( Location( location.row-0, location.col-2 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-0, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-0, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-0, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row-0, location.col+2 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
 
     x = clamp( Location( location.row+1, location.col-2 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row+1, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row+1, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row+1, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].a += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row+1, location.col+2 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
 
     x = clamp( Location( location.row+2, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row+2, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     x = clamp( Location( location.row+2, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ][ ant_id ].b += inc;
+    m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
+}
+
+
+void Battle::fillLowestEnemies( const Location& location, int ant_id )
+{
+    const unsigned height  = m_map.height();
+    const unsigned width   = m_map.width();
+    const int      enemies = m_grid[ location.row ][ location.col ].enemies( ant_id );
+
+    Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-2, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-2, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+
+    x = clamp( Location( location.row-1, location.col-2 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-1, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-1, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-1, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-1, location.col+2 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+
+    x = clamp( Location( location.row-0, location.col-2 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-0, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-0, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-0, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row-0, location.col+2 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+
+    x = clamp( Location( location.row+1, location.col-2 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row+1, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row+1, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row+1, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row+1, location.col+2 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+
+    x = clamp( Location( location.row+2, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row+2, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    x = clamp( Location( location.row+2, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
 }
 
 
@@ -177,6 +233,10 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
 
     fill( location, ant_id, inc);
 
+    // TODO: improve this by avoiding moving multiple ants into same square
+    //       just keep list of squares already moved into and add check to below
+    //       isWaterOrFood checks
+
     // The four move locations
     Location x_n = clamp( Location( location.row-1, location.col+0 ), height, width );
     Location x_s = clamp( Location( location.row+1, location.col+0 ), height, width );
@@ -186,128 +246,68 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
     if( !isWaterOrFood( m_map( x_n ) ) )
     {
         Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row-3, location.col-0 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row-3, location.col+1 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_s ) ) )
     {
         Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row+3, location.col-0 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row+3, location.col+1 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_w ) ) )
     {
         Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row+0, location.col-3 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row+1, location.col-3 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_e ) ) )
     {
         Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row+0, location.col+3 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
         x = clamp( Location( location.row+1, location.col+3 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_e ) ) || !isWaterOrFood( m_map( x_n ) ) )
     {
         Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_w ) ) || !isWaterOrFood( m_map( x_n ) ) )
     {
         Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_w ) ) || !isWaterOrFood( m_map( x_s ) ) )
     {
         Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
     if( !isWaterOrFood( m_map( x_e ) ) || !isWaterOrFood( m_map( x_s ) ) )
     {
         Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
-        m_grid[ x.row ][ x.col ][ ant_id ].c += inc;
+        m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 }
 
-
-Battle::Score Battle::score( const Battle::AntEnemies& ant_enemies, const Directions& moves )const
-{
-    LocationSet dead_enemies; 
-    Score       current_score;
-
-    int idx = 0;
-    for( AntEnemies::const_iterator it = ant_enemies.begin(); it != ant_enemies.end(); ++it )
-    {
-        // add up my_enem, distancey_count for moved position
-        Location loc   = m_map.getLocation( it->first, moves[ idx++ ] );
-
-        EnemyCount my_enemies = m_grid[ loc.row ][ loc.col ][ 1 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 2 ]; 
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 3 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 4 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 5 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 6 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 7 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 8 ];
-        my_enemies += m_grid[ loc.row ][ loc.col ][ 9 ];
-
-        //Debug::stream() << "scoring: " << loc << std::endl
-        //    << "     my_enemies: " << my_enemies << std::endl;
-
-
-        // for each of my nearby_enemies within dist2 of 10 (they can step into our zone)
-        bool my_ant_dies = false;
-        int  depths = 0;
-        const Locations& enemies = it->second;
-        for( Locations::const_iterator enemy = enemies.begin(); enemy != enemies.end(); ++enemy )
-        {
-            Location enemy_loc = *enemy;
-            if( m_map.distance2( loc, enemy_loc ) <= 10 ) // TODO: magic number
-            {
-                // Potentially in range.  Count this enemy's enemy count
-                // (for now approximate as just ant_id zero enemies)
-                EnemyCount enemy_enemies = m_grid[ enemy_loc.row ][ enemy_loc.col ][ MY_ANT_ID ];
-                if( my_enemies.beats( enemy_enemies ) )
-                { dead_enemies.insert( enemy_loc ); depths +=  my_enemies.deepest(); }
-                if( enemy_enemies.beatsAlly( my_enemies ) )
-                { my_ant_dies = true; }
-                //Debug::stream() << "    enemy " << enemy_loc <<  ": " << enemy_enemies << std::endl
-                //    << "             my_ant_dies = " << my_ant_dies << std::endl
-                //    << "             enemy_dies  = " << my_enemies.beats( enemy_enemies ) << std::endl;
-
-            }
-        }
-        current_score.ally_deaths   += static_cast<int>( my_ant_dies );
-        current_score.attack_depths += depths;
-
-        //Debug::stream() << "        current_score " << current_score << std::endl;
-
-    }
-
-    current_score.enemy_deaths = dead_enemies.size();
-    //Debug::stream() << "    dead enemies " << dead_enemies.size() << std::endl;
-    //Debug::stream() << "    final score  " << current_score << std::endl;
-    return current_score;
-}
 
 
 void Battle::solve1v1( const Location& ally, const Location& enemy )
@@ -483,26 +483,17 @@ Battle::Battle( Map& map, LocationSet& targeted_food )
     //
     const unsigned height = m_map.height();
     const unsigned width  = m_map.width();
-    m_grid = new EnemyCount**[ height ];
+    m_grid = new CombatTile*[ height ];
     for( unsigned i = 0; i < height; ++i )
-    {
-        m_grid[i] = new EnemyCount*[ width ];
-        for( unsigned j = 0; j < width; ++j )
-        {
-            m_grid[i][j] = new EnemyCount[ 10 ];
-        }
-    }
+        m_grid[i] = new CombatTile[ width ];
 }
 
 
 Battle::~Battle()
 {
     const unsigned height = m_map.height();
-    const unsigned width  = m_map.width();
     for( unsigned i = 0; i < height; ++i )
     {
-        for( unsigned j = 0; j < width; ++j )
-            delete [] m_grid[i][j];
         delete m_grid[i];
     }
     delete m_grid;
@@ -520,8 +511,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     const unsigned width  = m_map.width();
     for( unsigned i = 0; i < height; ++i )
         for( unsigned j = 0; j < width; ++j )
-            for( unsigned k = 0; k < 10; ++k )
-                m_grid[i][j][k].reset();
+            m_grid[i][j].reset();
 
     m_allies.clear();
     m_enemies.clear();
@@ -581,20 +571,14 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         }
     }
 
-    //Debug::stream() << "Battle:   found " << m_enemies.size() << " enemy ants in battle" << std::endl;
-
-
-
-
-
     //
     // Splat the ants into the m_grid
     //
-    //setFillColor( 0, 0, 255, 0.1f );
+    setFillColor( 255, 0, 255, 1.0f );
     for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
     {
         fillPlusOne( it->first, MY_ANT_ID, 1 );
-        //circle( it->first, 1, true );
+        circle( it->first, 1, true );
     }
 
     //setFillColor( 255, 0, 0, 0.1f );
@@ -674,8 +658,8 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         const AntEnemies& ally_enemies = clusters[i];
 
         setFillColor( i%3 == 0 ? 0 : rnd()%256,
-                i%3 == 1 ? 0 : rnd()%256,
-                i%3 == 2 ? 0 : rnd()%256, 0.3f );
+                      i%3 == 1 ? 0 : rnd()%256,
+                      i%3 == 2 ? 0 : rnd()%256, 0.3f );
         Debug::stream() << " cluster: " << i << std::endl;
         for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
         {
@@ -753,6 +737,75 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             }
         }
 
+
+        //
+        // Find the minimum enemy's enemies for each square
+        //
+        for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
+        {
+            Location loc = it->first;
+           
+            fillLowestEnemies( loc, MY_ANT_ID );
+
+            Locations neighbors;
+            m_map.getNeighbors( loc, isLand, neighbors );
+            for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
+                fillLowestEnemies( *it, MY_ANT_ID );
+        }
+
+        for( LocationSet::const_iterator it = m_enemies.begin(); it != m_enemies.end(); ++it )
+        {
+            Location loc = *it;
+            int      ant_id = m_map( loc ).ant_id;
+            
+            fillLowestEnemies( loc, ant_id );
+
+            Locations neighbors;
+            m_map.getNeighbors( loc, isLand, neighbors );
+            for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
+                fillLowestEnemies( *it, ant_id );
+        }
+
+
+        //
+        // Now find a move for each ally ant
+        //
+        for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
+        {
+            // TODO: optimize the number of good tiles taken up by ally moves here -- for now, greedy
+            // TODO: add abilty to be aggressive (allow moves to TIE) or defensive (no moves to TIE)
+            Location           loc           = it->first;
+            Location           best_location = loc;
+            CombatTile::Result best_result   = m_grid[ loc.row ][ loc.col ].result( MY_ANT_ID ); 
+            Debug::stream() << "   initial result " << loc << ": " << best_result << std::endl;
+
+            Locations neighbors;
+            m_map.getNeighbors( loc, isAvailable, neighbors );
+            for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
+            {
+                Location           cur_location = *it;
+                CombatTile::Result cur_result   = m_grid[ cur_location.row ][ cur_location.col ].result( MY_ANT_ID ); 
+                Debug::stream() << "       checking result " << cur_location << ": " << cur_result << std::endl;
+                if( cur_result > best_result )
+                {
+                    best_location = cur_location;
+                    best_result   = cur_result;
+                }
+            }
+
+            Ant*      ant = m_map( loc ).ant;
+            Direction dir = m_map.getDirection( loc, best_location );
+            ant->path.assign( best_location, dir, Path::ATTACK );
+            m_map( best_location ).assigned = true;
+            m_allies.insert( ant );
+
+            Debug::stream() << "Battle:     moving ant " << loc << " in " << DIRECTION_CHAR[ dir ] << std::endl;
+        }
+
+
+
+
+        /*
         //
         // Run simulated annealing on each cluster 
         //
@@ -764,7 +817,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         Score      cur_score  = score( cluster, cur_moves );
         Score      best_score = cur_score;
 
-        //Debug::stream() << "Battle: initial score is " << cur_score << std::endl;
+        Debug::stream() << "Battle: initial score is " << cur_score << std::endl;
 
         LocationSet original_squares;
         LocationSet occupied_squares;
@@ -795,9 +848,9 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             Location  new_loc  = m_map.getLocation( orig_loc, new_move );
 
             // Make sure the transition is viable 
-            //Debug::stream() << "  Transitioning ant " << orig_loc << " cur: " <<  DIRECTION_CHAR[ cur_move ] 
-            //    << " best: " << DIRECTION_CHAR[ best_moves[ rant ] ] << std::endl;
-            //Debug::stream() << "     first trying move " << DIRECTION_CHAR[ new_move ] << std::endl;
+            Debug::stream() << "  Transitioning ant " << orig_loc << " cur: " <<  DIRECTION_CHAR[ cur_move ] 
+                            << " best: " << DIRECTION_CHAR[ best_moves[ rant ] ] << std::endl;
+            Debug::stream() << "     first trying move " << DIRECTION_CHAR[ new_move ] << std::endl;
             int tries = 0;
             while( ( ( !m_map( new_loc ).isAvailable() && original_squares.find( new_loc ) == original_squares.end() ) || 
                         occupied_squares.find( new_loc ) != occupied_squares.end() ) && 
@@ -808,7 +861,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 new_move = static_cast<Direction>( (new_move+1) % 5 );
                 if( new_move == cur_move ) // Skip over cur_move
                     new_move = static_cast<Direction>( (new_move+1) % 5 );
-                //Debug::stream() << "       switching to move " << DIRECTION_CHAR[ new_move ] << std::endl;
+                Debug::stream() << "       switching to move " << DIRECTION_CHAR[ new_move ] << std::endl;
                 new_loc = m_map.getLocation( orig_loc, new_move );
                 tries++;
             }
@@ -822,10 +875,10 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
 
             // Check if we have a new best state
             const Score new_score = score( cluster, cur_moves );
-            //Debug::stream() << "Battle:      score: " << new_score << " best: " << best_score << std::endl; 
+            Debug::stream() << "Battle:      score: " << new_score << " best: " << best_score << std::endl; 
             if( new_score > best_score ) //|| ( new_score == best_score && cur_move == NONE ) ) // Prefer movement
             {
-                //Debug::stream() << "Battle:  found new better score " << new_score << std::endl;
+                Debug::stream() << "Battle:  found new better score " << new_score << std::endl;
                 best_score = new_score;
                 best_moves.assign( cur_moves.begin(), cur_moves.end() );
             }
@@ -833,17 +886,17 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             // Stochastically choose whether we accept this move, based on score and cooling schedule
             float p = P( cur_score, new_score, static_cast<float>( MAX_ITERATIONS - i ) / MAX_ITERATIONS ); 
             float e = rndf();
-            //Debug::stream() << "Battle       cur_score:" << cur_score << " new_score: " << new_score 
-            //    << " p: " << p << " rnd: " << e << std::endl;
+            Debug::stream() << "Battle       cur_score:" << cur_score << " new_score: " << new_score 
+                            << " p: " << p << " rnd: " << e << std::endl;
             if( p > e )
             {
-                //Debug::stream() << "Battle:          accepting transition" << cur_score << std::endl;
+                Debug::stream() << "Battle:          accepting transition" << cur_score << std::endl;
                 cur_score     = new_score;
             }
             else
             {
                 // Undo the last move
-                //Debug::stream() << "Battle:          rejecting transition " << cur_score << std::endl;
+                Debug::stream() << "Battle:          rejecting transition " << cur_score << std::endl;
                 occupied_squares.erase ( new_loc );
                 occupied_squares.insert( cur_loc );
                 fillPlusOne( new_loc, MY_ANT_ID, -1 );
@@ -851,7 +904,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 cur_moves[ rant ] = cur_move;
             }
         }
-        //Debug::stream() << "Battle:  max score is" << best_score << std::endl;
+        Debug::stream() << "Battle:  max score is" << best_score << std::endl;
 
         //
         // Assign paths for all battle ants
@@ -865,28 +918,10 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             m_map( new_location ).assigned = true; 
             m_allies.insert( ant );
 
-            //Debug::stream() << "Battle:     moving ant " << ant_location << " in " << DIRECTION_CHAR[ best_moves[i] ]
-            //    << std::endl;
+            Debug::stream() << "Battle:     moving ant " << ant_location << " in " << DIRECTION_CHAR[ best_moves[i] ]
+                            << std::endl;
         }
+        */
     }
 }
 
-
-// temp must be in [0, 1]
-float Battle::P( Battle::Score old_score, Battle::Score new_score, float temp )const
-{
-    // At temp 1.0 (max temp)
-    //   score increase => p = 0.5
-    //   score match    => p = 0.50 
-    //   score decrease => p = 0.5
-    // At temp 0.0 (min temp)
-    //   score increase => p = 1.00 
-    //   score match    => p = 0.50 
-    //   score decrease => p = 0.00
-    const float t = new_score > old_score ? 1.0f : 
-        new_score < old_score ? 0.0f : 
-        0.5f;
-    const float offset = lerp( 0.0f, 0.5f, temp );
-    return lerp( 0.0f+offset, 1.0f-offset, t );
-
-}

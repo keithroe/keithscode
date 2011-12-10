@@ -4,6 +4,8 @@
 
 #include <vector>
 #include <set>
+#include "Debug.h"
+
 
 class Map;
 class Ant;
@@ -20,6 +22,59 @@ public:
     typedef std::vector< std::pair<Location, Locations> >   AntEnemies;
     typedef std::vector<Direction>                          Directions;
 
+    
+    struct CombatTile
+    {
+        enum Result
+        {
+            LOSE=0,
+            TIE,
+            WIN
+        };
+
+        CombatTile() { reset(); }
+
+        void reset() 
+        { 
+            memset( attacks,          0, sizeof( attacks ) );
+            memset( lowest_enemies,   1, sizeof( lowest_enemies ) );
+            lowest_enemies[0] = lowest_enemies[1] = lowest_enemies[2] = lowest_enemies[3] =
+                                lowest_enemies[4] = lowest_enemies[5] = lowest_enemies[6] =
+                                lowest_enemies[7] = lowest_enemies[8] = lowest_enemies[9] = 100;
+        }
+
+        int enemies( int player )const
+        { 
+            // TODO: precalculate if necessary
+            return attacks[0] + attacks[1] + attacks[2] + attacks[3] + attacks[4] +
+                   attacks[5] + attacks[6] + attacks[7] + attacks[8] + attacks[9] -
+                   attacks[player];
+        }
+
+        int mmin( int a, int b ) { return a < b ? a : b; }
+        
+        void setLowestEnemies( int player, int enemies )
+        {
+            for( int i = 0; i < 10; ++i )
+                if( i != player && enemies < lowest_enemies[i] )
+                    lowest_enemies[i] = enemies;
+        }       
+
+        Result result( int player )
+        {
+            const int player_enemies = enemies( player );
+            const int enemy_enemies  = lowest_enemies[ player ];
+            Debug::stream() << "  result:  p_enemies: " << player_enemies << " e_enemies: " << enemy_enemies << std::endl;
+            return player_enemies < enemy_enemies ? WIN :
+                   player_enemies > enemy_enemies ? LOSE :
+                   TIE;
+                  
+        }
+
+        int    attacks[ 10 ];          // Number of ants which could attack this
+        int    lowest_enemies[ 10 ];   // Lowest enemy's enemis in range of this
+    };
+
 
     Battle( Map& map, LocationSet& targeted_food );
     ~Battle();
@@ -31,53 +86,14 @@ public:
 
 private:
 
-    struct Score
-    {
-        Score();
-
-        bool  operator< ( const Score& s )const;
-        bool  operator> ( const Score& s )const;
-        bool  operator==( const Score& s )const;
-        bool  operator>=( const Score& s )const;
-        Score operator+ ( const Score& s )const;
-        void  operator+=( const Score& s );
-
-        int enemy_deaths;   // enemy_kills
-        int ally_deaths;    // ally deaths
-        int attack_depths;  // depth of attacking ants
-    };
-
-    friend std::ostream& operator<<( std::ostream& out, const Score& s );
-
-    struct EnemyCount
-    {
-        EnemyCount();
-        EnemyCount( int a, int b, int c );
-
-        void operator+=( const EnemyCount& s );
-        
-        int sum()const;
-        int deepest()const;
-        int deepestEnemyCount()const;
-
-        bool beats( const EnemyCount& s )const;
-        bool beatsAlly( const EnemyCount& s )const;
-
-        void reset();
-
-        int a, b, c;
-    };
-
-    friend std::ostream& operator<<( std::ostream& out, const EnemyCount& s );
-
 
     const static int MY_ANT_ID = 0;
 
     void fill( const Location& location, int ant_id, int inc );
     void fillPlusOne( const Location& location, int ant_id, int inc );
+    void fillLowestEnemies( const Location& location, int ant_id );
 
-    Score score( const AntEnemies& ant_enemies, const Directions& moves )const;
-    float P( Battle::Score old_score, Battle::Score new_score, float temp )const;
+
 
     void solve1v1( const Location& ally, const Location& enemy );
     void solve2v1( const Location& ally0, const Location& ally1, const Location& enemy );
@@ -90,166 +106,10 @@ private:
     AntSet        m_allies;  //< Allies used in battle
     LocationSet   m_enemies; //< Enemies used in battle
 
-    EnemyCount*** m_grid; 
+
+    CombatTile** m_grid; 
 };
 
-
-//------------------------------------------------------------------------------
-//
-// Score 
-//
-//------------------------------------------------------------------------------
-
-inline Battle::Score::Score()
-    : enemy_deaths( 0 ),
-      ally_deaths( 0 ),
-      attack_depths( 0 )
-{
-}
-
-
-inline bool Battle::Score::operator<( const Battle::Score& s )const
-{
-#ifdef DEFENSIVE
-    return ally_deaths   > s.ally_deaths     ? true  :
-           ally_deaths   < s.ally_deaths     ? false :
-           enemy_deaths  < s.enemy_deaths    ? true  :
-           enemy_deaths  > s.enemy_deaths    ? false :
-           attack_depths < s.attack_depths;
-#else
-    return enemy_deaths  < s.enemy_deaths    ? true  :
-           enemy_deaths  > s.enemy_deaths    ? false :
-           attack_depths < s.attack_depths   ? true  :
-           attack_depths > s.attack_depths   ? false :
-           ally_deaths   > s.ally_deaths;
-#endif
-}
-
-
-inline bool Battle::Score::operator==( const  Battle::Score& s )const
-{
-    return enemy_deaths  == s.enemy_deaths &&
-           ally_deaths   == s.ally_deaths  &&
-           attack_depths == s.attack_depths;
-}
-
-
-inline bool Battle::Score::operator>( const Battle::Score& s )const
-{
-#ifdef DEFENSIVE
-    return ally_deaths     < s.ally_deaths    ? true  :
-           ally_deaths     > s.ally_deaths    ? false :
-           enemy_deaths    > s.enemy_deaths   ? true  :
-           enemy_deaths    < s.enemy_deaths   ? false :
-           attack_depths   > s.attack_depths;
-#else
-    return enemy_deaths    > s.enemy_deaths   ? true  :
-           enemy_deaths    < s.enemy_deaths   ? false :
-           attack_depths   > s.attack_depths  ? true  :
-           attack_depths   < s.attack_depths  ? false :
-           ally_deaths     < s.ally_deaths;
-#endif
-}
-
-
-inline bool Battle::Score::operator>=( const Battle::Score& s )const
-{
-    return !( *this < s );
-}
-
-
-inline Battle::Score Battle::Score::operator+( const Battle::Score& s )const
-{
-    Score t;
-    t.enemy_deaths     = enemy_deaths  + s.enemy_deaths;
-    t.ally_deaths      = ally_deaths   + s.ally_deaths;
-    t.attack_depths    = attack_depths + s.attack_depths;
-    return t;
-}
-
-inline void Battle::Score::operator+=( const Battle::Score& s )
-{
-    enemy_deaths  += s.enemy_deaths;
-    ally_deaths   += s.ally_deaths;
-    attack_depths += s.attack_depths;
-}
-
-
-inline std::ostream& operator<<( std::ostream& out, const Battle::Score& s )
-{
-    out << s.enemy_deaths << "." << s.ally_deaths << "." << s.attack_depths;
-    return out;
-}
-
-//------------------------------------------------------------------------------
-//
-// EnemyCount
-//
-//------------------------------------------------------------------------------
-
-inline Battle::EnemyCount::EnemyCount()
-    : a(0), b(0), c(0)
-{
-}
-
-
-inline Battle::EnemyCount::EnemyCount( int a, int b, int c ) 
-    : a(a),
-      b(b),
-      c(c) 
-{
-}
-
-
-inline void Battle::EnemyCount::operator+=( const EnemyCount& s )
-{ 
-    a += s.a;
-    b += s.b;
-    c += s.c;
-}
-
-
-inline int Battle::EnemyCount::sum()const
-{ 
-    return a + b + c;
-}
-
-
-inline int Battle::EnemyCount::deepest()const
-{ 
-    return a ? 3 : b ? 2 : 1;
-}
-
-
-inline int Battle::EnemyCount::deepestEnemyCount()const
-{
-    return a ? a : b ? b : c;
-}
-
-
-inline bool Battle::EnemyCount::beats( const EnemyCount& s )const
-{
-    return sum() <= s.sum() && deepest() <= s.deepest() && deepestEnemyCount() <= s.deepestEnemyCount();
-}
-
-
-inline bool Battle::EnemyCount::beatsAlly( const EnemyCount& s )const
-{
-    return deepestEnemyCount() <= s.deepestEnemyCount() || sum() < s.sum();
-}
-
-
-inline void Battle::EnemyCount::reset()
-{
-    a = b = c = 0;
-}
-
-
-inline std::ostream& operator<<( std::ostream& out, const Battle::EnemyCount& s )
-{
-    out << s.a << "." << s.b << "." << s.c;
-    return out;
-}
 
 
 #endif // BATTLE_H_
