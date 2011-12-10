@@ -29,6 +29,7 @@ public:
         {
             LOSE=0,
             TIE,
+            SAFE,
             WIN
         };
 
@@ -40,7 +41,7 @@ public:
             memset( lowest_enemies,   1, sizeof( lowest_enemies ) );
             lowest_enemies[0] = lowest_enemies[1] = lowest_enemies[2] = lowest_enemies[3] =
                                 lowest_enemies[4] = lowest_enemies[5] = lowest_enemies[6] =
-                                lowest_enemies[7] = lowest_enemies[8] = lowest_enemies[9] = 100;
+                                lowest_enemies[7] = lowest_enemies[8] = lowest_enemies[9] = -1;
         }
 
         int enemies( int player )const
@@ -56,16 +57,24 @@ public:
         void setLowestEnemies( int player, int enemies )
         {
             for( int i = 0; i < 10; ++i )
-                if( i != player && enemies < lowest_enemies[i] )
+                if( i != player && ( enemies < lowest_enemies[i] || lowest_enemies[i] == -1 ) )
                     lowest_enemies[i] = enemies;
         }       
 
         Result result( int player )
         {
-            const int player_enemies = enemies( player );
             const int enemy_enemies  = lowest_enemies[ player ];
-            Debug::stream() << "  result:  p_enemies: " << player_enemies << " e_enemies: " << enemy_enemies << std::endl;
-            return player_enemies < enemy_enemies ? WIN :
+            if( enemy_enemies == -1 )
+            {
+                Debug::stream() << "  result(): returning SAFE " << std::endl;
+                return SAFE;
+            }
+
+            const int player_enemies = enemies( player );
+            Debug::stream() << "  result() p_enemies: " << player_enemies 
+                            << " e_enemies: " << enemy_enemies << std::endl;
+            return 
+                   player_enemies < enemy_enemies ? WIN :
                    player_enemies > enemy_enemies ? LOSE :
                    TIE;
                   

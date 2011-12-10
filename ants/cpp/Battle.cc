@@ -715,6 +715,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
 
         }
 
+        /*
         // No further attempts to honor pre-existing paths
         for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
         {
@@ -726,6 +727,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 m_map( next_loc ).assigned = false;
             }
         }
+        */
 
         if( cluster.size() == 2 )
         {
@@ -773,11 +775,27 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
         {
             // TODO: optimize the number of good tiles taken up by ally moves here -- for now, greedy
-            // TODO: add abilty to be aggressive (allow moves to TIE) or defensive (no moves to TIE)
+            // TODO: add abilty to be aggressive (TIE > SAFE) or defensive (SAFE > TIE)
+            Ant*               ant           = m_map( it->first ).ant;
             Location           loc           = it->first;
+
+            Debug::stream() << "Battle: " << *ant << std::endl;
+            if( !ant->path.empty() )
+            {
+                Location           path_location = m_map.getLocation( loc, ant->path.nextStep() );
+                CombatTile::Result path_result   = m_grid[ loc.row ][ loc.col ].result( MY_ANT_ID ); 
+                if( path_result >= CombatTile::SAFE )
+                {
+                    //m_map( path_location ).assigned = true;
+                    m_allies.insert( ant );
+                    continue;
+                }
+                ant->path.reset();
+                m_map( path_location ).assigned = false;
+            }
+
             Location           best_location = loc;
             CombatTile::Result best_result   = m_grid[ loc.row ][ loc.col ].result( MY_ANT_ID ); 
-            Debug::stream() << "   initial result " << loc << ": " << best_result << std::endl;
 
             Locations neighbors;
             m_map.getNeighbors( loc, isAvailable, neighbors );
@@ -793,7 +811,6 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 }
             }
 
-            Ant*      ant = m_map( loc ).ant;
             Direction dir = m_map.getDirection( loc, best_location );
             ant->path.assign( best_location, dir, Path::ATTACK );
             m_map( best_location ).assigned = true;
