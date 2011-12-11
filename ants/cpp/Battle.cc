@@ -119,6 +119,7 @@ namespace
 
 void Battle::fill( const Location& location, int ant_id, int inc)
 {
+    assert( 0 <= ant_id && ant_id < 10 );
     const unsigned height = m_map.height();
     const unsigned width  = m_map.width();
 
@@ -226,8 +227,137 @@ void Battle::fillLowestEnemies( const Location& location, int ant_id )
 }
 
 
+void Battle::fillEnemyDistance( const Location& location )
+{
+    const unsigned height = m_map.height();
+    const unsigned width  = m_map.width();
+
+    Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-2, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-2, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+
+    x = clamp( Location( location.row-1, location.col-2 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-1, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-1, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-1, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-1, location.col+2 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+
+    x = clamp( Location( location.row-0, location.col-2 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-0, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-0, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-0, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row-0, location.col+2 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+
+    x = clamp( Location( location.row+1, location.col-2 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row+1, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row+1, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row+1, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row+1, location.col+2 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+
+    x = clamp( Location( location.row+2, location.col-1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row+2, location.col-0 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    x = clamp( Location( location.row+2, location.col+1 ), height, width );
+    m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+
+    // TODO: improve this by avoiding moving multiple ants into same square
+    //       just keep list of squares already moved into and add check to below
+    //       isWaterOrFood checks
+
+    // The four move locations
+    Location x_n = clamp( Location( location.row-1, location.col+0 ), height, width );
+    Location x_s = clamp( Location( location.row+1, location.col+0 ), height, width );
+    Location x_e = clamp( Location( location.row+0, location.col+1 ), height, width );
+    Location x_w = clamp( Location( location.row+0, location.col-1 ), height, width );
+
+    if( !isWaterOrFood( m_map( x_n ) ) )
+    {
+        Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row-3, location.col-0 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row-3, location.col+1 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_s ) ) )
+    {
+        Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row+3, location.col-0 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row+3, location.col+1 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_w ) ) )
+    {
+        Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row+0, location.col-3 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row+1, location.col-3 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_e ) ) )
+    {
+        Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row+0, location.col+3 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+        x = clamp( Location( location.row+1, location.col+3 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_e ) ) || !isWaterOrFood( m_map( x_n ) ) )
+    {
+        Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_w ) ) || !isWaterOrFood( m_map( x_n ) ) )
+    {
+        Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_w ) ) || !isWaterOrFood( m_map( x_s ) ) )
+    {
+        Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+
+    if( !isWaterOrFood( m_map( x_e ) ) || !isWaterOrFood( m_map( x_s ) ) )
+    {
+        Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
+        m_grid[ x.row ][ x.col ].distance_sum += m_map.distance2( location, x );;
+    }
+}
+
+
 void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
 {
+    assert( 0 <= ant_id && ant_id < 10 );
     const unsigned height = m_map.height();
     const unsigned width  = m_map.width();
 
@@ -761,6 +891,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             int      ant_id = m_map( loc ).ant_id;
             
             fillLowestEnemies( loc, ant_id );
+            fillEnemyDistance( loc );
 
             Locations neighbors;
             m_map.getNeighbors( loc, isLand, neighbors );
@@ -796,6 +927,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
 
             Location           best_location = loc;
             CombatTile::Result best_result   = m_grid[ loc.row ][ loc.col ].result( MY_ANT_ID ); 
+            int                best_distance = m_grid[ loc.row ][ loc.col ].distance_sum;
 
             Locations neighbors;
             m_map.getNeighbors( loc, isAvailable, neighbors );
@@ -803,11 +935,13 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             {
                 Location           cur_location = *it;
                 CombatTile::Result cur_result   = m_grid[ cur_location.row ][ cur_location.col ].result( MY_ANT_ID ); 
+                int                cur_distance = m_grid[ cur_location.row ][ cur_location.col ].distance_sum;
                 Debug::stream() << "       checking result " << cur_location << ": " << cur_result << std::endl;
-                if( cur_result > best_result )
+                if( cur_result > best_result || ( cur_result == best_result && cur_distance < best_distance ) )
                 {
                     best_location = cur_location;
                     best_result   = cur_result;
+                    best_distance = cur_distance;
                 }
             }
 

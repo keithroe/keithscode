@@ -335,7 +335,7 @@ void Bot::makeMoves()
     // Assign ants to attack/defend locally.  Will override path if necessary
     //
     Debug::stream() << " Assigning battle tasks..." << std::endl;
-    m_battle->solve( m_state.myAnts(), m_state.enemyAnts() );
+    //m_battle->solve( m_state.myAnts(), m_state.enemyAnts() );
 
     std::for_each( m_state.myAnts().begin(),
                    m_state.myAnts().end(),

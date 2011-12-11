@@ -37,6 +37,7 @@ public:
 
         void reset() 
         { 
+            distance_sum = 0;
             memset( attacks,          0, sizeof( attacks ) );
             memset( lowest_enemies,   1, sizeof( lowest_enemies ) );
             lowest_enemies[0] = lowest_enemies[1] = lowest_enemies[2] = lowest_enemies[3] =
@@ -46,6 +47,7 @@ public:
 
         int enemies( int player )const
         { 
+            assert( 0 <= player && player < 10 );
             // TODO: precalculate if necessary
             return attacks[0] + attacks[1] + attacks[2] + attacks[3] + attacks[4] +
                    attacks[5] + attacks[6] + attacks[7] + attacks[8] + attacks[9] -
@@ -56,6 +58,7 @@ public:
         
         void setLowestEnemies( int player, int enemies )
         {
+            assert( 0 <= player && player < 10 );
             for( int i = 0; i < 10; ++i )
                 if( i != player && ( enemies < lowest_enemies[i] || lowest_enemies[i] == -1 ) )
                     lowest_enemies[i] = enemies;
@@ -63,6 +66,7 @@ public:
 
         Result result( int player )
         {
+            assert( 0 <= player && player < 10 );
             const int enemy_enemies  = lowest_enemies[ player ];
             if( enemy_enemies == -1 )
             {
@@ -80,6 +84,7 @@ public:
                   
         }
 
+        int    distance_sum;           // Sum of all distnces to enemies 
         int    attacks[ 10 ];          // Number of ants which could attack this
         int    lowest_enemies[ 10 ];   // Lowest enemy's enemis in range of this
     };
@@ -101,7 +106,7 @@ private:
     void fill( const Location& location, int ant_id, int inc );
     void fillPlusOne( const Location& location, int ant_id, int inc );
     void fillLowestEnemies( const Location& location, int ant_id );
-
+    void fillEnemyDistance( const Location& location );
 
 
     void solve1v1( const Location& ally, const Location& enemy );
