@@ -16,6 +16,7 @@ public:
         HILL,
         FOOD, 
         EXPLORE,
+        DEFENSE,
         OTHER 
     };
 
@@ -23,10 +24,10 @@ public:
 
 
     template <class Iter>
-    Path( const Location& destination, Iter begins, Iter ends );
+    Path( const Location& destination, Iter begins, Iter ends, Goal goal = OTHER );
     
     template <class Iter>
-    void assign( const Location& destination, Iter begins, Iter ends );
+    void assign( const Location& destination, Iter begins, Iter ends, Goal goal = OTHER );
     void assign( const Location& destination, Direction step, Goal goal=OTHER );
 
     Location  destination()const        { return m_destination;     }
@@ -51,19 +52,19 @@ private:
     
 
 template <class Iter>
-Path::Path( const Location& destination, Iter begin, Iter end )
+Path::Path( const Location& destination, Iter begin, Iter end, Goal goal )
     : m_destination( destination ),
-      m_goal( OTHER )
+      m_goal( goal )
 {
     m_steps.assign( begin, end );
 }
 
 
 template <class Iter>
-void Path::assign( const Location& destination, Iter begin, Iter end )
+void Path::assign( const Location& destination, Iter begin, Iter end, Goal goal )
 {
     m_destination = destination;
-    m_goal        = OTHER;
+    m_goal        = goal;
     m_steps.assign( begin, end );
 }
 

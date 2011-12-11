@@ -446,8 +446,8 @@ void Map::diffusePriority( PriorityType type, unsigned iterations )
             float num_nodes   = 1.0f;
             if( m_grid[ 0   ][ w-2 ].isLand() ) { sum += priorities[ 0   ][ w-2 ]; num_nodes += 1.0f; }
             if( m_grid[ 0   ][ 0   ].isLand() ) { sum += priorities[ 0   ][ 0   ]; num_nodes += 1.0f; }
-            if( m_grid[ h-1 ][ w   ].isLand() ) { sum += priorities[ h-1 ][ w   ]; num_nodes += 1.0f; }
-            if( m_grid[ 1   ][ w   ].isLand() ) { sum += priorities[ 1   ][ w   ]; num_nodes += 1.0f; }
+            if( m_grid[ h-1 ][ w-1 ].isLand() ) { sum += priorities[ h-1 ][ w   ]; num_nodes += 1.0f; }
+            if( m_grid[ 1   ][ w-1 ].isLand() ) { sum += priorities[ 1   ][ w   ]; num_nodes += 1.0f; }
             m_scratch[ 0 ][ w-1 ] = sum / num_nodes; 
         }
 
