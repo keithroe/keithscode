@@ -332,10 +332,18 @@ void Bot::makeMoves()
                    std::bind1st( std::mem_fun( &Bot::assignToMapPath ), this ) );
 
     //
+    // Visualize ant paths for debugging
+    //
+    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
+    {
+        (*it)->path.visualize( (*it)->location, m_state.map() );
+    }
+
+    //
     // Assign ants to attack/defend locally.  Will override path if necessary
     //
     Debug::stream() << " Assigning battle tasks..." << std::endl;
-    //m_battle->solve( m_state.myAnts(), m_state.enemyAnts() );
+    m_battle->solve( m_state.myAnts(), m_state.enemyAnts() );
 
     std::for_each( m_state.myAnts().begin(),
                    m_state.myAnts().end(),
@@ -892,6 +900,7 @@ void Bot::makeAssignments()
                     << "    attack_ants   : " << cur_attack_ants << std::endl;
 
 
+    /*
 #ifdef VISUALIZER
     setFillColor( 0, 255, 0, 0.2 );
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
@@ -925,6 +934,7 @@ void Bot::makeAssignments()
             circle( ant->location, 1, true );
     }
 #endif
+*/
 }
 
 
