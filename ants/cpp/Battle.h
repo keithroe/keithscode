@@ -10,6 +10,7 @@
 class Map;
 class Ant;
 struct Location;
+struct CombatTile;
 
 
 class Battle
@@ -23,72 +24,6 @@ public:
     typedef std::vector<Direction>                          Directions;
 
     
-    struct CombatTile
-    {
-        enum Result
-        {
-            LOSE=0,
-            TIE,
-            SAFE,
-            WIN
-        };
-
-        CombatTile() { reset(); }
-
-        void reset() 
-        { 
-            distance_sum = 0;
-            memset( attacks,          0, sizeof( attacks ) );
-            memset( lowest_enemies,   1, sizeof( lowest_enemies ) );
-            lowest_enemies[0] = lowest_enemies[1] = lowest_enemies[2] = lowest_enemies[3] =
-                                lowest_enemies[4] = lowest_enemies[5] = lowest_enemies[6] =
-                                lowest_enemies[7] = lowest_enemies[8] = lowest_enemies[9] = -1;
-        }
-
-        int enemies( int player )const
-        { 
-            assert( 0 <= player && player < 10 );
-            // TODO: precalculate if necessary
-            return attacks[0] + attacks[1] + attacks[2] + attacks[3] + attacks[4] +
-                   attacks[5] + attacks[6] + attacks[7] + attacks[8] + attacks[9] -
-                   attacks[player];
-        }
-
-        int mmin( int a, int b ) { return a < b ? a : b; }
-        
-        void setLowestEnemies( int player, int enemies )
-        {
-            assert( 0 <= player && player < 10 );
-            for( int i = 0; i < 10; ++i )
-                if( i != player && ( enemies < lowest_enemies[i] || lowest_enemies[i] == -1 ) )
-                    lowest_enemies[i] = enemies;
-        }       
-
-        Result result( int player )
-        {
-            assert( 0 <= player && player < 10 );
-            const int enemy_enemies  = lowest_enemies[ player ];
-            if( enemy_enemies == -1 )
-            {
-                Debug::stream() << "  result(): returning SAFE " << std::endl;
-                return SAFE;
-            }
-
-            const int player_enemies = enemies( player );
-            Debug::stream() << "  result() p_enemies: " << player_enemies 
-                            << " e_enemies: " << enemy_enemies << std::endl;
-            return 
-                   player_enemies < enemy_enemies ? WIN :
-                   player_enemies > enemy_enemies ? LOSE :
-                   TIE;
-                  
-        }
-
-        int    distance_sum;           // Sum of all distnces to enemies 
-        int    attacks[ 10 ];          // Number of ants which could attack this
-        int    lowest_enemies[ 10 ];   // Lowest enemy's enemis in range of this
-    };
-
 
     Battle( Map& map, LocationSet& targeted_food );
     ~Battle();

@@ -7,6 +7,9 @@
 
 #include <list>
 
+class Map;
+
+
 class Path
 {
 public:
@@ -37,6 +40,8 @@ public:
     Goal      goal()const               { return m_goal;            }
     void      setGoal( Goal goal )      { m_goal = goal;            }
     Direction popNextStep();
+
+    void      visualize( const Location& start, const Map& map )const;
 
     void      reset()                   { m_steps.clear(); m_goal = OTHER; }
 

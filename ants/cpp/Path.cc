@@ -1,6 +1,7 @@
 
 #include "Path.h"
 #include "Debug.h"
+#include "Map.h"
 
 
 
@@ -33,6 +34,34 @@ Direction Path::popNextStep()
         m_goal = OTHER;
     }
     return dir;     
+}
+
+
+void Path::visualize( const Location& start, const Map& map )const
+{
+#ifdef VISUALIZER
+    if( m_steps.empty() ) return;
+    
+    setLineWidth( 2 );
+    switch( m_goal )
+    {
+        case ATTACK:  setColor( 255,  80,  80, 0.5f ); break;
+        case HILL:    setColor( 255, 255,  80, 0.5f ); break;
+        case FOOD:    setColor(  80, 255,  80, 0.5f ); break;
+        case EXPLORE: setColor(  80,  80, 255, 0.5f ); break;
+        case OTHER:   setColor(  80, 255, 255, 0.5f ); break;
+    }
+
+    Location cur_location = start;
+    for( std::list<Direction>::const_iterator it = m_steps.begin(); it != m_steps.end(); ++it )
+    {
+        Location next_location = map.getLocation( cur_location, *it );
+        int d = abs( next_location.row - cur_location.row + next_location.col - cur_location.col );
+        if(  d == 1 )
+            line( cur_location, next_location );
+        cur_location = next_location;
+    }
+#endif
 }
 
 

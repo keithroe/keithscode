@@ -3,6 +3,7 @@
 
 #include "State.h"
 #include <set>
+#include <map>
 
 class Location;
 class Battle;
@@ -50,10 +51,15 @@ private:
     typedef std::set<Location>  LocationSet;
     typedef std::set<Ant*>      AntSet;
 
+    typedef std::map<Location, Ant*> AssignedAnts;
+
+
     LocationSet        m_enemy_hills;
     bool               m_enemy_hills_changed;
     LocationSet        m_targeted_food;
     LocationSet        m_hills_under_attack;
+
+    AssignedAnts       m_food_ants;
 
     float              m_max_time;
     State              m_state;

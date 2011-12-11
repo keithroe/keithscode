@@ -10,6 +10,15 @@
 //
 // visualizer helpers
 //
+//  v setLineWidth width
+//  v setLineColor r g b a
+//  v setFillColor r g b a
+//  v arrow row1 col1 row2 col2
+//  v circle row col radius fill
+//  v line row1 col1 row2 col2
+//  v rect row col width height fill
+//  v star row col inner_radius outer_radius points fill
+//  v tile row col
 //------------------------------------------------------------------------------
 inline void circle( const Location& loc, float radius, bool fill )
 {
@@ -35,10 +44,33 @@ inline void setLineColor( int r, int g, int b, float a )
 #endif
 }
 
+inline void setColor( int r, int g, int b, float a )
+{
+#ifdef VISUALIZER
+    setLineColor( r, g, b, a );
+    setFillColor( r, g, b, a );
+#endif
+}
+
 inline void tile( const Location& loc )
 {
 #ifdef VISUALIZER
     std::cout << "v tile " << loc.row << " " << loc.col << std::endl;
+#endif
+}
+
+inline void setLineWidth( int width )
+{
+#ifdef VISUALIZER
+    std::cout << "v setLineWidth " << width << std::endl;
+#endif
+}
+
+inline void line( const Location& loc0, const Location& loc1 )
+{
+#ifdef VISUALIZER
+    std::cout << "v line " << loc0.row << " " << loc0.col << " "
+                           << loc1.row << " " << loc1.col << std::endl;
 #endif
 }
 
