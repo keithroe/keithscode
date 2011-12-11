@@ -16,7 +16,6 @@ public:
         HILL,
         FOOD, 
         EXPLORE,
-        DEFENSE,
         OTHER 
     };
 
