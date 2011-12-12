@@ -381,7 +381,7 @@ void Bot::makeMoves()
     //
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
     {
-        (*it)->path.visualize( (*it)->location, m_state.map() );
+        //(*it)->path.visualize( (*it)->location, m_state.map() );
     }
 
     //
@@ -669,9 +669,20 @@ void Bot::updateHillList()
 
 void Bot::updateTargetedFood()
 {
+    // Remove ants which have been killed
+    // TODO: n^2!
     std::vector< AssignedAnts::iterator > remove_these;
     for( AssignedAnts::iterator it = m_food_ants.begin(); it != m_food_ants.end(); ++it )
-        if( m_state.map()( it->first ).food == false )
+        if( std::find( m_state.myAnts().begin(), m_state.myAnts().end(), it->second ) == m_state.myAnts().end() )
+            remove_these.push_back( it );
+    
+    for( std::vector< AssignedAnts::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
+        m_food_ants.erase( *it );
+
+    // Remove ants whose food has disappeared
+    remove_these.clear();
+    for( AssignedAnts::iterator it = m_food_ants.begin(); it != m_food_ants.end(); ++it )
+        if( m_state.map()( it->first ).food == false && m_state.map()( it->first ).visible )
             remove_these.push_back( it );
 
     for( std::vector< AssignedAnts::iterator >::iterator it = remove_these.begin(); it != remove_these.end(); ++it )
@@ -679,6 +690,7 @@ void Bot::updateTargetedFood()
         (*it)->second->path.reset();
         m_food_ants.erase( *it );
     }
+
 }
 
 
