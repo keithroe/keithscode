@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <set>
+#include <map>
 #include "Debug.h"
 
 
@@ -18,14 +19,17 @@ class Battle
 public:
     typedef std::vector<Ant*>                               Ants;
     typedef std::set<Ant*>                                  AntSet;
+
     typedef std::vector<Location>                           Locations;
     typedef std::set<Location>                              LocationSet;
+
     typedef std::vector< std::pair<Location, Locations> >   AntEnemies;
     typedef std::vector<Direction>                          Directions;
 
+    typedef std::map< Location, Ant* >                      AssignedAnts;
     
 
-    Battle( Map& map, LocationSet& targeted_food );
+    Battle( Map& map, AssignedAnts& food_ants );
     ~Battle();
              
     void solve( const Ants& ants, const Locations& enemy_ants );
@@ -50,10 +54,10 @@ private:
                       int& ally_deaths, int& enemy_deaths, int& distance )const;
 
     Map&          m_map;
-    LocationSet&  m_targeted_food;    //< So we can remove targeted food if ant reassigned
+    AssignedAnts& m_food_ants;        //< So we can remove targeted food if ant reassigned
 
-    AntSet        m_allies;  //< Allies used in battle
-    LocationSet   m_enemies; //< Enemies used in battle
+    AntSet        m_allies;           //< Allies used in battle
+    LocationSet   m_enemies;          //< Enemies used in battle
 
 
     CombatTile** m_grid; 

@@ -49,7 +49,7 @@ void Path::visualize( const Location& start, const Map& map )const
         case HILL:    setColor( 255, 255,  80, 0.5f ); break;
         case FOOD:    setColor(  80, 255,  80, 0.5f ); break;
         case EXPLORE: setColor(  80,  80, 255, 0.5f ); break;
-        case OTHER:   setColor(  80, 255, 255, 0.5f ); break;
+        case OTHER:   setColor( 255, 255, 255, 0.8f ); break;
     }
 
     Location cur_location = start;

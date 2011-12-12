@@ -674,9 +674,9 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
 
 
 
-Battle::Battle( Map& map, LocationSet& targeted_food )
+Battle::Battle( Map& map, AssignedAnts& food_ants )
     : m_map( map ),
-      m_targeted_food( targeted_food )
+      m_food_ants( food_ants )
 {
     //
     // create m_grid
@@ -743,7 +743,11 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             if( !any_enemy_ants.found_enemy ) continue;
 
             if( ant->path.goal() == Path::FOOD )
-                m_targeted_food.erase( ant->path.destination() );
+            {
+                AssignedAnts::iterator it = m_food_ants.find( ant->path.destination() );
+                it->second->path.reset();
+                m_food_ants.erase( it );
+            }
             ant->path.reset();
             m_map( next_loc ).assigned = false;
         }
