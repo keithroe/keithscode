@@ -443,7 +443,12 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
     Location x_e = clamp( Location( location.row+0, location.col+1 ), height, width );
     Location x_w = clamp( Location( location.row+0, location.col-1 ), height, width );
 
-    if( !isWaterOrFood( m_map( x_n ) ) )
+    bool a_n = !isWaterOrFood( m_map( x_n ) ) && m_assigned_tiles.find( x_n ) == m_assigned_tiles.end();
+    bool a_s = !isWaterOrFood( m_map( x_s ) ) && m_assigned_tiles.find( x_s ) == m_assigned_tiles.end();
+    bool a_w = !isWaterOrFood( m_map( x_w ) ) && m_assigned_tiles.find( x_w ) == m_assigned_tiles.end();
+    bool a_e = !isWaterOrFood( m_map( x_e ) ) && m_assigned_tiles.find( x_e ) == m_assigned_tiles.end();
+
+    if( a_n ) 
     {
         Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
@@ -453,7 +458,7 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_s ) ) )
+    if( a_s )
     {
         Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
@@ -463,7 +468,7 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_w ) ) )
+    if( a_w ) 
     {
         Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
@@ -473,7 +478,7 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_e ) ) )
+    if( a_e ) 
     {
         Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
@@ -483,25 +488,25 @@ void Battle::fillPlusOne( const Location& location, int ant_id, int inc )
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_e ) ) || !isWaterOrFood( m_map( x_n ) ) )
+    if( a_e || a_n )
     {
         Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_w ) ) || !isWaterOrFood( m_map( x_n ) ) )
+    if( a_w || a_n ) 
     {
         Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_w ) ) || !isWaterOrFood( m_map( x_s ) ) )
+    if( a_w || a_s )
     {
         Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
     }
 
-    if( !isWaterOrFood( m_map( x_e ) ) || !isWaterOrFood( m_map( x_s ) ) )
+    if( a_e || a_s )
     {
         Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
         m_grid[ x.row ][ x.col ].attacks[ ant_id ] += inc;
@@ -715,6 +720,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
 
     m_allies.clear();
     m_enemies.clear();
+    m_assigned_tiles.clear();
 
 
 
@@ -782,6 +788,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     for( AntEnemies::const_iterator it = ally_enemies.begin(); it != ally_enemies.end(); ++it )
     {
         fillPlusOne( it->first, MY_ANT_ID, 1 );
+        m_assigned_tiles.insert( it->first );
         //circle( it->first, 1, true );
     }
 
@@ -789,6 +796,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
     for( LocationSet::const_iterator it = m_enemies.begin(); it != m_enemies.end(); ++it )
     {
         fillPlusOne( *it, m_map( *it ).ant_id, 1 );
+        m_assigned_tiles.insert( *it );
         //circle( *it, 1, true );
     }
     //setFillColor( 0, 0, 0, 0.0f );
@@ -990,7 +998,10 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 Location           path_loc    = m_map.getLocation( loc, ant->path.nextStep() );
                 CombatTile::Result path_result = m_grid[ path_loc.row ][ path_loc.col ].result( MY_ANT_ID ); 
                 Debug::stream() << "   checking path: " << path_loc << " result: " << path_result << std::endl;
-                if( path_result >= CombatTile::SAFE )
+                CombatTile::Result min_result = ant->path.goal() == Path::ATTACK || Path::HILL ? 
+                                                CombatTile::TIE : 
+                                                CombatTile::SAFE;
+                if( path_result >= min_result )
                 {
                     //m_map( path_loc ).assigned = true;
                     m_allies.insert( ant );

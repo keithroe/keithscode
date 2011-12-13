@@ -35,6 +35,9 @@ namespace
         Debug::stream() << "*************** " << std::endl;
     }
 
+
+
+
     struct FindEnemyAnts
     {
         FindEnemyAnts( std::vector<Location>& enemies ) : enemies( enemies ), found_enemy( false ) {}
@@ -206,12 +209,48 @@ namespace
 
     struct Available 
     {
+        Available( const Map& map ) : map( map ) {}
+
         bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
         {
-            return neighbor.isAvailable();
+            // We dont want any non-available nodes internal to our path.
+            return  map( current->loc ).isAvailable();
         }
+
+        const Map& map;
     };
 
+
+    struct HillDefensePriority
+    {
+        HillDefensePriority( Map& map ) : map( map ) {}
+
+        bool operator()( const BFNode* node )
+        {
+            const float peak_priority = 1.0f;
+            const float peak_distance = 8.0f;
+            const float max_distance  = 40;
+            float distance = static_cast<float>( node->depth );
+            float priority = map.getPriority( Map::DEFENSE, node->loc );
+            float hill_priority = distance < peak_distance ?
+                                  peak_priority - 0.5f * (peak_distance-distance) / peak_distance :
+                                  peak_priority - (distance-peak_distance) / ( max_distance - peak_distance );
+
+            map.setPriority( Map::DEFENSE, node->loc, priority + hill_priority );
+            return true;
+        }
+
+        Map& map;
+    };
+
+    void addHillDefensePriority( Map& map, const Location& location )
+    {
+        HillDefensePriority hill_defense_prority( map );
+        Always              always;
+        BF<HillDefensePriority, Always> add_hill_defense_priority( map, location, hill_defense_prority, always );
+        add_hill_defense_priority.setMaxDepth( 40 );
+        add_hill_defense_priority.traverse();
+    }
 
 
     typedef  BF<FindFoodAnt, NotHill> FindNearestFoodAnt;
@@ -309,7 +348,7 @@ void Bot::makeMoves()
     // Attack hills directly for close by ants
     //
     Debug::stream() << " Assigning hill-attack tasks... " << std::endl;
-    assignToHillAttack( 9 );
+    assignToHillAttack( 10 );
 
     //
     // Assign ants to very nearby food with high priority
@@ -335,15 +374,14 @@ void Bot::makeMoves()
     // TODO: rally more intelligently, between enemies and base. also, count
     //       number of enemies and respond proportionately
     //
-    for( LocationSet::iterator it = m_hills_under_attack.begin(); it != m_hills_under_attack.end(); ++it )
-        m_state.map().setPriority( Map::DEFENSE, *it, 1000 );
-    m_state.map().diffusePriority( Map::DEFENSE, 35 );
-
     for( Locations::iterator it = base_attackers.begin(); it != base_attackers.end(); ++it )
-        m_state.map().setPriority( Map::DEFENSE, *it, 1000 );
-    for( LocationSet::iterator it = m_hills_under_attack.begin(); it != m_hills_under_attack.end(); ++it )
-        m_state.map().setPriority( Map::DEFENSE, *it, -200 );
+        m_state.map().setPriority( Map::DEFENSE, *it, 500 );
     m_state.map().diffusePriority( Map::DEFENSE, 15 );
+    
+    for( LocationSet::iterator it = m_hills_under_attack.begin(); it != m_hills_under_attack.end(); ++it )
+    {
+        addHillDefensePriority( m_state.map(), *it );
+    }
     
 
     //
@@ -381,7 +419,7 @@ void Bot::makeMoves()
     //
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
     {
-        //(*it)->path.visualize( (*it)->location, m_state.map() );
+        (*it)->path.visualize( (*it)->location, m_state.map() );
     }
 
     //
@@ -434,10 +472,10 @@ void Bot::assignToHillAttack( unsigned max_dist )
         Debug::stream() << " Searching for nearby ants to attack hill: " << *it << std::endl;
 
         HillAttackAnts hill_attack_ants;
-        Always         always;
-        BF<HillAttackAnts, Always> find_hill_attack_ants( m_state.map(), *it, hill_attack_ants, always );
-        //Available      available;
-        //BF<HillAttackAnts, Available> find_hill_attack_ants( m_state.map(), *it, hill_attack_ants, available );
+        //Always         always;
+        //BF<HillAttackAnts, Always> find_hill_attack_ants( m_state.map(), *it, hill_attack_ants, always );
+        Available      available( m_state.map() );
+        BF<HillAttackAnts, Available> find_hill_attack_ants( m_state.map(), *it, hill_attack_ants, available );
         find_hill_attack_ants.setMaxDepth( max_dist );
         find_hill_attack_ants.traverse();
     }

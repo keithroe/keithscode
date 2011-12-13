@@ -58,6 +58,7 @@ private:
 
     AntSet        m_allies;           //< Allies used in battle
     LocationSet   m_enemies;          //< Enemies used in battle
+    LocationSet   m_assigned_tiles;   //< Tiles already used in fill methods 
 
 
     CombatTile** m_grid; 
