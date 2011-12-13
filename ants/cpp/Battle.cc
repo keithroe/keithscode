@@ -571,44 +571,48 @@ void Battle::solve1v1( const Location& ally, const Location& enemy )
 
 // TODO: switch this to minimax scoring (return maximum ally deaths and associated enemy deaths then minimize this)
 void Battle::countDeaths( const Location& ally0, const Location& ally1, const Location& enemy,
-                          int& ally_deaths, int& enemy_deaths, int& distance )const
+                          float& p_die, float& p_kill, float& distance )const
 {
     int dist0           = m_map.distance2( ally0, enemy );
     int dist1           = m_map.distance2( ally1, enemy );
-    int allies_in_range = static_cast<int>( dist0 <= 5 ) +
-                          static_cast<int>( dist1 <= 5 );
-    enemy_deaths = static_cast<int>( allies_in_range >= 1 );
-    ally_deaths  = static_cast<int>( allies_in_range == 1 );
-    distance     = dist0 + dist1;
+    int allies_in_range = static_cast<int>( dist0 <= 5 ) + static_cast<int>( dist1 <= 5 );
+    float enemy_deaths  = static_cast<float>( allies_in_range >= 1 );
+    float ally_deaths   = static_cast<float>( allies_in_range == 1 );
+    float positions     = 1.0f;
+    distance            = dist0 + dist1;
 
     Debug::stream() << "      epos: " << enemy << " edeaths: " << enemy_deaths << " mydeaths: " << ally_deaths 
                     << " allyinrange: " << allies_in_range << " d0: " << dist0 << " d1: " << dist1 << std::endl;
     for( int i = 0; i < 4; ++i )
     {
         Location moved_enemy = m_map.getLocation( enemy, static_cast<Direction>( i ) ); 
-        if( m_map( moved_enemy ).isWater() ) continue; // TODO: should cache the available directions, pass into func
+        
+        // TODO: could cache the available directions, pass into func
+        if( m_map( moved_enemy ).isWater() ) continue;
+
+        positions          += 1.0f;
         int dist0           = m_map.distance2( ally0, moved_enemy );
         int dist1           = m_map.distance2( ally1, moved_enemy );
-        int allies_in_range = static_cast<int>( dist0 <= 5 ) +
-                              static_cast<int>( dist1 <= 5 );
-        enemy_deaths += static_cast<int>( allies_in_range >= 1 );
-        ally_deaths  += static_cast<int>( allies_in_range == 1 );
+        int allies_in_range = static_cast<int>( dist0 <= 5 ) + static_cast<int>( dist1 <= 5 );
+        enemy_deaths       += static_cast<float>( allies_in_range >= 1 );
+        ally_deaths        += static_cast<float>( allies_in_range == 1 );
         Debug::stream() << "      epos: " << moved_enemy << " edeaths: " << enemy_deaths << " mydeaths: " << ally_deaths
                         << " allyinrange: " << allies_in_range << " d0: " << dist0 << " d1: " << dist1 << std::endl;
         distance     += dist0 + dist1;
     }
+
+    p_die  = ally_deaths  / positions;
+    p_kill = enemy_deaths / positions;
 }
 
-
-void Battle::solve2v1( const Location& ally0, const Location& ally1, const Location& enemy )
+void Battle::solve2v1( const Location& ally0, const Location& ally1, const Location& enemy, int max_depth,
+                       Direction& move0, Direction& move1, float& p_die, float& p_kill )
 {
-    Debug::stream() << "solve2v1 " << ally0 << "," << ally1 << " vs " << enemy << std::endl;
-
-    Direction best_move0 = NONE;
-    Direction best_move1 = NONE;
-    Location  best_loc0 = ally0;
-    Location  best_loc1 = ally1;
-    int best_ally_dies = 10, best_enemy_dies = 0, best_dist = 1000, best_ally_dist = 1000;
+    move0  = NONE;
+    move1  = NONE;
+    p_die  = 1.0f;
+    p_kill = 0.0f; 
+    float dist = 1000.0f;
 
     for( int i = 0; i < 5; ++i )
     {
@@ -619,6 +623,7 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
                             << "        " << m_map( moved_ally0 ) << std::endl;
             continue;
         }
+
         for( int j = 0; j < 5; ++j && i != NONE )
         {
             Location moved_ally1 = m_map.getLocation( ally1, static_cast<Direction>( j ) ); 
@@ -628,52 +633,52 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
                                 << "        " << m_map( moved_ally0 ) << std::endl;
                 continue;
             }
-            int ally_dies, enemy_dies, dist;
-            countDeaths( moved_ally0, moved_ally1, enemy, ally_dies, enemy_dies, dist );
-            int ally_dist = m_map.distance2( moved_ally1, moved_ally0 );
+            float cur_p_die = 1.0f, cur_p_kill = 0.0f, cur_dist = 1000.0f;
+            countDeaths( moved_ally0, moved_ally1, enemy, cur_p_die, cur_p_kill, cur_dist );
 
-            Debug::stream() << "    trying " << moved_ally0 << "," << moved_ally1 
-                << " new allydies:" << ally_dies << " enemydies:" << enemy_dies
-                << " allydist: " << ally_dist << " dist:" << dist << std::endl;
-            // too passive
-            //if( ( best_ally_dies > 0 && ally_dies == 0 )                                            ||
-            //    ( best_ally_dies > 0 && enemy_dies - ally_dies > best_enemy_dies - best_ally_dies ) ||
-            //    ( ally_dies == best_ally_dies && enemy_dies >  best_enemy_dies )                    ||
-            //    ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && distance < best_dist ) )  
+            Debug::stream() << "    trying " << moved_ally0 << "," << moved_ally1 << " p_ally_die:" << cur_p_die 
+                            << " p_enemy_die:" << cur_p_kill << " dist:" << cur_dist << std::endl;
 
-            /*
-               if( enemy_dies - ally_dies > best_enemy_dies - best_ally_dies         ||
-               ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_distance <  best_ally_dist ) ||
-               ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && ally_distance == best_ally_dist && 
-               distance < best_dist ) )  
-               */
-
-            if( ally_dies < best_ally_dies  ||
-              ( ally_dies == best_ally_dies && enemy_dies > best_enemy_dies ) ||
-              ( ally_dies == best_ally_dies && enemy_dies == best_enemy_dies && dist <  best_dist ) )
+            if( cur_p_die <  p_die ||
+              ( cur_p_die == p_die && cur_p_kill >  p_kill ) ||
+              ( cur_p_die == p_die && cur_p_kill == p_kill && cur_dist < dist ) )
             {
-                best_enemy_dies = enemy_dies;
-                best_ally_dies  = ally_dies;
-                best_dist       = dist;
-                best_ally_dist  = ally_dist;
-                best_move0      = static_cast<Direction>( i );
-                best_move1      = static_cast<Direction>( j );
-                best_loc0       = moved_ally0;
-                best_loc1       = moved_ally1;
+                Debug::stream() << "      found new BEST!!!!!" << std::endl;
+                p_die      = cur_p_die;
+                p_kill     = cur_p_kill;
+                dist       = dist;
+                move0      = static_cast<Direction>( i );
+                move1      = static_cast<Direction>( j );
+
+                // We have a perfect solution -- bail
+                if( p_die <  0.001f && p_kill > 0.999f ) return;
             }
         }
     }
+}
 
-    Debug::stream() << " moving " << ally0 << " in " << DIRECTION_CHAR[ best_move0 ] << std::endl
-                    << " moving " << ally1 << " in " << DIRECTION_CHAR[ best_move1 ] << std::endl;
-    Ant* ant = m_map( ally0 ).ant;
-    ant->path.assign( best_loc0, best_move0, Path::ATTACK );
-    m_map( best_loc0 ).assigned = true;
+
+void Battle::solve2v1( const Location& ally0, const Location& ally1, const Location& enemy )
+{
+    Debug::stream() << "solve2v1 " << ally0 << "," << ally1 << " vs " << enemy << std::endl;
+
+    float p_die, p_kill;
+    Direction move0, move1;
+    solve2v1( ally0, ally1, enemy, 1, move0, move1, p_die, p_kill );
+
+    Debug::stream() << " moving " << ally0 << " in " << DIRECTION_CHAR[ move0 ] << std::endl
+                    << " moving " << ally1 << " in " << DIRECTION_CHAR[ move1 ] << std::endl;
+
+    Location moved_ally0 = m_map.getLocation( ally0, move0 );
+    Ant* ant             = m_map( ally0 ).ant;
+    ant->path.assign( moved_ally0, move0, Path::ATTACK );
+    m_map( moved_ally0 ).assigned = true;
     m_allies.insert( ant );
 
+    Location moved_ally1 = m_map.getLocation( ally1, move1 );
     ant = m_map( ally1 ).ant;
-    ant->path.assign( best_loc1, best_move1, Path::ATTACK );
-    m_map( best_loc1 ).assigned = true;
+    ant->path.assign( moved_ally1, move1, Path::ATTACK );
+    m_map( moved_ally1 ).assigned = true;
     m_allies.insert( ant );
 }
 

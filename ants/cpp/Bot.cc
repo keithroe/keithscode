@@ -432,19 +432,6 @@ void Bot::makeMoves()
                    m_state.myAnts().end(),
                    std::bind1st( std::mem_fun( &Bot::makeUncheckedMove), this ) );
     
-    /*
-    //
-    // Now make moves for individual ants
-    //
-    Debug::stream() << " Making moves (path or map based )... " << std::endl;
-    for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
-    {
-        // Battle ants have already been moved
-        if( m_battle->getAllies().find( *it ) == m_battle->getAllies().end() )
-            makeMove( *it );
-    }
-    */
-    
     Debug::stream() << "After moves " << std::endl
                     << m_state.map() << std::endl;
 }
