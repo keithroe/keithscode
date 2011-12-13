@@ -50,8 +50,10 @@ private:
 
     void solve1v1( const Location& ally, const Location& enemy );
     void solve2v1( const Location& ally0, const Location& ally1, const Location& enemy );
-    void countDeaths( const Location& ally0, const Location& ally1, const Location& enemy, 
-                      int& ally_deaths, int& enemy_deaths, int& distance )const;
+    void solve2v1( const Location& ally0, const Location& ally1, const Location& enemy, int max_depth,
+                   Direction& move0, Direction& move1, float& p_die, float& p_kill );
+    void countDeaths( const Location& ally0, const Location& ally1, const Location& enemy,
+                          float& p_die, float& p_kill, float& distance )const;
 
     Map&          m_map;
     AssignedAnts& m_food_ants;        //< So we can remove targeted food if ant reassigned
