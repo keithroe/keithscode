@@ -61,7 +61,9 @@ namespace
     {
         bool operator()( const BFNode* node )
         {
-            if( node->square->ant_id == 0 && node->child->square->isAvailable() )
+            if( node->square->ant_id == 0 &&
+                node->square->ant->path.goal() != Path::HILL &&
+                node->child->square->isAvailable() )
             {
                 Ant* cur_ant = node->square->ant;
                 node->getRPath( cur_ant->path );
@@ -88,7 +90,8 @@ namespace
             if( node->square->ant_id == 0 )
             {
                 Ant* cur_ant = node->square->ant;
-                if( ( cur_ant->path.goal() != Path::ATTACK || allow_overrides ) &&
+                if( ( cur_ant->assignment  != Ant::STATIC_DEFENSE ) &&
+                    ( cur_ant->path.goal() != Path::ATTACK || allow_overrides ) &&
                     ( !already_assigned                    || already_assigned->path.size() > node->depth ) && 
                     ( cur_ant->path.goal() != Path::FOOD   || cur_ant->path.size() > node->depth ) &&
                       node->child->square->isAvailable() )
@@ -201,10 +204,14 @@ namespace
 
     struct NotHill 
     {
+        NotHill( const Map& map ) : map( map ) {}
+
         bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
         {
-            return neighbor.hill_id != 0;
+            return map( current->loc ).hill_id != 0;
         }
+
+        const Map& map;
     };
 
     struct Available 
@@ -309,6 +316,7 @@ void Bot::makeMoves()
 {
     Debug::stream() << " ===============================================" << std::endl; 
     Debug::stream() << " turn " << m_state.turn() << ":" << std::endl;
+    Debug::stream() << " state: " << m_state << std::endl;
 
     //
     // Check for validity of pre-existing paths
@@ -348,7 +356,7 @@ void Bot::makeMoves()
     // Attack hills directly for close by ants
     //
     Debug::stream() << " Assigning hill-attack tasks... " << std::endl;
-    assignToHillAttack( 10 );
+    assignToHillAttack( 16 );
 
     //
     // Assign ants to very nearby food with high priority
@@ -393,19 +401,23 @@ void Bot::makeMoves()
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
         std::vector<Location> neighbors;
+        Debug::stream() << "Processing frontier node: " << *it << std::endl;
         m_state.map().getNeighbors( *it, isLand, neighbors );
         for( std::vector<Location>::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
-          m_state.map().setPriority( Map::EXPLORE, *it, 1000 );
+        {
+            m_state.map().setPriority( Map::EXPLORE, *it, 1000 );
+        }
     }
 
     for( State::Ants::const_iterator it = m_state.myAnts().begin(); it != m_state.myAnts().end(); ++it )
-        m_state.map().setPriority( Map::EXPLORE, (*it)->location, -10 );
+        m_state.map().setPriority( Map::EXPLORE, (*it)->location, -100 );
     
+    Debug::stream() << "Before moves " << std::endl << m_state.map() << std::endl;
+
     int diffusion_steps = std::max( m_state.rows(), m_state.cols() );
     m_state.map().diffusePriority( Map::EXPLORE, diffusion_steps );
 
 
-    Debug::stream() << "Before moves " << std::endl << m_state.map() << std::endl;
     
     //
     // Any ants without explicit path will follow map priorities
@@ -482,7 +494,7 @@ void Bot::assignToFood( unsigned max_dist, bool allow_overrides )
         Ant* previous_ant = ( prev != m_food_ants.end() ) ? prev->second : 0u;
 
         FindFoodAnt    find_ant( m_food_ants, allow_overrides, previous_ant );
-        NotHill        not_hill;
+        NotHill        not_hill( m_state.map() );
         FindNearestFoodAnt find_nearest_ant( m_state.map(), *it, find_ant, not_hill );
         find_nearest_ant.setMaxDepth( max_dist );
         find_nearest_ant.traverse();
@@ -837,16 +849,21 @@ void Bot::findStaticAnt( const Location& hill, const Location& defense_position 
 void Bot::makeAssignments()
 {
     int num_ants = m_state.myAnts().size();
-    int num_ants_per_base    = num_ants;
     int static_ants_per_base = 0;
     if( !m_state.myHills().empty() )
     {
-        num_ants_per_base    = num_ants / m_state.myHills().size();
-        static_ants_per_base = num_ants_per_base >= 64 ? 4 :
-                               num_ants_per_base >= 48 ? 3 :
-                               num_ants_per_base >= 32 ? 2 :
-                               num_ants_per_base >= 16 ? 1 :
-                               0;
+        if( m_state.myHills().size() > 1 )
+            static_ants_per_base = num_ants >= 70 ? 4 :
+                                   num_ants >= 64 ? 3 :
+                                   num_ants >= 48 ? 2 :
+                                   num_ants >= 32 ? 1 :
+                                   0;
+         else
+            static_ants_per_base = num_ants >= 64 ? 4 :
+                                   num_ants >= 48 ? 3 :
+                                   num_ants >= 32 ? 2 :
+                                   num_ants >= 16 ? 1 :
+                                   0;
     }
 
 
@@ -879,11 +896,13 @@ void Bot::makeAssignments()
     //       - can explore algoriithm punish cul-de-sacs?
     //
     Debug::stream() << "Assigning ants:" << std::endl
+                    << "    num_hills     : " << m_state.myHills().size() << std::endl
                     << "    total_ants    : " << num_ants << std::endl
                     << "    enemy_hills   : " << m_enemy_hills.size() << std::endl
                     << "    attacked_hills: " << m_hills_under_attack.size() << std::endl
                     << "    explore_ants  : " << explore_ants << std::endl
                     << "    defense_ants  : " << defense_ants << std::endl
+                    << "    sdefense_ants : " << static_ants_per_base << std::endl
                     << "    attack_ants   : " << attack_ants << std::endl;
     
     Debug::stream() << "Previous ants:" << std::endl
