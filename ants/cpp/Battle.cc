@@ -48,7 +48,15 @@ struct CombatTile
             assert( 0 <= player && player < 10 );
             for( int i = 0; i < 10; ++i )
                 if( i != player && ( enemies < lowest_enemies[i] || lowest_enemies[i] == -1 ) )
+                {
+                    Debug::stream() << "           setting lowest_enemies[ " << i << " ] to " << enemies << std::endl;
                     lowest_enemies[i] = enemies;
+                }
+                else
+                {
+                    Debug::stream() << "           keeping lowest_enemies[ " << i << " ] of " << lowest_enemies[i]
+                                    << std::endl;
+                }
         }       
 
         Result result( int player )
@@ -248,51 +256,74 @@ void Battle::fillLowestEnemies( const Location& location, int ant_id )
     const unsigned width   = m_map.width();
     const int      enemies = m_grid[ location.row ][ location.col ].enemies( ant_id );
 
+    Debug::stream() << "      propagating enemy count of " << enemies << std::endl;
+
     Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-2, location.col-0 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-2, location.col+1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
 
     x = clamp( Location( location.row-1, location.col-2 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-1, location.col-1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-1, location.col-0 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-1, location.col+1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-1, location.col+2 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
 
     x = clamp( Location( location.row-0, location.col-2 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-0, location.col-1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-0, location.col-0 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-0, location.col+1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row-0, location.col+2 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
 
     x = clamp( Location( location.row+1, location.col-2 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row+1, location.col-1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row+1, location.col-0 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row+1, location.col+1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row+1, location.col+2 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
 
     x = clamp( Location( location.row+2, location.col-1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row+2, location.col-0 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
     x = clamp( Location( location.row+2, location.col+1 ), height, width );
+    Debug::stream() << "        calling setLowestEnemies on " << x << std::endl;
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
 }
 
@@ -977,6 +1008,8 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         {
             Location loc = *it;
             int      ant_id = m_map( loc ).ant_id;
+
+            Debug::stream() << "Filling lowest enemies for enemy: " << ant_id << "-" << loc << std::endl;
             
             fillLowestEnemies( loc, ant_id );
             fillEnemyDistance( loc );
@@ -984,7 +1017,10 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
             Locations neighbors;
             m_map.getNeighbors( loc, isLand, neighbors );
             for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
+            {
+                Debug::stream() << "     ant neighbor " << *it << std::endl;
                 fillLowestEnemies( *it, ant_id );
+            }
         }
 
 
@@ -1004,10 +1040,7 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 Location           path_loc    = m_map.getLocation( loc, ant->path.nextStep() );
                 CombatTile::Result path_result = m_grid[ path_loc.row ][ path_loc.col ].result( MY_ANT_ID ); 
                 Debug::stream() << "   checking path: " << path_loc << " result: " << path_result << std::endl;
-                CombatTile::Result min_result = ant->path.goal() == Path::ATTACK || Path::HILL ? 
-                                                CombatTile::TIE : 
-                                                CombatTile::SAFE;
-                if( path_result >= min_result )
+                if( path_result >= CombatTile::SAFE )
                 {
                     //m_map( path_loc ).assigned = true;
                     m_allies.insert( ant );
