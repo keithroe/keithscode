@@ -627,7 +627,8 @@ void Battle::solve2v1( const Location& ally0, const Location& ally1, const Locat
         for( int j = 0; j < 5; ++j && i != NONE )
         {
             Location moved_ally1 = m_map.getLocation( ally1, static_cast<Direction>( j ) ); 
-            if( moved_ally1 == moved_ally0 || ( !m_map( moved_ally1 ).isAvailable() && moved_ally1 != ally0 ) )
+            if( moved_ally1 == moved_ally0 || 
+              ( !m_map( moved_ally1 ).isAvailable() && moved_ally1 != ally0 && j != NONE ) )
             {
                 Debug::stream() << "    ally1 location " << moved_ally1 << " not available:" << std::endl
                                 << "        " << m_map( moved_ally0 ) << std::endl;
