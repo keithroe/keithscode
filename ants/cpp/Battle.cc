@@ -1002,9 +1002,12 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 Location           path_loc    = m_map.getLocation( loc, ant->path.nextStep() );
                 CombatTile::Result path_result = m_grid[ path_loc.row ][ path_loc.col ].result( MY_ANT_ID ); 
                 Debug::stream() << "   checking path: " << path_loc << " result: " << path_result << std::endl;
-                if( path_result >= CombatTile::SAFE )
+                CombatTile::Result min_result = 
+                    ant->assignment == Ant::DEFENSE                                     ? CombatTile::TIE :
+                    ant->assignment == Ant::ATTACK  && cluster.size() >= enemies.size() ? CombatTile::TIE :
+                    CombatTile::SAFE;
+                if( path_result >= min_result )
                 {
-                    //m_map( path_loc ).assigned = true;
                     m_allies.insert( ant );
                     continue;
                 }
