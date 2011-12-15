@@ -248,7 +248,7 @@ namespace
         bool operator()( const BFNode* node )
         {
             const float peak_priority = 1.0f;
-            const float peak_distance = 8.0f;
+            const float peak_distance = 4.0f;
             const float max_distance  = 40;
             float distance = static_cast<float>( node->depth );
             float priority = map.getPriority( Map::DEFENSE, node->loc );
@@ -524,8 +524,8 @@ void Bot::makeMoves()
     //       number of enemies and respond proportionately
     //
     for( Locations::iterator it = base_attackers.begin(); it != base_attackers.end(); ++it )
-        m_state.map().setPriority( Map::DEFENSE, *it, 500 );
-    m_state.map().diffusePriority( Map::DEFENSE, 15 );
+        m_state.map().setPriority( Map::DEFENSE, *it, 20 );
+    m_state.map().diffusePriority( Map::DEFENSE, 6 );
     
     for( LocationSet::iterator it = m_hills_under_attack.begin(); it != m_hills_under_attack.end(); ++it )
     {
