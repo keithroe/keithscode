@@ -64,14 +64,15 @@ struct Square
     //
     
     Type  type;                 ///< What type of square is this 
-    bool  visible;              ///< Is this square visible to any ants?
-    bool  food;                 ///< Does this square contain food 
+    int   hill_id;              ///< Hill player id, -1 if none
     int   ant_id;               ///< Ant player id, -1 if none
     int   new_ant_id;           ///< Ant player id, -1 if none
-    int   hill_id;              ///< Hill player id, -1 if none
     Ant*  ant;                  ///< Ant data if present, NULL otherwise
     Ant*  new_ant;              ///< Ant data if present, NULL otherwise
     bool  assigned;
+    bool  visible;              ///< Is this square visible to any ants?
+    bool  food;                 ///< Does this square contain food 
+    bool  in_enemy_range;
 
     std::vector<int> deadAnts; ///< List of present dead ant's player ids
 };
@@ -79,14 +80,15 @@ struct Square
     
 inline Square::Square()
     : type( UNKNOWN ),
-      visible( false ),
-      food( false ),
+      hill_id( -1 ),
       ant_id( -1 ),
       new_ant_id( -1 ),
-      hill_id( -1 ),
       ant( NULL ),
       new_ant( NULL ),
-      assigned( false )
+      assigned( false ),
+      visible( false ),
+      food( false ),
+      in_enemy_range( false )
 {
 }
 
@@ -94,14 +96,15 @@ inline Square::Square()
 inline void Square::reset()
 {
     // Leave type alone as this is static between turns
-    visible     = false;
-    food        = false;
+    hill_id     = -1;
     ant_id      = -1;
     new_ant_id  = -1;
-    hill_id     = -1;
     ant         = NULL;
     new_ant     = NULL;
     assigned    = false;
+    visible     = false;
+    food        = false;
+    in_enemy_range = false;
 
     deadAnts.clear();
 };
@@ -172,6 +175,7 @@ inline bool isLand( const Square& s )          { return s.type == Square::LAND; 
 inline bool isWater( const Square& s )         { return s.type == Square::WATER; }
 inline bool notWater( const Square& s )        { return s.type != Square::WATER; }
 inline bool isAvailable( const Square& s )     { return s.isAvailable();         }
+inline bool isAvailableAndNotInCombat( const Square& s )     { return s.isAvailable() && !s.in_enemy_range;  }
 inline bool isVisible( const Square& s )       { return s.visible;               }
 inline bool notVisible( const Square& s )      { return !s.visible;              }
 inline bool isWaterOrFood( const Square& s )   { return s.food || s.isWater();   }
