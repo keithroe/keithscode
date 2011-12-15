@@ -63,6 +63,7 @@ namespace
         {
             if( node->square->ant_id == 0 &&
                 node->square->ant->path.goal() != Path::HILL &&
+                node->square->ant->path.goal() != Path::FOOD &&
                 node->child->square->isAvailable() )
             {
                 Ant* cur_ant = node->square->ant;
@@ -214,6 +215,18 @@ namespace
         const Map& map;
     };
 
+    struct NotHillOrCombat
+    {
+        NotHillOrCombat( const Map& map ) : map( map ) {}
+
+        bool operator()( const BFNode* current, const Location& location, const Square& neighbor )
+        {
+            return map( current->loc ).hill_id != 0 && !neighbor.in_enemy_range;
+        }
+
+        const Map& map;
+    };
+
     struct Available 
     {
         Available( const Map& map ) : map( map ) {}
@@ -260,7 +273,130 @@ namespace
     }
 
 
-    typedef  BF<FindFoodAnt, NotHill> FindNearestFoodAnt;
+    void splatEnemyCombatRange( const Location& location, Map& map )
+    {
+        const unsigned height = map.height();
+        const unsigned width  = map.width();
+
+        Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-2, location.col-0 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-2, location.col+1 ), height, width );
+        map( x ).in_enemy_range = true; 
+
+        x = clamp( Location( location.row-1, location.col-2 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-1, location.col-1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-1, location.col-0 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-1, location.col+1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-1, location.col+2 ), height, width );
+        map( x ).in_enemy_range = true; 
+
+        x = clamp( Location( location.row-0, location.col-2 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-0, location.col-1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-0, location.col-0 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-0, location.col+1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row-0, location.col+2 ), height, width );
+        map( x ).in_enemy_range = true; 
+
+        x = clamp( Location( location.row+1, location.col-2 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row+1, location.col-1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row+1, location.col-0 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row+1, location.col+1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row+1, location.col+2 ), height, width );
+        map( x ).in_enemy_range = true; 
+
+        x = clamp( Location( location.row+2, location.col-1 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row+2, location.col-0 ), height, width );
+        map( x ).in_enemy_range = true; 
+        x = clamp( Location( location.row+2, location.col+1 ), height, width );
+        map( x ).in_enemy_range = true; 
+
+        // The four move locations
+        Location x_n = clamp( Location( location.row-1, location.col+0 ), height, width );
+        Location x_s = clamp( Location( location.row+1, location.col+0 ), height, width );
+        Location x_e = clamp( Location( location.row+0, location.col+1 ), height, width );
+        Location x_w = clamp( Location( location.row+0, location.col-1 ), height, width );
+
+        if( !isWaterOrFood( map( x_n ) ) )
+        {
+            Location x = clamp( Location( location.row-3, location.col-1 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row-3, location.col-0 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row-3, location.col+1 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_s ) ) )
+        {
+            Location x = clamp( Location( location.row+3, location.col-1 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row+3, location.col-0 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row+3, location.col+1 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_w ) ) )
+        {
+            Location x = clamp( Location( location.row-1, location.col-3 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row+0, location.col-3 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row+1, location.col-3 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_e ) ) )
+        {
+            Location x = clamp( Location( location.row-1, location.col+3 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row+0, location.col+3 ), height, width );
+            map( x ).in_enemy_range = true; 
+            x = clamp( Location( location.row+1, location.col+3 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_n ) ) )
+        {
+            Location x = clamp( Location( location.row+2, location.col+2 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_n ) ) )
+        {
+            Location x = clamp( Location( location.row-2, location.col+2 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_w ) ) || !isWaterOrFood( map( x_s ) ) )
+        {
+            Location x = clamp( Location( location.row-2, location.col-2 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+
+        if( !isWaterOrFood( map( x_e ) ) || !isWaterOrFood( map( x_s ) ) )
+        {
+            Location x = clamp( Location( location.row+2, location.col-2 ), height, width );
+            map( x ).in_enemy_range = true; 
+        }
+    }
+
+    typedef  BF<FindFoodAnt, NotHillOrCombat> FindNearestFoodAnt;
     
 }
 
@@ -317,6 +453,11 @@ void Bot::makeMoves()
     Debug::stream() << " ===============================================" << std::endl; 
     Debug::stream() << " turn " << m_state.turn() << ":" << std::endl;
     Debug::stream() << " state: " << m_state << std::endl;
+
+    for( Locations::const_iterator it = m_state.enemyAnts().begin(); it != m_state.enemyAnts().end(); ++it )
+    {
+        splatEnemyCombatRange( *it, m_state.map() );
+    }
 
     //
     // Check for validity of pre-existing paths
@@ -493,9 +634,9 @@ void Bot::assignToFood( unsigned max_dist, bool allow_overrides )
         AssignedAnts::iterator prev  = m_food_ants.find( *it );
         Ant* previous_ant = ( prev != m_food_ants.end() ) ? prev->second : 0u;
 
-        FindFoodAnt    find_ant( m_food_ants, allow_overrides, previous_ant );
-        NotHill        not_hill( m_state.map() );
-        FindNearestFoodAnt find_nearest_ant( m_state.map(), *it, find_ant, not_hill );
+        FindFoodAnt        find_ant( m_food_ants, allow_overrides, previous_ant );
+        NotHillOrCombat    not_hill_or_combat( m_state.map() );
+        FindNearestFoodAnt find_nearest_ant( m_state.map(), *it, find_ant, not_hill_or_combat );
         find_nearest_ant.setMaxDepth( max_dist );
         find_nearest_ant.traverse();
 
@@ -758,9 +899,10 @@ bool Bot::checkValidPath( Ant* ant )
     }
 
     Location goal_loc = ant->path.destination();
-    if(  ant->path.goal() == Path::FOOD && !hasFood( map( goal_loc ) ) )
+    if( ant->path.goal() == Path::FOOD &&
+      ( !hasFood( map( goal_loc ) ) || map( next_loc ).in_enemy_range ) )
     {
-        Debug::stream() << "     resetting path: food gone" << std::endl;
+        Debug::stream() << "     resetting path: food gone or next step in combat range" << std::endl;
         AssignedAnts::iterator it = m_food_ants.find( ant->path.destination() );
         assert( it != m_food_ants.end() );
         it->second->path.reset();
