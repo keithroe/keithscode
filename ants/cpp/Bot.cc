@@ -1008,12 +1008,10 @@ void Bot::makeAssignments()
                                    0;
     }
 
-
-
     int max_explore_ants = ( m_state.rows() / 16 ) * ( m_state.cols() / 16 );
     int max_defense_ants = m_hills_under_attack.size()  * 16; 
     int explore_ants = std::min( max_explore_ants, num_ants / 2 );
-    int defense_ants = std::min( max_defense_ants, num_ants / 8 );
+    int defense_ants = std::min( max_defense_ants, num_ants / 4 );
     int attack_ants  = num_ants - explore_ants - defense_ants;
     
     int cur_explore_ants        = 0;
