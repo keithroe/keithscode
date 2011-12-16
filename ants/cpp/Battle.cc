@@ -244,6 +244,7 @@ void Battle::fillLowestEnemies( const Location& location, int ant_id )
     const unsigned width   = m_map.width();
     const int      enemies = m_grid[ location.row ][ location.col ].enemies( ant_id );
 
+    Debug::stream() << "  Setting lowest enemies for " << ant_id << " " << location << ": " << enemies << std::endl;
 
     Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
     m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
@@ -958,6 +959,8 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         {
             Location loc = it->first;
            
+            Debug::stream() << "processing min enemies for ally ant at " << loc << std::endl;
+
             fillLowestEnemies( loc, MY_ANT_ID );
 
             Locations neighbors;
@@ -966,23 +969,19 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 fillLowestEnemies( *it, MY_ANT_ID );
         }
 
-        for( LocationSet::const_iterator it = m_enemies.begin(); it != m_enemies.end(); ++it )
+        for( LocationSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
         {
             Location loc = *it;
             int      ant_id = m_map( loc ).ant_id;
 
-            Debug::stream() << "Filling lowest enemies for enemy: " << ant_id << "-" << loc << std::endl;
-            
+            Debug::stream() << "processing min enemies for enemy ant at " << loc << std::endl;
             fillLowestEnemies( loc, ant_id );
             fillEnemyDistance( loc );
 
             Locations neighbors;
             m_map.getNeighbors( loc, isLand, neighbors );
             for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
-            {
-                Debug::stream() << "     ant neighbor " << *it << std::endl;
                 fillLowestEnemies( *it, ant_id );
-            }
         }
 
 
@@ -992,20 +991,21 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
         {
             // TODO: optimize the number of good tiles taken up by ally moves here -- for now, greedy
-            // TODO: add abilty to be aggressive (TIE > SAFE) or defensive (SAFE > TIE)
-            Ant*               ant           = m_map( it->first ).ant;
-            Location           loc           = it->first;
+            Ant*     ant = m_map( it->first ).ant;
+            Location loc = it->first;
 
             Debug::stream() << "Battle: " << *ant << std::endl;
             if( !ant->path.empty() )
             {
+                Debug::stream() << "    checking path: " << ant->path << std::endl;
                 Location           path_loc    = m_map.getLocation( loc, ant->path.nextStep() );
                 CombatTile::Result path_result = m_grid[ path_loc.row ][ path_loc.col ].result( MY_ANT_ID ); 
-                Debug::stream() << "   checking path: " << path_loc << " result: " << path_result << std::endl;
+                Debug::stream() << "    result : " << path_result << std::endl;
                 CombatTile::Result min_result = 
                     ant->assignment == Ant::DEFENSE                                     ? CombatTile::TIE :
                     ant->assignment == Ant::ATTACK  && cluster.size() >= enemies.size() ? CombatTile::TIE :
                     CombatTile::SAFE;
+                Debug::stream() << "    min result : " << min_result << std::endl;
                 if( path_result >= min_result )
                 {
                     m_allies.insert( ant );
