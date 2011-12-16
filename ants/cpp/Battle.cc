@@ -11,86 +11,115 @@
 #include "Map.h"
     
 struct CombatTile
+{
+    enum Result
     {
-        enum Result
-        {
-            LOSE=0,
-            TIE,
-            SAFE,
-            WIN
-        };
-
-        CombatTile() { reset(); }
-
-        void reset() 
-        { 
-            distance_sum = 0;
-            memset( attacks,          0, sizeof( attacks ) );
-            memset( lowest_enemies,   1, sizeof( lowest_enemies ) );
-            lowest_enemies[0] = lowest_enemies[1] = lowest_enemies[2] = lowest_enemies[3] =
-                                lowest_enemies[4] = lowest_enemies[5] = lowest_enemies[6] =
-                                lowest_enemies[7] = lowest_enemies[8] = lowest_enemies[9] = -1;
-        }
-
-        int enemies( int player )const
-        { 
-            assert( 0 <= player && player < 10 );
-            // TODO: precalculate if necessary
-            return attacks[0] + attacks[1] + attacks[2] + attacks[3] + attacks[4] +
-                   attacks[5] + attacks[6] + attacks[7] + attacks[8] + attacks[9] -
-                   attacks[player];
-        }
-
-        int mmin( int a, int b ) { return a < b ? a : b; }
-        
-        void setLowestEnemies( int player, int enemies )
-        {
-            //
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // TODO
-            // Make lowest_enemies by a double ( lowest seen at new square "what we now store", enemy_count at orig square ).  use the second number to break ties.
-            assert( 0 <= player && player < 10 );
-            for( int i = 0; i < 10; ++i )
-                if( i != player && ( enemies < lowest_enemies[i] || lowest_enemies[i] == -1 ) )
-                    lowest_enemies[i] = enemies;
-        }       
-
-        Result result( int player )
-        {
-            assert( 0 <= player && player < 10 );
-            const int enemy_enemies  = lowest_enemies[ player ];
-
-            if( enemy_enemies == -1 )
-                return SAFE;
-
-            const int player_enemies = enemies( player );
-            Debug::stream() << "  comparing result() p_enemies: " << player_enemies 
-                            << " e_enemies: " << enemy_enemies << std::endl;
-            return 
-                   player_enemies < enemy_enemies ? WIN :
-                   player_enemies > enemy_enemies ? LOSE :
-                   TIE;
-                  
-        }
-
-        int    distance_sum;           // Sum of all distnces to enemies 
-        int    attacks[ 10 ];          // Number of ants which could attack this
-        int    lowest_enemies[ 10 ];   // Lowest enemy's enemis in range of this
+        LOSE=0,
+        TIE,
+        SAFE,
+        WIN
     };
+
+    struct LowestEnemies
+    {
+        LowestEnemies() 
+          : at_base_location( -1 ), at_current_location( -1 ) {}
+        
+        explicit LowestEnemies( int enemies ) 
+          : at_base_location( enemies ), at_current_location( enemies ) {}
+
+        LowestEnemies( int base, int current ) 
+          : at_base_location( base ), at_current_location( current ) {}
+
+        bool valid()const
+        { return at_base_location != -1; }
+
+        void reset()
+        { at_base_location = at_current_location = -1; }
+
+        bool operator<( const LowestEnemies& le1 )const
+        {
+            return at_current_location < le1.at_current_location ? true  :
+                   at_current_location > le1.at_current_location ? false :
+                   at_base_location    < le1.at_base_location;
+        }
+        
+        bool operator>( const LowestEnemies& le1 )const
+        {
+            return at_current_location > le1.at_current_location ? true  :
+                   at_current_location < le1.at_current_location ? false :
+                   at_base_location    > le1.at_base_location;
+        }
+
+        std::ostream& operator<<( std::ostream& out )const
+        {
+            out << "<" << at_current_location << "," << at_base_location << ">";
+            return out;
+        }
+        
+        int at_base_location;
+        int at_current_location;
+    };
+
+    CombatTile() { reset(); }
+
+    void reset() 
+    { 
+        distance_sum = 0;
+        memset( attacks,          0, sizeof( attacks ) );
+        memset( lowest_enemies,   1, sizeof( lowest_enemies ) );
+
+        for( int i = 0; i < 10; ++i ) lowest_enemies[i].reset();
+    }
+
+    int enemies( int player )const
+    { 
+        assert( 0 <= player && player < 10 );
+        // TODO: precalculate if necessary
+        return attacks[0] + attacks[1] + attacks[2] + attacks[3] + attacks[4] +
+               attacks[5] + attacks[6] + attacks[7] + attacks[8] + attacks[9] -
+               attacks[player];
+    }
+
+    int mmin( int a, int b ) { return a < b ? a : b; }
+    
+    void setLowestEnemies( int player, int at_base_location, int at_current_location)
+    {
+        LowestEnemies enemies( at_base_location, at_current_location );
+        assert( 0 <= player && player < 10 );
+        for( int i = 0; i < 10; ++i )
+            if( i != player && ( enemies < lowest_enemies[i] || !lowest_enemies[i].valid() ) )
+                lowest_enemies[i] = enemies;
+    }       
+
+    Result result( int player )
+    {
+        assert( 0 <= player && player < 10 );
+        const LowestEnemies enemy_enemies = lowest_enemies[ player ];
+
+        if( !enemy_enemies.valid() )
+            return SAFE;
+
+        const LowestEnemies player_enemies( enemies( player ) );
+        Debug::stream() << "  comparing result() p_enemies: " << player_enemies 
+                        << " e_enemies: " << enemy_enemies << std::endl;
+        return player_enemies < enemy_enemies ? WIN :
+               player_enemies > enemy_enemies ? LOSE :
+               TIE;
+              
+    }
+
+    int           distance_sum;           // Sum of all distnces to enemies 
+    int           attacks[ 10 ];          // Number of ants which could attack this
+    LowestEnemies lowest_enemies[ 10 ];   // Lowest enemy's enemis in range of this
+};
+
+std::ostream& operator<<( std::ostream& out, const CombatTile::LowestEnemies& le )
+{
+    out << "<" << le.at_current_location << "," << le.at_base_location << ">";
+    return out;
+}
+            
 
 namespace
 {
@@ -256,7 +285,7 @@ void Battle::fill( const Location& location, int ant_id, int inc)
 }
 
 
-void Battle::fillLowestEnemies( const Location& location, int ant_id )
+void Battle::fillLowestEnemies( const Location& location, int ant_id, int base_enemies )
 {
     const unsigned height  = m_map.height();
     const unsigned width   = m_map.width();
@@ -265,51 +294,51 @@ void Battle::fillLowestEnemies( const Location& location, int ant_id )
     Debug::stream() << "  Setting lowest enemies for " << ant_id << " " << location << ": " << enemies << std::endl;
 
     Location x = clamp( Location( location.row-2, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-2, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-2, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
 
     x = clamp( Location( location.row-1, location.col-2 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-1, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-1, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-1, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-1, location.col+2 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
 
     x = clamp( Location( location.row-0, location.col-2 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-0, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-0, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-0, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row-0, location.col+2 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
 
     x = clamp( Location( location.row+1, location.col-2 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row+1, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row+1, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row+1, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row+1, location.col+2 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
 
     x = clamp( Location( location.row+2, location.col-1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row+2, location.col-0 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
     x = clamp( Location( location.row+2, location.col+1 ), height, width );
-    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, enemies );
+    m_grid[ x.row ][ x.col ].setLowestEnemies( ant_id, base_enemies, enemies );
 }
 
 
@@ -975,31 +1004,34 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
         //
         for( AntEnemies::const_iterator it = cluster.begin(); it != cluster.end(); ++it )
         {
-            Location loc = it->first;
+            const Location loc = it->first;
+            const int base_enemies = m_grid[ loc.row ][ loc.col ].enemies( MY_ANT_ID );
            
             Debug::stream() << "processing min enemies for ally ant at " << loc << std::endl;
 
-            fillLowestEnemies( loc, MY_ANT_ID );
+            fillLowestEnemies( loc, MY_ANT_ID, base_enemies );
 
             Locations neighbors;
             m_map.getNeighbors( loc, isLand, neighbors );
             for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
-                fillLowestEnemies( *it, MY_ANT_ID );
+                fillLowestEnemies( *it, MY_ANT_ID, base_enemies );
         }
 
         for( LocationSet::const_iterator it = enemies.begin(); it != enemies.end(); ++it )
         {
-            Location loc = *it;
-            int      ant_id = m_map( loc ).ant_id;
+            const Location loc = *it;
+            const int ant_id = m_map( loc ).ant_id;
+            const int base_enemies = m_grid[ loc.row ][ loc.col ].enemies( ant_id );
 
-            Debug::stream() << "processing min enemies for enemy ant at " << loc << std::endl;
-            fillLowestEnemies( loc, ant_id );
+            Debug::stream() << "processing min enemies for enemy ant at " << loc 
+                            << " with base_enemies: " << base_enemies <<  std::endl;
+            fillLowestEnemies( loc, ant_id, base_enemies );
             fillEnemyDistance( loc );
 
             Locations neighbors;
             m_map.getNeighbors( loc, isLand, neighbors );
             for( Locations::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
-                fillLowestEnemies( *it, ant_id );
+                fillLowestEnemies( *it, ant_id, base_enemies );
         }
 
 
