@@ -44,7 +44,7 @@ private:
 
     void fill( const Location& location, int ant_id, int inc );
     void fillPlusOne( const Location& location, int ant_id, int inc );
-    void fillLowestEnemies( const Location& location, int ant_id );
+    void fillLowestEnemies( const Location& location, int ant_id, int base_enemies );
     void fillEnemyDistance( const Location& location );
 
 
