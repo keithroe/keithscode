@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <cmath>
 
 //
 // Helpers
@@ -247,14 +248,22 @@ namespace
 
         bool operator()( const BFNode* node )
         {
+          /*
             const float peak_priority = 1.0f;
-            const float peak_distance = 4.0f;
             const float max_distance  = 40;
+            const float peak_distance = 4.0f;
             float distance = static_cast<float>( node->depth );
             float priority = map.getPriority( Map::DEFENSE, node->loc );
             float hill_priority = distance < peak_distance ?
                                   peak_priority - 0.5f * (peak_distance-distance) / peak_distance :
                                   peak_priority - (distance-peak_distance) / ( max_distance - peak_distance );
+          */
+
+            const float peak_priority = 1.0f;
+            const float max_distance  = 40.0f;
+            float distance = static_cast<float>( node->depth );
+            float priority = map.getPriority( Map::DEFENSE, node->loc );
+            float hill_priority = peak_priority - sqrtf( distance / max_distance );
 
             map.setPriority( Map::DEFENSE, node->loc, priority + hill_priority );
             return true;
