@@ -542,7 +542,6 @@ void Bot::makeMoves()
     for( State::LocationSet::const_iterator it = m_state.frontier().begin(); it != m_state.frontier().end(); ++it )
     {
         std::vector<Location> neighbors;
-        Debug::stream() << "Processing frontier node: " << *it << std::endl;
         m_state.map().getNeighbors( *it, isLand, neighbors );
         for( std::vector<Location>::iterator it = neighbors.begin(); it != neighbors.end(); ++it )
         {
