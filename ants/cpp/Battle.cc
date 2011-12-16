@@ -45,6 +45,24 @@ struct CombatTile
         
         void setLowestEnemies( int player, int enemies )
         {
+            //
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // TODO
+            // Make lowest_enemies by a double ( lowest seen at new square "what we now store", enemy_count at orig square ).  use the second number to break ties.
             assert( 0 <= player && player < 10 );
             for( int i = 0; i < 10; ++i )
                 if( i != player && ( enemies < lowest_enemies[i] || lowest_enemies[i] == -1 ) )
