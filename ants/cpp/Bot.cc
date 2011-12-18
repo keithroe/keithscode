@@ -506,7 +506,7 @@ void Bot::makeMoves()
     // Attack hills directly for close by ants
     //
     Debug::stream() << " Assigning hill-attack tasks... " << std::endl;
-    assignToHillAttack( 16 );
+    assignToHillAttack( 32 );
 
     //
     // Assign ants to very nearby food with high priority
@@ -533,8 +533,8 @@ void Bot::makeMoves()
     //       number of enemies and respond proportionately
     //
     for( Locations::iterator it = base_attackers.begin(); it != base_attackers.end(); ++it )
-        m_state.map().setPriority( Map::DEFENSE, *it, 20 );
-    m_state.map().diffusePriority( Map::DEFENSE, 6 );
+        m_state.map().setPriority( Map::DEFENSE, *it, 100 );
+    m_state.map().diffusePriority( Map::DEFENSE, 12 );
     
     for( LocationSet::iterator it = m_hills_under_attack.begin(); it != m_hills_under_attack.end(); ++it )
     {
