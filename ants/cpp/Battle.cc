@@ -1053,7 +1053,8 @@ void Battle::solve( const Ants& ants, const Locations& enemy_ants )
                 Debug::stream() << "    result : " << path_result << std::endl;
                 CombatTile::Result min_result = 
                     ant->assignment == Ant::DEFENSE                                     ? CombatTile::TIE :
-                    ant->assignment == Ant::ATTACK  && cluster.size() >= enemies.size() ? CombatTile::TIE :
+                    //ant->assignment == Ant::ATTACK  && cluster.size() >= enemies.size() ? CombatTile::TIE :
+                    cluster.size() >= enemies.size() ? CombatTile::TIE :
                     CombatTile::SAFE;
                 Debug::stream() << "    min result : " << min_result << std::endl;
                 if( path_result >= min_result )
