@@ -1,5 +1,6 @@
 
 #include "../AStar.h"
+#include "../Logger.h"
 #include <iostream>
 
 
@@ -145,9 +146,6 @@ void testLarge()
     std::vector<Graph::Node> path;
     astar.getPath( path );
 
-    std::cerr << " path found length: " << path.size() << std::endl;
-
-
     /*
     for( std::vector<Graph::Node>::iterator it = path.begin();
          it != path.end();
@@ -164,6 +162,7 @@ void testLarge()
 
 void testSmall()
 {
+
     Graph graph( 16, 16 );
     for( int i = 0; i < 12; ++i ) graph.m_grid[ i ][ 4  ].is_wall = true;
     for( int i = 4; i < 16; ++i ) graph.m_grid[ i ][ 8  ].is_wall = true;
@@ -181,9 +180,6 @@ void testSmall()
     std::vector<Graph::Node> path;
     astar.getPath( path );
 
-    std::cerr << " path found length: " << path.size() << std::endl;
-
-
     for( std::vector<Graph::Node>::iterator it = path.begin();
          it != path.end();
          ++it )
@@ -198,6 +194,8 @@ void testSmall()
 
 int main( int argc, char** argv )
 {
+    Log::setReportingLevel( Log::INFO );
+
     //testSmall();
     for( int i = 0; i < 10; ++i )
         testLarge();
