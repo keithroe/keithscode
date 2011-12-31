@@ -1,8 +1,8 @@
 
 #include "../AStar.h"
 #include "../Logger.h"
-#include <iostream>
 
+#include <fstream>
 
 class Graph
 {
@@ -195,6 +195,9 @@ void testSmall()
 int main( int argc, char** argv )
 {
     Log::setReportingLevel( Log::INFO );
+
+    std::ofstream fout( "log.txt" ); 
+    Log::setStream( fout );
 
     //testSmall();
     for( int i = 0; i < 10; ++i )
