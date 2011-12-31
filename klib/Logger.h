@@ -14,6 +14,7 @@
 //   - Use  KLOG macro to log at desired level:
 //     KLOG( Log::WARNING ) << "Some warning message";
 //     The logger will insert newlines after each message
+//   - Defaults to writing to cerr. Use setStream() to write to cout, file, etc
 //
 // Inspired by http://drdobbs.com/cpp/201804215
 //
@@ -69,10 +70,10 @@ private:
     static std::string toString( Level level );
     
     static Level         s_reporting_level;
-    static std::ostream& s_out;
+    static std::ostream* s_out;
 };
 
-std::ostream& Log::s_out             = std::cerr;
+std::ostream* Log::s_out             = &std::cerr;
 Log::Level    Log::s_reporting_level = Log::WARNING;
 
 
@@ -84,15 +85,15 @@ inline Log::Log()
 
 inline Log::~Log()
 {
-    s_out << "\n";
+    *s_out << "\n";
 }
 
 
 inline std::ostream& Log::get( Log::Level level )
 {
-    s_out << "[" << time() << "] " << toString( level ) << ": "
+    *s_out << "[" << time() << "] " << toString( level ) << ": "
           << std::string( (level > INFO ? level - INFO : 0 ), '\t' );
-    return s_out;
+    return *s_out;
 }
 
 
@@ -107,8 +108,12 @@ inline void Log::setReportingLevel( Level level )
     s_reporting_level = level;
 }
 
+inline void Log::setStream( std::ostream& out )
+{
+    s_out = &out;
+}
 
-std::string Log::toString( Log::Level level )
+inline std::string Log::toString( Log::Level level )
 {
     static const char* const level2string[] = 
     {
