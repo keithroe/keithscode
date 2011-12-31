@@ -1,32 +1,5 @@
-
 #ifndef KLIB_ASTAR_H_
 #define KLIB_ASTAR_H_
-
-// 
-// OPEN = priority queue containing START
-// CLOSED = empty set
-// while lowest rank in OPEN is not the GOAL:
-//   current = remove lowest rank item from OPEN
-//   add current to CLOSED
-//   for neighbors of current:
-//     cost = g(current) + movementcost(current, neighbor)
-//     if neighbor in OPEN and cost less than g(neighbor):
-//       remove neighbor from OPEN, because new path is better
-//     if neighbor in CLOSED and cost less than g(neighbor): **
-//       remove neighbor from CLOSED
-//     if neighbor not in OPEN and neighbor not in CLOSED:
-//       set g(neighbor) to cost
-//       add neighbor to OPEN
-//       set priority queue rank to g(neighbor) + h(neighbor)
-//       set neighbor's parent to current
-// 
-// reconstruct reverse path from destination to start
-// by following parent pointers
-//
-
-//
-// TODO: can a direct indexed array be used for 2D grid case?
-//
 
 
 // Graph
@@ -54,14 +27,8 @@
 #include <algorithm>
 #include <set>
 #include <vector>
-#include <cassert>
 
-
-//////////////////////////
-#include <iostream>
-//////////////////////////
-
-
+#include "Logger.h"
 
 
 template <typename Graph>
@@ -239,12 +206,16 @@ template <typename Graph>
 bool AStar<Graph>::search()
 {
     while( m_open_queue.size() > 0 )
+    {
         if( step() )
         {
-            std::cerr << "FOUND GOAL.  Steps  : " << m_steps << std::endl
-                      << "             updates: " << m_updates << std::endl;
+            KLOG( Log::INFO ) << "FOUND GOAL.  Steps   : " << m_steps;
+            KLOG( Log::INFO ) << "             updates : " << m_updates;
+            KLOG( Log::INFO ) << "             path len: " 
+                              << m_destination_node->g;
             return true;
         }
+    }
     return false;
 }
 
@@ -263,12 +234,10 @@ void AStar<Graph>::pushNode( const GraphNode& graph_node,
 
     std::push_heap( m_open_queue.begin(), m_open_queue.end(), HeapCompare() );
     
-    /*
-    std::cerr << "    pushing: " << node->graph_node << std::endl
-              << "             " << node->g << std::endl
-              << "             " << node->h << std::endl
-              << "             " << node->prev << std::endl;
-              */
+    KLOG( Log::DEBUG3 ) << "pushing: " << node->graph_node; 
+    KLOG( Log::DEBUG3 ) << "       : " << node->g;
+    KLOG( Log::DEBUG3 ) << "       : " << node->h;
+    KLOG( Log::DEBUG3 ) << "       : " << node->prev;
 }
 
 
@@ -293,13 +262,11 @@ bool AStar<Graph>::step()
 
     Node* current = popNode();
 
-    /*
-    std::cerr << "current: " << current->graph_node << std::endl
-              << "         " << current->g << std::endl
-              << "         " << current->h << std::endl
-              << "         " << current->prev << std::endl
-              << "         " << current << std::endl;
-              */
+    KLOG( Log::DEBUG2 ) << "current: " << current->graph_node;
+    KLOG( Log::DEBUG2 ) << "         " << current->g;
+    KLOG( Log::DEBUG2 ) << "         " << current->h;
+    KLOG( Log::DEBUG2 ) << "         " << current->prev;
+    KLOG( Log::DEBUG2 ) << "         " << current;
 
     //
     // Check to see if we have reached our destination
@@ -318,8 +285,6 @@ bool AStar<Graph>::step()
         m_neighbors.clear();
         m_graph.getNeighbors( current->graph_node, m_neighbors );
 
-    // TODO: cull based on f() < max_depth too
-        bool need_to_make_heap = false;
         for( typename GraphNodeVec::iterator neighbor = m_neighbors.begin();
              neighbor != m_neighbors.end();
              ++neighbor )
@@ -328,7 +293,9 @@ bool AStar<Graph>::step()
                                m_graph.getCost( current->graph_node,
                                                 *neighbor );
 
+            //
             // Search open list for this neighbor
+            //
             if( m_open_set.find( *neighbor ) != m_open_set.end() )
             {
                 typename
@@ -343,34 +310,28 @@ bool AStar<Graph>::step()
                     m_updates++;
                     open_node->g    = neighbor_g;
                     open_node->prev = current;
-                    need_to_make_heap = true;
-                    
                     std::make_heap( m_open_queue.begin(),
                                     m_open_queue.end(),
                                     HeapCompare() );
-                                    
                 }
                 continue;
             }
             
-            // Check to see if this neighbor is in closed set 
+            //
+            // Search closed list for this neighbor 
+            //
             if( m_closed_set.find( *neighbor ) != m_closed_set.end() )
                 continue;
 
-            // We need to add a new node to our open list
-            pushNode( *neighbor,
-                      neighbor_g,
-                      m_graph.getCostHeuristic( *neighbor, m_destination ),
-                      current );
+            //
+            // Add this neighbor to open list as a search candidate
+            //
+            float neighbor_h = m_graph.getCostHeuristic( *neighbor,
+                                                         m_destination );
+            // Below check for h < m_max_depth assumes admissable heuristic
+            if( neighbor_h + neighbor_g < m_max_depth )
+                pushNode( *neighbor, neighbor_g, neighbor_h, current );
         }
-
-
-        /*
-        if( need_to_make_heap )
-            std::make_heap( m_open_queue.begin(),
-                            m_open_queue.end(),
-                            HeapCompare() );
-                            */
     }
 
     //
@@ -383,7 +344,6 @@ bool AStar<Graph>::step()
 template <typename Graph>
 void AStar<Graph>::getPath( GraphNodeVec& path )const
 {
-    assert( m_destination_node );             // TODO: get rid
     Node* current = m_destination_node;
     while( current->prev != 0 ) 
     {
