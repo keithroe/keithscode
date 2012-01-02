@@ -1,9 +1,15 @@
 
 #include "../AStar.h"
 #include "../Logger.h"
+#include "../Timer.h"
 
 #include <fstream>
 
+//------------------------------------------------------------------------------
+//
+// Simple 2D grid based graph class for testing A* search
+//
+//------------------------------------------------------------------------------
 class Graph
 {
 public:
@@ -129,6 +135,12 @@ std::ostream& operator<<( std::ostream& out, const Graph& graph )
 }
 
 
+//------------------------------------------------------------------------------
+//
+// test functions 
+//
+//------------------------------------------------------------------------------
+
 void testLarge()
 {
     Graph graph( 1024, 1024 );
@@ -192,15 +204,43 @@ void testSmall()
 }
 
 
+struct LogTimings
+{
+    LogTimings() : total_elapsed_seconds( 0.0 ) {}
+
+    void operator()( double elapsed_seconds )
+    {
+        KLOG( Log::INFO ) << "testLarge took " << elapsed_seconds << "s";
+        total_elapsed_seconds += elapsed_seconds;
+    }
+
+    double total_elapsed_seconds;
+};
+
+//------------------------------------------------------------------------------
+//
+// main 
+//
+//------------------------------------------------------------------------------
+
 int main( int argc, char** argv )
 {
     Log::setReportingLevel( Log::INFO );
 
-    std::ofstream fout( "log.txt" ); 
-    Log::setStream( fout );
+    //std::ofstream fout( "log.txt" ); 
+    //Log::setStream( fout );
 
     //testSmall();
-    for( int i = 0; i < 10; ++i )
+    LogTimings log_timings;
+    const int NUM_RUNS = 10;
+    for( int i = 0; i < NUM_RUNS; ++i )
+    {
+        AutoTimerRef<LogTimings> auto_timer( log_timings );
         testLarge();
-    
+    }
+
+    KLOG( Log::INFO ) << "Average time: " 
+                      << log_timings.total_elapsed_seconds /
+                         static_cast<double>( NUM_RUNS )
+                      << "s";
 }
