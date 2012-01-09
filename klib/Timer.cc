@@ -1,5 +1,6 @@
 
 #include "Timer.h"
+#include <cassert>
 
 
 #if defined( __linux__ )
@@ -65,20 +66,37 @@ namespace
 
 
 
-Timer::Timer()
-    : m_start_ticks( getTicks() )
+Timer::Timer( bool start_timer )
+    : m_is_running( false ),
+      m_time_elapsed( 0.0 ),
+      m_start_ticks( 0 )
 {
+    if( start_timer )
+        start();
 }
 
 
-Timer::~Timer()
+void Timer::start()
 {
+    assert( !m_is_running )
+    m_start_ticks = getTicks();
+    m_running     = true;
+}
+
+
+void Timer::stop()
+{
+    assert( m_running );
+    m_time_elapsed = getTimeElapsed();
+    m_running      = false;
 }
 
 
 void Timer::reset()
 {
-    m_start_ticks = getTicks();
+    m_start_ticks  = getTicks();
+    m_time_elapsed = 0.0;
+    m_running      = true;
 }
 
 
