@@ -66,54 +66,54 @@ namespace
 
 
 
-Timer::Timer( bool start_timer )
+Timer::Timer()
     : m_is_running( false ),
       m_time_elapsed( 0.0 ),
       m_start_ticks( 0 )
 {
-    if( start_timer )
-        start();
 }
 
 
 void Timer::start()
 {
-    assert( !m_is_running )
+    assert( !m_is_running );
     m_start_ticks = getTicks();
-    m_running     = true;
+    m_is_running  = true;
 }
 
 
 void Timer::stop()
 {
-    assert( m_running );
+    assert( m_is_running );
     m_time_elapsed = getTimeElapsed();
-    m_running      = false;
+    m_is_running   = false;
 }
 
 
 void Timer::reset()
 {
-    m_start_ticks  = getTicks();
     m_time_elapsed = 0.0;
-    m_running      = true;
+    m_is_running   = false;
 }
 
 
 double Timer::getTimeElapsed()const
 {
-    const Ticks current_ticks = getTicks();
-    return ( current_ticks - m_start_ticks ) * secondsPerTick();
+    if( !m_is_running )
+        return m_time_elapsed;
+
+    const Ticks cur_ticks = getTicks();
+    return ( cur_ticks - m_start_ticks ) * secondsPerTick() + m_time_elapsed;
 }
 
 
-double Timer::getTimeElapsedMilliSecond()const
+double secondsToMilliseconds( double seconds )
 {
-    return getTimeElapsed() * 1.0e3;
+    return seconds * 1.0e3;
 }
 
 
-double Timer::getTimeElapsedMicroSecond()const
+double secondsToMicroseconds( double seconds )
 {
-    return getTimeElapsed() * 1.0e6;
+    return seconds * 1.0e6;
 }
