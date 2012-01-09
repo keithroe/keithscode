@@ -4,36 +4,45 @@
 
 
 ///
-/// Simple timer class which allows client to keep track of elapsed time
+/// Simple timer class which allows client to keep track of elapsed time within
+/// a program.  Mimics stopwatch functionality
 ///
 class Timer
 {
 public:
     typedef unsigned long long Ticks;
 
-    /// Initializes timer to current time
-    Timer();
+    /// Initialize timer
+    explicit Timer();
 
-    ~Timer();
+    /// Start the timer running
+    void start();
 
-    /// Resets start time to current time
+    /// Stop the timer 
+    void stop();
+
+    /// Resets timer, clearing previous time elapsed 
     void reset();
 
     /// Get time elapsed in seconds
     double getTimeElapsed()const;
 
-    /// Get time elapsed in milliseconds 
-    double getTimeElapsedMilliSecond()const;
-
-    /// Get time elapsed in microseconds 
-    double getTimeElapsedMicroSecond()const;
-    
 private:
 
-
-    // TODO: use mach_absolute_time on mac
-    Ticks m_start_ticks;
+    bool   m_is_running;
+    double m_time_elapsed;
+    Ticks  m_start_ticks;
 };
+
+///
+/// Convert seconds to milliseconds
+///
+double secondsToMilliseconds( double seconds );
+
+///
+/// Convert seconds to microseconds
+///
+double secondsToMicroseconds( double seconds );
 
 
 ///
