@@ -209,9 +209,9 @@ bool AStar<Graph>::search()
     {
         if( step() )
         {
-            KLOG( Log::INFO ) << "FOUND GOAL.  Steps   : " << m_steps;
-            KLOG( Log::INFO ) << "             updates : " << m_updates;
-            KLOG( Log::INFO ) << "             path len: " 
+            KLOG( Log::DEBUG ) << "FOUND GOAL.  Steps   : " << m_steps;
+            KLOG( Log::DEBUG ) << "             updates : " << m_updates;
+            KLOG( Log::DEBUG ) << "             path len: " 
                               << m_destination_node->g;
             return true;
         }

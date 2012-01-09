@@ -110,9 +110,9 @@ public:
                 solution_state = current_state;
             }
 
-            float temperature = m_cooling_schedule.step();
-            float p = m_transition_p.get( last_score, current_score, temperature );
-            float e = drand48();
+            const float temperature = m_cooling_schedule.step();
+            const float p = m_transition_p.get( last_score, current_score, temperature );
+            const float e = drand48();
             if( p > e )
             {
                 cur_energy = new_energy;
@@ -132,3 +132,4 @@ private:
 
 
 #endif // SIMULATED_ANNEALING_H_
+
