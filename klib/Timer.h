@@ -57,15 +57,19 @@ private:
     Ticks  m_start_ticks;
 };
 
+
 ///
 /// Convert seconds to milliseconds
 ///
-double secondsToMilliseconds( double seconds );
+inline double secondsToMilliseconds( double seconds )
+{ return seconds * 1.0e3; }
+
 
 ///
 /// Convert seconds to microseconds
 ///
-double secondsToMicroseconds( double seconds );
+inline double secondsToMicroseconds( double seconds )
+{ return seconds * 1.0e6; }
 
 
 ///
@@ -76,11 +80,8 @@ template <typename Action>
 class AutoTimer
 {
 public:
-    explicit AutoTimer( Action action )
-        : m_action( action )
-    {
-        m_timer.start();
-    }
+    explicit AutoTimer( Action action ) : m_action( action )
+    { m_timer.start(); }
 
     ~AutoTimer()
     { m_action( m_timer.getTimeElapsed() ); }
@@ -99,11 +100,8 @@ template <typename Action>
 class AutoTimerRef
 {
 public:
-    explicit AutoTimerRef( Action& action )
-        : m_action( action )
-    {
-        m_timer.start();
-    }
+    explicit AutoTimerRef( Action& action ) : m_action( action )
+    { m_timer.start(); }
 
     ~AutoTimerRef()
     { m_action( m_timer.getTimeElapsed() ); }
