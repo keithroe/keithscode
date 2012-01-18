@@ -105,15 +105,3 @@ double Timer::getTimeElapsed()const
     const Ticks cur_ticks = getTicks();
     return ( cur_ticks - m_start_ticks ) * secondsPerTick() + m_time_elapsed;
 }
-
-
-double secondsToMilliseconds( double seconds )
-{
-    return seconds * 1.0e3;
-}
-
-
-double secondsToMicroseconds( double seconds )
-{
-    return seconds * 1.0e6;
-}
