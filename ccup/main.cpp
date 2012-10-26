@@ -730,7 +730,7 @@ public:
     virtual void chooseMove( 
             Color color,
             const Board& board,
-            Move >& move
+            Move& move
             )=0;
 };
 
@@ -741,8 +741,14 @@ public:
 //
 //------------------------------------------------------------------------------
 
+// TODO: at this point there is a loose coupling between the board passed in
+//   and the exploration list.  This means the same board must be passed in each
+//   time with only the moves recommended by the RandomAI being used on the
+//   board.  AI should probably own board.  This should be fixed so I can sleep
+//   at night.
 class RandomAI : public AI
 {
+    
 public:
     RandomAI();
 
@@ -831,7 +837,7 @@ void RandomAI::chooseExploration(
 void RandomAI::chooseExpansion(
         Color color,
         const Board& board,
-        Move >& move 
+        Move& move 
         )
 {
     LDEBUG << "Choosing exansion *************************";
@@ -943,7 +949,7 @@ void RandomAI::chooseExpansion(
 //
 //------------------------------------------------------------------------------
 
-class MCTSAI : public RandomAI
+class MCTSAI : public AI
 {
 public:
     MCTSAI();
@@ -996,7 +1002,7 @@ protected:
 };
 
 MCTSAI::MCTSAI()
-    : RandomAI(),
+    : AI(),
       m_root( 0 )
 {
 }
@@ -1013,7 +1019,8 @@ void MCTSAI::chooseMove(
             Move& move
             )
 {
-    RandomAI::chooseMove( color, board, move );
+    RandomAI random_ai;
+    random_ai.chooseMove( color, board, move );
     return;
 
     const double time_allowed = 0.5;
@@ -1052,6 +1059,7 @@ void MCTSAI::chooseMove(
         //
         // Run simulation
         //
+   //     while( 
         
 
         
