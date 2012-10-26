@@ -1,4 +1,3 @@
-
 //
 // MIT License
 //
@@ -23,6 +22,7 @@
 // IN THE SOFTWARE
 //
 
+
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
@@ -34,6 +34,11 @@
 #include <string>
 #include <vector>
 
+
+// TODO:
+//   * Fixed sized allocator for Board
+//   * Profiling pass
+//
 
 class Board;
 class AI;
@@ -446,6 +451,9 @@ const int GRID_SIZE      = 15u;
 const int NUM_GRID_CELLS = GRID_SIZE*GRID_SIZE;
 const int INVALID_IDX    = 255;
 
+
+typedef std::vector< std::pair<int, int> > Move;
+
 enum Color { NONE=0, WHITE, BLACK, };
 
 char toChar( Color c );
@@ -722,7 +730,7 @@ public:
     virtual void chooseMove( 
             Color color,
             const Board& board,
-            std::vector< std::pair<int, int> >& move
+            Move >& move
             )=0;
 };
 
@@ -738,24 +746,26 @@ class RandomAI : public AI
 public:
     RandomAI();
 
-    ~RandomAI() {}
+    virtual ~RandomAI() {}
 
 
-    void chooseMove( 
+    virtual void chooseMove( 
             Color color,
             const Board& board,
-            std::vector<std::pair<int, int> >& move
+            Move& move
             );
 protected:
-    void chooseExploration(
+    // TODO:Specialize this for MCTS since it cant use persistant m_explorations
+    virtual void chooseExploration(
             Color color,
             const Board& board,
-            std::vector<std::pair<int, int> >& move
+            Move& move
             );
-    void chooseExpansion(
+
+    virtual void chooseExpansion(
             Color color,
             const Board& board,
-            std::vector<std::pair<int, int> >& move
+            Move& move
             );
 
     std::vector<int> m_explorations;
@@ -779,7 +789,7 @@ RandomAI::RandomAI()
 void RandomAI::chooseMove( 
         Color color,
         const Board& board,
-        std::vector<std::pair<int, int> >& move 
+        Move& move 
         )
 {
     if( board.numWhiteStones() == 0 || drand48() < 0.5f )
@@ -793,7 +803,7 @@ void RandomAI::chooseMove(
 void RandomAI::chooseExploration(
         Color color,
         const Board& board,
-        std::vector<std::pair<int, int> >& move 
+        Move& move 
         )
 {
     move.clear();
@@ -821,7 +831,7 @@ void RandomAI::chooseExploration(
 void RandomAI::chooseExpansion(
         Color color,
         const Board& board,
-        std::vector< std::pair<int, int > >& move 
+        Move >& move 
         )
 {
     LDEBUG << "Choosing exansion *************************";
@@ -927,6 +937,153 @@ void RandomAI::chooseExpansion(
         chooseExploration( color, board, move );
 }
 
+//------------------------------------------------------------------------------
+//
+// MCTSAI 
+//
+//------------------------------------------------------------------------------
+
+class MCTSAI : public RandomAI
+{
+public:
+    MCTSAI();
+
+    ~MCTSAI();
+
+
+    void chooseMove( 
+            Color color,
+            const Board& board,
+            Move& move
+            );
+protected:
+
+    class Node
+    {
+    public:
+        Node( Node* parent )
+            : m_parent( parent ),
+              m_num_wins( 0 ),
+              m_num_visits( 0 )
+        {}
+
+        const Board& board()const       { return m_board; }
+        Board& board()                  { return m_board; }
+
+        int numWins()const              { return m_num_wins;   }
+        int numVisits()const            { return m_num_visits; }
+
+        void addWin()                   { ++m_num_visits; ++m_num_wins; }
+        void addLoss()                  { ++m_num_visits; }
+
+
+        void addChild( Node* child )    { m_children.push_back( child ); }
+
+        bool select( Node** next );
+
+    private:
+        Node*              m_parent;
+        int                m_num_wins;
+        int                m_num_visits;
+        Board              m_board;
+        Move               m_move;
+
+        std::vector<Node*> m_children;
+    };
+
+
+    Node* m_root;
+};
+
+MCTSAI::MCTSAI()
+    : RandomAI(),
+      m_root( 0 )
+{
+}
+
+
+MCTSAI::~MCTSAI()
+{
+}
+
+
+void MCTSAI::chooseMove( 
+            Color color,
+            const Board& board,
+            Move& move
+            )
+{
+    RandomAI::chooseMove( color, board, move );
+    return;
+
+    const double time_allowed = 0.5;
+    Timer timer;
+    timer.start();
+    
+    std::vector< Node* > visited;
+    while( timer.getTimeElapsed() < time_allowed )
+    {
+        //
+        // SELECT Walk tree, selecting moves until we hit never before seen pos
+        //
+        visited.clear();
+        visited.push_back( m_root );
+
+        Node* cur  = m_root;
+        Node* next = 0;
+
+        while( !cur->select( &next ) )
+        {
+            cur = next;
+            visited.push_back( cur );
+
+            if( cur->board().gameFinished() )
+            {
+                LDEBUG << "Reached finished game state during select!";
+                continue;
+            }
+        }
+
+        //
+        // Expand the tree
+        //
+        cur->addChild( next );
+
+        //
+        // Run simulation
+        //
+        
+
+        
+
+
+
+
+
+        /*
+
+        // The tree is traversed 
+        while (current node elem_of T )
+            last node <- current node
+            current node <- Select(current node)
+        end
+        // A node is added 
+        last node <- Expand(last node)
+
+        // A simulated game is played
+        R <- P lay simulated game(last node)
+
+        // The result is backpropagated 
+        current node <- last node 
+        while (current node elem_of T ) 
+            Backpropagation(current node, R) current node <- current node.parent
+        end
+        */
+
+
+    }
+}
+
 
 //------------------------------------------------------------------------------
 //
@@ -958,7 +1115,7 @@ Player::Player()
     : m_color( NONE ),
       m_opp_color( NONE ),
       m_move_number( 0 ),
-      m_ai( new RandomAI )
+      m_ai( new MCTSAI )
 {
 }
 
@@ -986,13 +1143,11 @@ std::string Player::doMove( const std::string& opponent_move )
 
     placeOpponentStones( opponent_move );
 
-    std::vector<std::pair<int, int> > move; // TODO: persistent
+    Move move; // TODO: persistent
     m_ai->chooseMove( m_color, m_board, move );
 
     std::ostringstream oss;
-    for( std::vector<std::pair<int, int> >::iterator it = move.begin();
-         it != move.end();
-         ++it )
+    for( Move::iterator it = move.begin(); it != move.end(); ++it )
     {
         m_board.set( it->first, it->second, m_color );
         oss << toString( it->first, it->second );
@@ -1024,7 +1179,6 @@ void Player::placeOpponentStones( const std::string& opponent_move )
 //  Helper definitions 
 //
 //------------------------------------------------------------------------------
-
 
 inline char toChar( Color c )
 {
@@ -1080,6 +1234,7 @@ inline std::string toString( int x, int y )
     return buf;
 }
 
+
 inline bool legalExploration( const Board& b, Color c, int idx )
 {
     assert( idx < NUM_GRID_CELLS );
@@ -1123,12 +1278,14 @@ int main( int argc, char** argv )
 
     Log::setReportingLevel( Log::DEBUG );
     
+    LDEBUG << "Board size is " << sizeof( Board );
+    LDEBUG << "Point size is " << sizeof( Point );
+
     Player player;
 
     LoopTimerInfo main_loop_time( "Main loop" );
     while( true )
     {
-
         std::string opponent_move;
         std::cin >> opponent_move;
 
