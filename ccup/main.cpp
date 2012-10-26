@@ -37,7 +37,7 @@
 
 class Board;
 class AI;
-class SymplePlayer;
+class Player;
 
 
 //
@@ -930,14 +930,14 @@ void RandomAI::chooseExpansion(
 
 //------------------------------------------------------------------------------
 //
-//  SymplePlayer
+//  Player
 //
 //------------------------------------------------------------------------------
 
-class SymplePlayer
+class Player
 {
 public:
-    SymplePlayer();
+    Player();
 
     std::string doMove( const std::string& opponent_move );
 
@@ -954,7 +954,7 @@ private:
 };
 
 
-SymplePlayer::SymplePlayer()
+Player::Player()
     : m_color( NONE ),
       m_opp_color( NONE ),
       m_move_number( 0 ),
@@ -963,7 +963,7 @@ SymplePlayer::SymplePlayer()
 }
 
 
-std::string SymplePlayer::doMove( const std::string& opponent_move )
+std::string Player::doMove( const std::string& opponent_move )
 {
 
     m_move_number++;
@@ -1003,7 +1003,7 @@ std::string SymplePlayer::doMove( const std::string& opponent_move )
 }
 
 
-void SymplePlayer::placeOpponentStones( const std::string& opponent_move )
+void Player::placeOpponentStones( const std::string& opponent_move )
 {
     if( opponent_move != "Start" )
     {
@@ -1123,7 +1123,7 @@ int main( int argc, char** argv )
 
     Log::setReportingLevel( Log::DEBUG );
     
-    SymplePlayer player;
+    Player player;
 
     LoopTimerInfo main_loop_time( "Main loop" );
     while( true )
