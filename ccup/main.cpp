@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cstdlib>
+#include <cstring>
 #include <iomanip>
 #include <iostream>
 #include <map>
@@ -502,6 +503,8 @@ class Board
 public:
     Board();
 
+    Board( const Board& orig );
+
     // No error checking for now
     void set( int x, int y, Color color ); 
 
@@ -535,6 +538,7 @@ public:
     
     Point* grid()
     { return m_grid; }
+
 
     static int wrap( int x );
     static int clamp( int x );
@@ -572,6 +576,16 @@ Board::Board()
             p.neighbors[3] = ( j == GRID_SIZE-1 ? INVALID_IDX : to1D(i, j+1) );
         }
     }
+}
+
+
+Board::Board( const Board& orig )
+    : m_color( orig.m_color ),
+      m_num_groups( orig.m_num_groups ),
+      m_num_white_stones( orig.m_num_white_stones ),
+      m_num_black_stones( orig.m_num_black_stones )
+{
+    memcpy( m_grid, orig.m_grid, sizeof( m_grid ) );
 }
 
 
@@ -1059,7 +1073,18 @@ void MCTSAI::chooseMove(
         //
         // Run simulation
         //
-   //     while( 
+        RandomAI  random_ai;
+        Board     sim_board = next->board();
+        Color     cur_color = color;
+        Move      move;
+        while( !sim_board.gameFinished() )
+        {
+            random_ai.chooseMove( cur_color, sim_board, move );
+            for( Move::iterator it = move.begin(); it != move.end(); ++it )
+                sim_board.set( it->first, it->second, cur_color );
+
+            cur_color = cur_color == WHITE : BLACK ? WHITE;
+        }
         
 
         
