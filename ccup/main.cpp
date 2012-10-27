@@ -29,6 +29,7 @@
 #include <cstring>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <set>
 #include <sstream>
@@ -39,6 +40,7 @@
 // TODO:
 //   * Fixed sized allocator for Board
 //   * Profiling pass
+//   * color and board should be assigned to AI at construction
 //
 
 class Board;
@@ -555,7 +557,6 @@ public:
                m_num_black_stones - GROUP_PENALTY*m_num_black_groups ;
     }
 
-
     bool gameFinished()const
     {  return m_num_black_stones + m_num_white_stones == NUM_GRID_CELLS; }
 
@@ -890,8 +891,9 @@ protected:
     class Node
     {
     public:
-        Node( Node* parent )
+        Node( Node* parent, const Move& move )
             : m_parent( parent ),
+              m_move( move ),
               m_num_wins( 0 ),
               m_num_visits( 0 )
         {}
@@ -908,14 +910,23 @@ protected:
 
         Node* parent()                  { return m_parent; }
 
+        void  bestMove( Move& move );
+
+        float score()const              
+        { 
+            assert( m_num_visits ); 
+            return static_cast<float>( m_num_wins ) / 
+                   static_cast<float>( m_num_visits );
+        }
+
         bool select( Node** next );
 
     private:
         Node*              m_parent;
+        Move               m_move;
         int                m_num_wins;
         int                m_num_visits;
         Board              m_board;
-        Move               m_move;
 
         std::vector<Node*> m_children;
     };
@@ -942,9 +953,11 @@ void MCTSAI::chooseMove(
             Move& move
             )
 {
+    /*
     RandomAI random_ai;
     random_ai.chooseMove( color, board, move );
     return;
+    */
 
     const double time_allowed = 0.5;
     Timer timer;
@@ -954,7 +967,7 @@ void MCTSAI::chooseMove(
     while( timer.getTimeElapsed() < time_allowed )
     {
         //
-        // SELECT Walk tree, selecting moves until we hit never before seen pos
+        // SELECT: Walk tree, selecting moves until we hit never before seen pos
         //
         visited.clear();
         visited.push_back( m_root );
@@ -975,12 +988,12 @@ void MCTSAI::chooseMove(
         }
 
         //
-        // Expand the tree
+        // EXPAND: add new node to  the tree
         //
         cur->addChild( next );
 
         //
-        // Run simulation
+        // SIMULATE: Run simulation
         //
         RandomAI  random_ai;
         Board     sim_board = next->board();
@@ -999,7 +1012,7 @@ void MCTSAI::chooseMove(
         const int score = sim_board.winner() == color ? 1 : 0;
 
         //
-        // Back propagate the score
+        // PROPAGATE: Back propagate the score
         //
         next->addResult( score );
         Node* parent = next->parent();
@@ -1009,6 +1022,35 @@ void MCTSAI::chooseMove(
             parent = parent->parent();
         }
     }
+
+    m_root->bestMove( move );
+}
+
+void  MCTSAI::Node::bestMove( Move& move )
+{
+    assert( !m_children.empty() );
+
+    float max_score = std::numeric_limits<float>::min();  
+    Node* best = 0;
+
+    for( std::vector<Node*>::iterator it = m_children.begin();
+         it != m_children.end();
+         ++it )
+    {
+        Node* child = *it;
+        if( child->score() > max_score )
+        {
+            best = child;
+            max_score = child->score();
+        }
+    }
+
+    move.assign( best->m_move.begin(), best->m_move.end() );
+}
+
+
+bool MCTSAI::Node::select( Node** next )
+{
 }
 
 
