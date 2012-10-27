@@ -451,6 +451,7 @@ struct LoopTimerInfo
 const int GRID_SIZE      = 15;
 const int NUM_GRID_CELLS = GRID_SIZE*GRID_SIZE;
 const int INVALID_IDX    = 16;
+const int GROUP_PENALTY  = 6;
 
 
 typedef std::vector< std::pair<int, int> > Move;
@@ -546,6 +547,14 @@ public:
 
     int numBlackStones()const
     { return m_num_black_stones; }
+
+    int score( Color c )const
+    {
+        return c == WHITE                                            ? 
+               m_num_white_stones - GROUP_PENALTY*m_num_white_groups :
+               m_num_black_stones - GROUP_PENALTY*m_num_black_groups ;
+    }
+
 
     bool gameFinished()const
     {  return m_num_black_stones + m_num_white_stones == NUM_GRID_CELLS; }
@@ -670,6 +679,18 @@ void Board::set( int x, int y, Color color )
                 m_num_black_groups--;
         }
     }
+}
+
+
+Color Board::winner()const
+{
+    const int wscore = m_num_white_stones - GROUP_PENALTY*m_num_white_groups;
+    const int bscore = m_num_black_stones - GROUP_PENALTY*m_num_black_groups;
+
+    if( wscore > bscore )
+        return WHITE;
+    else
+        return BLACK;
 }
 
 
@@ -1004,7 +1025,7 @@ public:
 
     std::string doMove( const std::string& opponent_move );
 
-    const Board& getBoard()const { return m_board; }
+    const Board& board()const { return m_board; }
 
 private:
     void placeOpponentStones( const std::string& opponent_move );
@@ -1341,11 +1362,13 @@ int main( int argc, char** argv )
         std::string my_move = player.doMove( opponent_move );
 
         LINFO << " my move: " << my_move;
-        LINFO << "\n" << player.getBoard();
+        LINFO << "\n" << player.board();
         std::cout << my_move << std::endl;
        
     }
 
+    std::cerr << "WHITE: " << player.board().score( WHITE ) << "\n"
+              << "BLACK: " << player.board().score( BLACK ) << "\n";
     main_loop_time.log();
 }
 
