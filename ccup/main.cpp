@@ -556,6 +556,7 @@ public:
     Point* grid()
     { return m_grid; }
 
+    Color winner()const;
 
     static int wrap( int x );
     static int clamp( int x );
@@ -564,7 +565,9 @@ private:
     void changeGroup( int old_group, int new_group );
 
     Color       m_color;
-    int         m_num_groups;
+    int         m_next_group;
+    int         m_num_white_groups;
+    int         m_num_black_groups;
     int         m_num_white_stones;
     int         m_num_black_stones;
     Point       m_grid[NUM_GRID_CELLS];
@@ -573,7 +576,9 @@ private:
 
 Board::Board()
     : m_color( WHITE ),
-      m_num_groups( 0 ),
+      m_next_group( 0 ),
+      m_num_white_groups( 0 ),
+      m_num_black_groups( 0 ),
       m_num_white_stones( 0 ),
       m_num_black_stones( 0 )
 {
@@ -598,7 +603,9 @@ Board::Board()
 
 Board::Board( const Board& orig )
     : m_color( orig.m_color ),
-      m_num_groups( orig.m_num_groups ),
+      m_next_group( orig.m_next_group ),
+      m_num_white_groups( orig.m_num_white_groups ),
+      m_num_black_groups( orig.m_num_black_groups ),
       m_num_white_stones( orig.m_num_white_stones ),
       m_num_black_stones( orig.m_num_black_stones )
 {
@@ -639,7 +646,11 @@ void Board::set( int x, int y, Color color )
     // All neighbors are empty, create new group
     if( p.group == 0 )
     {
-        p.group = ++m_num_groups; 
+        p.group = ++m_next_group; 
+        if( color == WHITE )
+            m_num_white_groups++;
+        else
+            m_num_black_groups++;
         return;
     }
 
@@ -653,6 +664,10 @@ void Board::set( int x, int y, Color color )
             m_grid[ nidx ].group != p.group )
         {
             changeGroup( m_grid[ nidx ].group, p.group);
+            if( color == WHITE )
+                m_num_white_groups--;
+            else
+                m_num_black_groups--;
         }
     }
 }
@@ -866,11 +881,11 @@ protected:
         int numWins()const              { return m_num_wins;   }
         int numVisits()const            { return m_num_visits; }
 
-        void addWin()                   { ++m_num_visits; ++m_num_wins; }
-        void addLoss()                  { ++m_num_visits; }
-
+        void addResult( int score )     { ++m_num_visits; m_num_wins += score; }
 
         void addChild( Node* child )    { m_children.push_back( child ); }
+
+        Node* parent()                  { return m_parent; }
 
         bool select( Node** next );
 
@@ -958,35 +973,20 @@ void MCTSAI::chooseMove(
 
             cur_color = (cur_color == WHITE ? BLACK : WHITE );
         }
-        
 
-        
+        assert( sim_board.winner() != NONE );
+        const int score = sim_board.winner() == color ? 1 : 0;
 
-
-
-
-
-        /*
-
-        // The tree is traversed 
-        while (current node elem_of T )
-            last node <- current node
-            current node <- Select(current node)
-        end
-        // A node is added 
-        last node <- Expand(last node)
-
-        // A simulated game is played
-        R <- P lay simulated game(last node)
-
-        // The result is backpropagated 
-        current node <- last node 
-        while (current node elem_of T ) 
-            Backpropagation(current node, R) current node <- current node.parent
-        end
-        */
-
-
+        //
+        // Back propagate the score
+        //
+        next->addResult( score );
+        Node* parent = next->parent();
+        while( parent )
+        {
+            parent->addResult( score );
+            parent = parent->parent();
+        }
     }
 }
 
@@ -1279,12 +1279,13 @@ bool chooseExpansion(
                 continue;
             }
 
+            // If we have multiple adjacent friendly groups, add this move if
+            // none of the adjacent groups have been expanded yet
             if( num_adjacent > 1 )
             {
                 bool ok_to_join = true;
                 for( int i = 0; i < num_adjacent; ++i )
                 {
-
                     if( expansions.count( adjacent_groups[ i ] ) > 0 )
                     {
                         ok_to_join = false;
@@ -1294,9 +1295,8 @@ bool chooseExpansion(
                 if( ok_to_join )
                 {
                     for( int i = 0; i < num_adjacent; ++i )
-                    {
                         expansions.insert( adjacent_groups[ i ] ); 
-                    }
+
                     move.push_back( coord );
                     LDEBUG << "       >1 adj groups, works!!";
                 }
