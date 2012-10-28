@@ -25,6 +25,7 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
@@ -481,16 +482,18 @@ void to2D( int i, int& x, int& y );
 bool chooseExpansion(
         Color color,
         const Board& board,
-        const std::vector<int>& random_points,
+        const std::vector<unsigned char>& random_points,
         Move& move 
         );
 
 bool chooseExploration(
         Color color,
         const Board& board,
-        std::vector<int>& potential_expolorations,
+        std::vector<unsigned char>& potential_expolorations,
         Move& move 
         );
+
+float uct( float score, float num_visits, float num_visits_parent );
 
 //------------------------------------------------------------------------------
 //
@@ -524,6 +527,9 @@ public:
 
     // No error checking for now
     void set( int x, int y, Color color ); 
+    
+    // No error checking for now
+    void set( const Move& move, Color color ); 
 
     // No error checking for now
     const Point& get( int x, int y )const
@@ -682,6 +688,13 @@ void Board::set( int x, int y, Color color )
     }
 }
 
+    
+void Board::set( const Move& move, Color color )
+{
+    for( Move::const_iterator it = move.begin(); it != move.end(); ++it )
+        set( it->first, it->second, color );
+}
+
 
 Color Board::winner()const
 {
@@ -828,8 +841,8 @@ public:
             );
 protected:
 
-    std::vector<int> m_explorations;
-    std::vector<int> m_expansions;
+    std::vector<unsigned char> m_explorations;
+    std::vector<unsigned char> m_expansions;
 
 };
 
@@ -891,12 +904,20 @@ protected:
     class Node
     {
     public:
-        Node( Node* parent, const Move& move )
+        Node( Node* parent )
             : m_parent( parent ),
-              m_move( move ),
+              m_move(),
               m_num_wins( 0 ),
-              m_num_visits( 0 )
-        {}
+              m_num_visits( 0 ),
+              m_explorations( NUM_GRID_CELLS ),
+              m_expansions( NUM_GRID_CELLS )
+        {
+            for( int i = 0; i < NUM_GRID_CELLS; ++i )
+                m_explorations[i] = m_expansions[i] = i;
+
+            std::random_shuffle( m_explorations.begin(), m_explorations.end() );
+            std::random_shuffle( m_expansions.begin(), m_expansions.end() ); 
+        }
 
         const Board& board()const       { return m_board; }
         Board& board()                  { return m_board; }
@@ -919,7 +940,7 @@ protected:
                    static_cast<float>( m_num_visits );
         }
 
-        bool select( Node** next );
+        bool select( Node** next, Color color );
 
     private:
         Node*              m_parent;
@@ -928,16 +949,20 @@ protected:
         int                m_num_visits;
         Board              m_board;
 
-        std::vector<Node*> m_children;
+        std::vector<Node*>          m_children;
+        std::vector<unsigned char>  m_explorations;
+        std::vector<unsigned char>  m_expansions;
     };
 
 
     Node* m_root;
+    int   m_T;       
+
 };
 
 MCTSAI::MCTSAI()
     : AI(),
-      m_root( 0 )
+      m_root( new Node( 0 ) )
 {
 }
 
@@ -953,11 +978,9 @@ void MCTSAI::chooseMove(
             Move& move
             )
 {
-    /*
     RandomAI random_ai;
     random_ai.chooseMove( color, board, move );
     return;
-    */
 
     const double time_allowed = 0.5;
     Timer timer;
@@ -975,7 +998,7 @@ void MCTSAI::chooseMove(
         Node* cur  = m_root;
         Node* next = 0;
 
-        while( !cur->select( &next ) )
+        while( !cur->select( &next, color ) )
         {
             cur = next;
             visited.push_back( cur );
@@ -1002,8 +1025,7 @@ void MCTSAI::chooseMove(
         while( !sim_board.gameFinished() )
         {
             random_ai.chooseMove( cur_color, sim_board, move );
-            for( Move::iterator it = move.begin(); it != move.end(); ++it )
-                sim_board.set( it->first, it->second, cur_color );
+            sim_board.set( move, cur_color );
 
             cur_color = (cur_color == WHITE ? BLACK : WHITE );
         }
@@ -1049,9 +1071,66 @@ void  MCTSAI::Node::bestMove( Move& move )
 }
 
 
-bool MCTSAI::Node::select( Node** next )
+bool MCTSAI::Node::select( Node** node, Color c )
 {
+    const size_t T = 8;
+    if( m_children.size() > T )
+    {
+        float best_uct_score = uct( 0, 0, m_num_visits ); 
+        Node* selection = 0;
+
+        for( std::vector<Node*>::iterator it = m_children.begin();
+             it != m_children.end();
+             ++it )
+        {
+            Node* child = *it;
+            float uct_score = 
+                uct( child->score(), child->numVisits(), m_num_visits );
+            if( uct_score > best_uct_score )
+            {
+                selection = child;
+                best_uct_score = uct_score;
+            }
+        }
+
+        // If a preexisting node was selected
+        if( selection )
+        {
+            *node = selection;
+            return true;
+        }
+
+        // else fall through to tree expansion
+    }
+
+    //
+    // Expand the tree here
+    //
+
+    Node* n = new Node( this ); 
+ 
+    float p_explore = 0.5f; // TODO:  make some function of mov
+    if( m_board.numStones( c ) == 0 || drand48() < p_explore )
+    {
+        if( !chooseExploration( c, m_board, m_explorations, n->m_move ) )
+            chooseExpansion( c, m_board, m_expansions, n->m_move );
+    }
+    else
+    {
+        if( !chooseExpansion( c, m_board, m_expansions, n->m_move ) )
+            chooseExploration( c, m_board, m_explorations, n->m_move );
+    }
+
+    n->m_board.set( n->m_move, c );
+
+    *node = n;
+
+    return false;
+
+
+    // UCT
 }
+
 
 
 //------------------------------------------------------------------------------
@@ -1238,7 +1317,7 @@ void to2D( int i, int& x, int& y )
 bool chooseExploration(
         Color color,
         const Board& board,
-        std::vector<int>& potential_explorations,
+        std::vector<unsigned char>& potential_explorations,
         Move& move 
         )
 {
@@ -1268,7 +1347,7 @@ bool chooseExploration(
 bool chooseExpansion(
         Color color,
         const Board& board,
-        const std::vector<int>& random_points,
+        const std::vector<unsigned char>& random_points,
         Move& move 
         )
 {
@@ -1281,7 +1360,7 @@ bool chooseExpansion(
     int adjacent_groups[4];
 
     // Iterate over points in random order
-    for( std::vector<int>::const_iterator it = random_points.begin();
+    for( std::vector<unsigned char>::const_iterator it = random_points.begin();
          it != random_points.end();
          ++it )
     {
@@ -1371,6 +1450,12 @@ bool chooseExpansion(
     }
 
     return( !move.empty() );
+}
+
+float uct( float score, float num_visits, float num_visits_parent )
+{
+    const float C = 1.0f;
+    return score + C * sqrtf( logf( num_visits_parent ) / (num_visits+1.0f ) );
 }
 
 //------------------------------------------------------------------------------
