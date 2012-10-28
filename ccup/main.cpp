@@ -29,6 +29,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iomanip>
+#include <iterator>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -171,6 +172,7 @@ inline std::string Log::toString( Log::Level level )
 {
     static const char* const level2string[] = 
     {
+        "NONE",
         "ERROR",
         "WARNING",
         "INFO",
@@ -453,7 +455,7 @@ struct LoopTimerInfo
 
 const int GRID_SIZE      = 15;
 const int NUM_GRID_CELLS = GRID_SIZE*GRID_SIZE;
-const int INVALID_IDX    = 16;
+const int INVALID_IDX    = 255;
 const int GROUP_PENALTY  = 6;
 
 
@@ -511,6 +513,15 @@ struct Point
 
     unsigned char neighbors[4]; // { L, R, B, T }
 };
+
+std::ostream& operator<<( std::ostream& out, const Point& p )
+{
+    out << "[" << static_cast<int>( p.x ) << "," 
+               << static_cast<int>( p.y ) << "] c: " 
+               << static_cast<int>( p.color ) << " g: " 
+               << static_cast<int>( p.group );
+    return out;
+}
 
 //------------------------------------------------------------------------------
 //
@@ -1289,6 +1300,20 @@ inline bool legalExploration( const Board& b, Color c, int idx )
     const Point* g = b.grid(); 
     const Point& p = g[idx];
 
+    int x, y;
+    to2D( idx, x, y );
+    LDEBUG << "   testing " << x << "," << y; 
+    for( int i = 0; i < 4; ++i )
+    {
+        if( p.neighbors[i] == INVALID_IDX )
+            continue;
+        LDEBUG << "      neighbor " << i;
+        to2D( p.neighbors[i], x, y );
+        LDEBUG << "      neighbor " << i << ": " << x << ", " << y;
+        const Point& np = g[ p.neighbors[i] ];
+        LDEBUG << "            : " << np;
+    }
+
     return( p.color == NONE                                                   &&
           ( p.neighbors[0] == INVALID_IDX || g[ p.neighbors[0] ].color != c ) &&
           ( p.neighbors[1] == INVALID_IDX || g[ p.neighbors[1] ].color != c ) &&
@@ -1330,10 +1355,12 @@ bool chooseExploration(
         const int idx = potential_explorations.back();
         potential_explorations.pop_back();
 
+
         if( legalExploration( board, color, idx ) )
         {
             int x, y;
             to2D( idx, x, y );
+            LDEBUG << "      foudn legal explore: " << x << "," << y;
             move.push_back( std::make_pair( x, y ) );
             return true;
         }
@@ -1476,6 +1503,7 @@ int main( int argc, char** argv )
     Player player;
 
     LoopTimerInfo main_loop_time( "Main loop" );
+    std::vector< std::string > opponent_moves;
     while( true )
     {
         std::string opponent_move;
@@ -1483,7 +1511,10 @@ int main( int argc, char** argv )
 
         AutoTimerRef<LoopTimerInfo> schedule_timer( main_loop_time );
 
-        if( opponent_move == "Quit" )
+        LINFO << " opp move: " << opponent_move;
+        opponent_moves.push_back( opponent_move );
+
+        if( std::cin.eof() || opponent_move == "Quit" )
             break;
 
         std::string my_move = player.doMove( opponent_move );
@@ -1491,12 +1522,16 @@ int main( int argc, char** argv )
         LINFO << " my move: " << my_move;
         LINFO << "\n" << player.board();
         std::cout << my_move << std::endl;
-       
+        std::cout.flush();
     }
 
     std::cerr << "WHITE: " << player.board().score( WHITE ) << "\n"
               << "BLACK: " << player.board().score( BLACK ) << "\n";
     main_loop_time.log();
+
+    std::cerr << "REPLAY ------------------------------------\n";
+    std::ostream_iterator< std::string > out( std::cerr, "\n" );
+    std::copy( opponent_moves.begin(), opponent_moves.end(), out );
 }
 
 
