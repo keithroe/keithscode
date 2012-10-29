@@ -912,7 +912,6 @@ public:
             const Board& board,
             Move& move
             );
-protected:
 
     class Node
     {
@@ -1013,17 +1012,20 @@ void MCTSAI::chooseMove(
     
     std::vector< Node* > visited;
     unsigned iter_count = 0u;
+    unsigned max_depth = 0u;
     while( timer.getTimeElapsed() < time_allowed )
     {
         iter_count++;
         LDEBUG << " Iteration: " << iter_count << std::endl;
 
+        /*
         if( iter_count % 10 == 0 )
         {
             std::ostringstream oss;
             oss << "graph_" << m_move_number << "_" << iter_count << ".dot";
             printGraph( m_root, oss.str() );
         }
+        */
 
         //
         // SELECT: Walk tree, selecting moves until we hit never before seen pos
@@ -1035,8 +1037,10 @@ void MCTSAI::chooseMove(
         Node* cur  = m_root;
         Node* next = 0;
 
+        unsigned depth = 1u;
         while( cur->select( &next, color ) )
         {
+            depth++;
             cur = next;
             visited.push_back( cur );
 
@@ -1046,6 +1050,8 @@ void MCTSAI::chooseMove(
                 break;
             }
         }
+        if( depth > max_depth )
+            max_depth = depth;
 
         //
         // EXPAND: add new node to  the tree
@@ -1084,6 +1090,12 @@ void MCTSAI::chooseMove(
             parent = parent->parent();
         }
     }
+    std::cerr << "iter count: " << iter_count << std::endl;
+    std::cerr << "max_depth : " << max_depth << std::endl;
+
+    std::ostringstream oss;
+    oss << "graph_" << m_move_number << "_final.dot";
+    printGraph( m_root, oss.str() );
 
     m_root->bestMove( move );
 }
@@ -1198,10 +1210,8 @@ bool MCTSAI::Node::select( Node** node, Color c )
         }
     }
 
-            std::cerr << "    here a " << best_node_uct_score << std::endl;
     if( new_node_uct_score > best_node_uct_score )
     {
-            std::cerr << "    here b " << std::endl;
         //
         // Expand the tree here
         //
@@ -1211,15 +1221,12 @@ bool MCTSAI::Node::select( Node** node, Color c )
         const float p_explore = 0.5f; // TODO:  make some function of mov
         if( m_board.numStones( c ) == 0 || drand48() < p_explore )
         {
-            std::cerr << "    here 0 " << std::endl;
             if( chooseExploration( c, m_board, m_explorations, n->m_move ) )
             {
-            std::cerr << "    here 0.1 " << std::endl;
                 *node = n;
                 n->m_board.set( n->m_move, c );
                 return false;
             }
-            std::cerr << "    here 1 " << std::endl;
         }
         else
         {
@@ -1579,7 +1586,8 @@ bool chooseExpansion(
 
 float uct( float score, float num_visits, float num_visits_parent )
 {
-    const float C = 0.1f;
+    //const float C = 0.1f;
+    const float C = 0.01f;
     return score + C * sqrtf( ( logf( num_visits_parent+1.0f ) ) / 
                               ( num_visits+1.0f ) );
 }
@@ -1597,6 +1605,7 @@ int main( int argc, char** argv )
     Log::setReportingLevel( Log::DEBUG );
     
     LDEBUG << "Board size is " << sizeof( Board );
+    LDEBUG << "Node size is "  << sizeof( MCTSAI::Node );
     LDEBUG << "Point size is " << sizeof( Point );
 
     Player player;
@@ -1605,16 +1614,18 @@ int main( int argc, char** argv )
     std::vector< std::string > opponent_moves;
     while( true )
     {
-        std::string opponent_move;
-        std::cin >> opponent_move;
+        std::string opponent_move ( "D7" );
+        //std::cin >> opponent_move;
 
         AutoTimerRef<LoopTimerInfo> schedule_timer( main_loop_time );
 
         LINFO << " opp move: " << opponent_move;
         opponent_moves.push_back( opponent_move );
 
+        /*
         if( std::cin.eof() || opponent_move == "Quit" )
             break;
+            */
 
         std::string my_move = player.doMove( opponent_move );
 
@@ -1622,6 +1633,10 @@ int main( int argc, char** argv )
         LINFO << "\n" << player.board();
         std::cout << my_move << std::endl;
         std::cout.flush();
+       
+        
+        
+        break;
     }
 
     std::cerr << "WHITE: " << player.board().score( WHITE ) << "\n"
