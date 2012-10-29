@@ -52,6 +52,7 @@ void MCTSAI::chooseMove(
 {
     m_move_number++;
     
+    std::cerr << " sim board :" << m_move_number << std::endl << m_root->board() << std::endl;
 
     /*
     RandomAI random_ai;
@@ -59,7 +60,7 @@ void MCTSAI::chooseMove(
     return;
     */
 
-    const double time_allowed = 0.5;
+    const double time_allowed = 0.05;
     Timer timer;
     timer.start();
     
@@ -85,7 +86,7 @@ void MCTSAI::chooseMove(
         //
         LDEBUG << "    SELECT: ";
         visited.clear();
-        visited.push_back( m_root );
+        visited.push_back( m_root ); // TODO: use this
 
         Node* cur  = m_root;
         Node* next = 0;
