@@ -28,6 +28,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <cstring>
+#include <fstream>
 #include <iomanip>
 #include <iterator>
 #include <iostream>
@@ -86,8 +87,9 @@ class Player;
     else if( level > Log::getReportingLevel() ) ;                              \
     else Log().get( level )
 
-#define LINFO  KLOG( Log::INFO )
-#define LDEBUG KLOG( Log::DEBUG )
+#define LINFO   KLOG( Log::INFO )
+#define LDEBUG  KLOG( Log::DEBUG )
+#define LDEBUG1 KLOG( Log::DEBUG1 )
 
 class Log
 {
@@ -917,7 +919,6 @@ protected:
     public:
         Node( Node* parent )
             : m_parent( parent ),
-              m_move(),
               m_num_wins( 0 ),
               m_num_visits( 0 ),
               m_explorations( NUM_GRID_CELLS ),
@@ -942,6 +943,10 @@ protected:
 
         Node* parent()                  { return m_parent; }
 
+        const Move& move()const         { return m_move; }
+
+        const std::vector<Node*>& children()const { return m_children; }
+
         void  bestMove( Move& move );
 
         float score()const              
@@ -965,14 +970,18 @@ protected:
         std::vector<unsigned char>  m_expansions;
     };
 
+    static void printGraph( const Node* node, const std::string& filename );
+    static void printGraphNode( const Node* node, std::ostream& out );
 
+    unsigned m_move_number;
     Node* m_root;
-    int   m_T;       
 
 };
 
+
 MCTSAI::MCTSAI()
     : AI(),
+      m_move_number( 0 ),
       m_root( new Node( 0 ) )
 {
 }
@@ -989,27 +998,44 @@ void MCTSAI::chooseMove(
             Move& move
             )
 {
+    m_move_number++;
+
+    /*
     RandomAI random_ai;
     random_ai.chooseMove( color, board, move );
     return;
+    */
 
-    const double time_allowed = 0.5;
+
+    const double time_allowed = 5;
     Timer timer;
     timer.start();
     
     std::vector< Node* > visited;
+    unsigned iter_count = 0u;
     while( timer.getTimeElapsed() < time_allowed )
     {
+        iter_count++;
+        LDEBUG << " Iteration: " << iter_count << std::endl;
+
+        if( iter_count % 10 == 0 )
+        {
+            std::ostringstream oss;
+            oss << "graph_" << m_move_number << "_" << iter_count << ".dot";
+            printGraph( m_root, oss.str() );
+        }
+
         //
         // SELECT: Walk tree, selecting moves until we hit never before seen pos
         //
+        LDEBUG << "    SELECT: ";
         visited.clear();
         visited.push_back( m_root );
 
         Node* cur  = m_root;
         Node* next = 0;
 
-        while( !cur->select( &next, color ) )
+        while( cur->select( &next, color ) )
         {
             cur = next;
             visited.push_back( cur );
@@ -1017,18 +1043,20 @@ void MCTSAI::chooseMove(
             if( cur->board().gameFinished() )
             {
                 LDEBUG << "Reached finished game state during select!";
-                continue;
+                break;
             }
         }
 
         //
         // EXPAND: add new node to  the tree
         //
+        LDEBUG << "    EXPAND";
         cur->addChild( next );
 
         //
         // SIMULATE: Run simulation
         //
+        LDEBUG << "    SIMULATE";
         RandomAI  random_ai;
         Board     sim_board = next->board();
         Color     cur_color = color;
@@ -1047,6 +1075,7 @@ void MCTSAI::chooseMove(
         //
         // PROPAGATE: Back propagate the score
         //
+        LDEBUG << "    PROPAGATE";
         next->addResult( score );
         Node* parent = next->parent();
         while( parent )
@@ -1058,6 +1087,64 @@ void MCTSAI::chooseMove(
 
     m_root->bestMove( move );
 }
+
+
+void MCTSAI::printGraph( const Node* node, const std::string& filename )
+{
+    std::ofstream out( filename.c_str() );
+    out << "digraph g {\n"
+        << "  graph [ size=\"8.0,10.5\""
+        << " bgcolor=white"
+        << " overlap=false"
+        << " splines=true"
+        << " labelloc=\"t\"];\n";
+
+    out << "  node [fontname=\"Courier\","
+        << "fontsize=10,"
+        << "textalign=left,"
+        << "shape=Mrecord];\n";
+
+    printGraphNode( node, out );
+
+    out <<"}";
+}
+    
+
+void MCTSAI::printGraphNode( const Node* n, std::ostream& out )
+{
+    out << "  " << reinterpret_cast<unsigned long long>( n )
+        << " [style=filled,fillcolor=\"#FFFFFF\",labeljust=l,label=\"Move: ";
+
+    for( Move::const_iterator it = n->move().begin();
+         it != n->move().end();
+         ++it )
+    {
+        out << toString( it->first, it->second );
+        if( it + 1 != n->move().end() )
+            out << "-";
+    }
+    out << "\\n";
+    out << "Wins  : " << n->numWins() << "\\n";
+    out << "Visits: " << n->numVisits();
+    out << "\"];\n";
+
+    for( std::vector<Node*>::const_iterator it = n->children().begin();
+         it != n->children().end();
+         ++it )
+    {
+        out << "  " 
+            << reinterpret_cast<unsigned long long>( n ) << " -> " 
+            << reinterpret_cast<unsigned long long>( *it ) << ";\n";
+    }
+    
+    for( std::vector<Node*>::const_iterator it = n->children().begin();
+         it != n->children().end();
+         ++it )
+    {
+        printGraphNode( *it, out );
+    }
+}
+
 
 void  MCTSAI::Node::bestMove( Move& move )
 {
@@ -1084,62 +1171,73 @@ void  MCTSAI::Node::bestMove( Move& move )
 
 bool MCTSAI::Node::select( Node** node, Color c )
 {
-    const size_t T = 8;
-    if( m_children.size() > T )
-    {
-        float best_uct_score = uct( 0, 0, m_num_visits ); 
-        Node* selection = 0;
+    LDEBUG << "        selecting from " << m_children.size() << " children";
 
+    const float new_node_uct_score = uct( 0, 0, m_num_visits ); 
+    float best_node_uct_score = -1e16f; //std::numeric_limits<float>::min();
+    Node* best_node = 0;
+        
+    LDEBUG << "        initial UCT score " << new_node_uct_score;
+
+    // If we have surpassed the threshold, find the best existing uct score
+    const size_t T = 4;
+    if( m_children.size() > T ) 
+    {
         for( std::vector<Node*>::iterator it = m_children.begin();
              it != m_children.end();
              ++it )
         {
-            Node* child = *it;
-            float uct_score = 
-                uct( child->score(), child->numVisits(), m_num_visits );
-            if( uct_score > best_uct_score )
+            Node* c = *it;
+            float uct_score = uct( c->score(), c->numVisits(), m_num_visits );
+            LDEBUG << "        new UCT score " << uct_score;
+            if( uct_score > best_node_uct_score )
             {
-                selection = child;
-                best_uct_score = uct_score;
+                best_node = c;
+                best_node_uct_score = uct_score;
+            }
+        }
+    }
+
+            std::cerr << "    here a " << best_node_uct_score << std::endl;
+    if( new_node_uct_score > best_node_uct_score )
+    {
+            std::cerr << "    here b " << std::endl;
+        //
+        // Expand the tree here
+        //
+
+        Node* n = new Node( this ); 
+
+        const float p_explore = 0.5f; // TODO:  make some function of mov
+        if( m_board.numStones( c ) == 0 || drand48() < p_explore )
+        {
+            std::cerr << "    here 0 " << std::endl;
+            if( chooseExploration( c, m_board, m_explorations, n->m_move ) )
+            {
+            std::cerr << "    here 0.1 " << std::endl;
+                *node = n;
+                n->m_board.set( n->m_move, c );
+                return false;
+            }
+            std::cerr << "    here 1 " << std::endl;
+        }
+        else
+        {
+            if( chooseExpansion( c, m_board, m_expansions, n->m_move ) )
+            {
+                *node = n;
+                n->m_board.set( n->m_move, c );
+                return false;
             }
         }
 
-        // If a preexisting node was selected
-        if( selection )
-        {
-            *node = selection;
-            return true;
-        }
-
-        // else fall through to tree expansion
+        delete n;    
     }
 
-    //
-    // Expand the tree here
-    //
-
-    Node* n = new Node( this ); 
- 
-    float p_explore = 0.5f; // TODO:  make some function of mov
-    if( m_board.numStones( c ) == 0 || drand48() < p_explore )
-    {
-        if( !chooseExploration( c, m_board, m_explorations, n->m_move ) )
-            chooseExpansion( c, m_board, m_expansions, n->m_move );
-    }
-    else
-    {
-        if( !chooseExpansion( c, m_board, m_expansions, n->m_move ) )
-            chooseExploration( c, m_board, m_explorations, n->m_move );
-    }
-
-    n->m_board.set( n->m_move, c );
-
-    *node = n;
-
-    return false;
-
-
-    // UCT
+    // If a preexisting node was selected
+    assert( best_node );
+    *node = best_node;;
+    return true;
 }
 
 
@@ -1300,6 +1398,7 @@ inline bool legalExploration( const Board& b, Color c, int idx )
     const Point* g = b.grid(); 
     const Point& p = g[idx];
 
+    /*
     int x, y;
     to2D( idx, x, y );
     LDEBUG << "   testing " << x << "," << y; 
@@ -1311,8 +1410,8 @@ inline bool legalExploration( const Board& b, Color c, int idx )
         to2D( p.neighbors[i], x, y );
         LDEBUG << "      neighbor " << i << ": " << x << ", " << y;
         const Point& np = g[ p.neighbors[i] ];
-        LDEBUG << "            : " << np;
     }
+    */
 
     return( p.color == NONE                                                   &&
           ( p.neighbors[0] == INVALID_IDX || g[ p.neighbors[0] ].color != c ) &&
@@ -1360,7 +1459,6 @@ bool chooseExploration(
         {
             int x, y;
             to2D( idx, x, y );
-            LDEBUG << "      foudn legal explore: " << x << "," << y;
             move.push_back( std::make_pair( x, y ) );
             return true;
         }
@@ -1378,7 +1476,7 @@ bool chooseExpansion(
         Move& move 
         )
 {
-    LDEBUG << "Choosing exansion *************************";
+    LDEBUG << "Choosing expansion *************************";
     assert( board.numStones( color ) != 0 );
     
     move.clear();
@@ -1398,7 +1496,7 @@ bool chooseExpansion(
         to2D( idx, x, y );
         if( p.color == NONE ) // empty point
         {
-            LDEBUG << "considering " << x << "," << y;
+            LDEBUG1 << "considering " << x << "," << y;
 
             // Find this points adjacent groups
             int num_adjacent = 0;
@@ -1424,7 +1522,7 @@ bool chooseExpansion(
             // Not on border of any group -- skip it
             if( num_adjacent == 0 )
             {
-                LDEBUG << "       no adj groups, skipping";
+                LDEBUG1 << "       no adj groups, skipping";
                 continue;
             }
 
@@ -1438,11 +1536,11 @@ bool chooseExpansion(
                 int group = adjacent_groups[0];
                 if( expansions.find( group ) != expansions.end() )
                 {
-                    LDEBUG << "         group already expanded, skipping";
+                    LDEBUG1 << "         group already expanded, skipping";
                     continue;
                 }
 
-                LDEBUG << "        inserting ";
+                LDEBUG1 << "        inserting ";
                 expansions.insert( group ); 
                 move.push_back( coord );
                 continue;
@@ -1467,12 +1565,12 @@ bool chooseExpansion(
                         expansions.insert( adjacent_groups[ i ] ); 
 
                     move.push_back( coord );
-                    LDEBUG << "       >1 adj groups, works!!";
+                    LDEBUG1 << "       >1 adj groups, works!!";
                 }
                 continue;
             }
 
-            LDEBUG << "       >1 adj groups, skipping";
+            LDEBUG1 << "       >1 adj groups, skipping";
         }
     }
 
@@ -1481,8 +1579,9 @@ bool chooseExpansion(
 
 float uct( float score, float num_visits, float num_visits_parent )
 {
-    const float C = 1.0f;
-    return score + C * sqrtf( logf( num_visits_parent ) / (num_visits+1.0f ) );
+    const float C = 0.1f;
+    return score + C * sqrtf( ( logf( num_visits_parent+1.0f ) ) / 
+                              ( num_visits+1.0f ) );
 }
 
 //------------------------------------------------------------------------------
