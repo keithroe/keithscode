@@ -60,6 +60,19 @@ void MCTSAI::chooseMove(
     return;
     */
 
+    for( child in root->children )
+    {
+        if( child matches board )
+            new_root = child;
+            break
+    }
+
+    if( new_root )
+        clean up roots other children
+        root = new_root
+    else 
+        root = new Node( board )
+
     const double time_allowed = 0.05;
     Timer timer;
     timer.start();

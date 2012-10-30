@@ -27,8 +27,8 @@
 #define CCUP_AI_H__
 
 #include "Util.h"
+#include "Board.h"
 
-class Board;
 
 //------------------------------------------------------------------------------
 //
@@ -43,11 +43,13 @@ class AI
 public:
     virtual ~AI() {}
 
-    virtual void chooseMove( 
-            Color color,
-            const Board& board,
-            Move& move
-            )=0;
+    
+    virtual void chooseMove( Move& move )=0;
+
+protected:
+    Color          m_player_color;
+    std::string    m_last_opp_move;
+    Board          m_board
 };
 
 
