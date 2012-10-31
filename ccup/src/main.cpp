@@ -40,8 +40,10 @@
 
 int main( int argc, char** argv )
 {
-
-    Log::setReportingLevel( Log::DEBUG );
+    if( argc > 1 && std::string( argv[1] ) == "-v" )
+        Log::setReportingLevel( Log::DEBUG );
+    else
+        Log::setReportingLevel( Log::INFO );
     
     Player player;
 
@@ -54,7 +56,6 @@ int main( int argc, char** argv )
 
         AutoTimerRef<LoopTimerInfo> schedule_timer( main_loop_time );
 
-        LINFO << " opp move: " << opponent_move;
         opponent_moves.push_back( opponent_move );
 
         if( std::cin.eof() || opponent_move == "Quit" )
@@ -62,7 +63,8 @@ int main( int argc, char** argv )
 
         std::string my_move = player.doMove( opponent_move );
 
-        LINFO << " my move: " << my_move;
+        LINFO << "opp move: " << opponent_move;
+        LINFO << "my move : " << my_move;
         LINFO << "\n" << player.board();
         std::cout << my_move << std::endl;
         std::cout.flush();
