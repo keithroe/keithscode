@@ -27,10 +27,10 @@
 #ifndef CCUP_PLAYER_H__
 #define CCUP_PLAYER_H__
 
+#include "AI.h"
 #include "Board.h"
 #include "Util.h"
 
-class AI;
 
 //------------------------------------------------------------------------------
 //
@@ -45,14 +45,9 @@ public:
 
     std::string doMove( const std::string& opponent_move );
 
-    const Board& board()const { return m_board; }
+    const Board& board()const { return m_ai->board(); }
 
 private:
-    void placeOpponentStones( const std::string& opponent_move );
-
-    Board     m_board;            // Current board
-    Color     m_color;
-    Color     m_opp_color;
     int       m_move_number;
     AI*       m_ai;
 };

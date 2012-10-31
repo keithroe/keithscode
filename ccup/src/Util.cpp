@@ -28,8 +28,45 @@
 
 #include <cassert>
 #include <set>
+#include <sstream>
 
-bool chooseExploration(
+void toMove( const std::string& str_move, Move& move )
+{
+    move.clear();
+
+    std::istringstream iss( str_move );
+    std::string point;
+    while( std::getline( iss, point, '-' ) )
+    {
+        int x, y;
+        toCoord( point, x, y );
+        move.push_back( std::make_pair( x, y ) );
+    }
+}
+
+
+void chooseRandomMove( 
+        Color color,
+        const Board& board,
+        float p_explore,
+        const std::vector<unsigned char>& random_points,
+        std::vector<unsigned char>& potential_explorations,
+        Move& move 
+        )
+{
+    if( board.numStones( color ) == 0 || drand48() < p_explore )
+    {
+        if(!chooseRandomExploration(color, board, potential_explorations, move))
+            chooseRandomExpansion( color, board, random_points, move);
+    }
+    else
+    {
+        if( !chooseRandomExpansion(color, board, random_points, move))
+            chooseRandomExploration(color, board, potential_explorations, move);
+    }
+}
+
+bool chooseRandomExploration(
         Color color,
         const Board& board,
         std::vector<unsigned char>& potential_explorations,
@@ -60,7 +97,7 @@ bool chooseExploration(
 
 }
 
-bool chooseExpansion(
+bool chooseRandomExpansion(
         Color color,
         const Board& board,
         const std::vector<unsigned char>& random_points,

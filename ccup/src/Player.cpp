@@ -23,18 +23,18 @@
 //
 
 #include "Player.h"
+
+#include "Logger.h"
 #include "MCTSAI.h"
+#include "RandomAI.h"
 
 #include <sstream>
 #include <iostream>
-#include "Logger.h"
 
 Player::Player()
-    : m_color( NONE ),
-      m_opp_color( NONE ),
-      m_move_number( 0 ),
+    : m_move_number( 0 ),
+      //m_ai( new RandomAI )
       m_ai( new MCTSAI )
-
 {
 }
 
@@ -44,59 +44,24 @@ std::string Player::doMove( const std::string& opponent_move )
 
     m_move_number++;
 
-    if( m_color == NONE ) // First move
+    if( opponent_move != "Start" )
     {
-        if( opponent_move == "Start" )
-        {
-            m_color     = WHITE;
-            m_opp_color = BLACK;
-        }
-        else
-        {
-            m_color     = BLACK;
-            m_opp_color = WHITE;
-        }
-
-        m_board.setColor( m_color );
+        Move opp_move; 
+        toMove( opponent_move, opp_move );
+        m_ai->opponentMove( opp_move );
     }
 
-    placeOpponentStones( opponent_move );
+    Move move; 
+    m_ai->getMove( move );
 
-    Move move; // TODO: persistent
-    m_ai->chooseMove( m_color, m_board, move );
-
-    std::cerr << "Making move: " << std::endl;
-    for( Move::iterator it = move.begin(); it != move.end(); ++it )
-    {
-        std::cerr << "  "  << toString( it->first, it->second ) << std::endl;
-    }
-    std::cerr << "   on board\n" << m_board << std::endl;
-
+    // TODO: ostream iterator and copy
     std::ostringstream oss;
     for( Move::iterator it = move.begin(); it != move.end(); ++it )
     {
-        m_board.set( it->first, it->second, m_color );
         oss << toString( it->first, it->second );
         if( it + 1 != move.end() )
             oss << "-";
     }
     return oss.str(); 
 }
-
-
-void Player::placeOpponentStones( const std::string& opponent_move )
-{
-    if( opponent_move != "Start" )
-    {
-        std::istringstream iss( opponent_move );
-        std::string position;
-        while( std::getline( iss, position, '-' ) )
-        {
-            int x, y;
-            toCoord( position, x, y );
-            m_board.set( x, y, m_opp_color );
-        }
-    }
-}
-
 

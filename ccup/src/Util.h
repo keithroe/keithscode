@@ -61,18 +61,29 @@ int extractCol( const std::string& position );
 void toCoord( const std::string& position, int& x, int& y );
 
 std::string toString( int x, int y );
+void        toMove( const std::string& str_move, Move& move );
 
 int to1D( int x, int y );
 void to2D( int i, int& x, int& y );
 
-bool chooseExpansion(
+
+void chooseRandomMove( 
+        Color color,
+        const Board& board,
+        float p_explore,
+        const std::vector<unsigned char>& random_points,
+        std::vector<unsigned char>& potential_expolorations,
+        Move& move 
+        );
+
+bool chooseRandomExpansion(
         Color color,
         const Board& board,
         const std::vector<unsigned char>& random_points,
         Move& move 
         );
 
-bool chooseExploration(
+bool chooseRandomExploration(
         Color color,
         const Board& board,
         std::vector<unsigned char>& potential_expolorations,
@@ -80,6 +91,7 @@ bool chooseExploration(
         );
 
 float uct( float score, float num_visits, float num_visits_parent );
+float uctOpp( float score, float num_visits, float num_visits_parent );
 
 
 
@@ -162,9 +174,15 @@ inline void to2D( int i, int& x, int& y )
 
 inline float uct( float score, float num_visits, float num_visits_parent )
 {
-    //const float C = 0.1f;
-    const float C = 0.01f;
+    const float C = 0.1f;
     return score + C * sqrtf( ( logf( num_visits_parent+1.0f ) ) / 
+                              ( num_visits+1.0f ) );
+}
+
+inline float uctOpp( float score, float num_visits, float num_visits_parent )
+{
+    const float C = 0.1f;
+    return score - C * sqrtf( ( logf( num_visits_parent+1.0f ) ) / 
                               ( num_visits+1.0f ) );
 }
 

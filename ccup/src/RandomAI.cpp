@@ -26,7 +26,8 @@
 #include "Board.h"
 
 RandomAI::RandomAI()
-    : m_explorations( NUM_GRID_CELLS ),
+    : AI(),
+      m_explorations( NUM_GRID_CELLS ),
       m_expansions( NUM_GRID_CELLS )
 {
     for( int i = 0; i < NUM_GRID_CELLS; ++i )
@@ -37,22 +38,10 @@ RandomAI::RandomAI()
 }
 
 
-void RandomAI::chooseMove( 
-        Color color,
-        const Board& board,
-        Move& move 
-        )
+void RandomAI::doGetMove( Move& move )
 {
-    if( board.numStones( color ) == 0 || drand48() < 0.5f )
-    {
-        if( !chooseExploration( color, board, m_explorations, move ) )
-            chooseExpansion( color, board, m_expansions, move );
-    }
-    else
-    {
-        if( !chooseExpansion( color, board, m_expansions, move ) )
-            chooseExploration( color, board, m_explorations, move );
-    }
+    chooseRandomMove( m_color, m_board, 0.5f, m_expansions, m_explorations,
+                      move );
 }
 
 

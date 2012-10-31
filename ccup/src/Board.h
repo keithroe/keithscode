@@ -96,6 +96,7 @@ public:
     static int wrap( int x );
     static int clamp( int x );
 
+    
 private:
     void changeGroup( int old_group, int new_group );
 
@@ -109,5 +110,6 @@ private:
 };
 
 std::ostream& operator<<( std::ostream& out, const Board& board );
+bool operator==( const Board& b0, const Board& b1 );
 
 #endif // CCUP_BOARD_H__
