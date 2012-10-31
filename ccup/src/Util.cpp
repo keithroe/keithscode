@@ -73,7 +73,6 @@ bool chooseRandomExploration(
         Move& move 
         )
 {
-    LDEBUG << "Choosing exploration *************************";
     move.clear();
 
     // Walk the vector till we find the first legal move
@@ -104,7 +103,6 @@ bool chooseRandomExpansion(
         Move& move 
         )
 {
-    LDEBUG << "Choosing expansion *************************";
     assert( board.numStones( color ) != 0 );
     
     move.clear();

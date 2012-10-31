@@ -174,6 +174,7 @@ void Node::deleteTree()
 
 bool Node::selectAIMove( Node** node )
 {
+    LDEBUG << "\tselectAI from " << m_children.size() << " children";
     //
     // We are selecting our own move, choose optimal score
     //
@@ -181,7 +182,7 @@ bool Node::selectAIMove( Node** node )
     float best_score   = 0.0f; 
     Node* best_node    = 0;
 
-    if( m_children.size() < T )
+    if( m_children.size() >= T )
     {
         for( Children::iterator it = m_children.begin();
              it != m_children.end();
@@ -190,6 +191,7 @@ bool Node::selectAIMove( Node** node )
             Node* c = *it;
 
             float score = uct( c->score(), c->numVisits(), m_num_visits );
+            LDEBUG << "\t\t" << "child score: " << score;
             if( score > best_score )
             {
                 best_node  = c;
@@ -199,12 +201,21 @@ bool Node::selectAIMove( Node** node )
     }
 
     float expand_score = uct( 0, 0, m_num_visits );
+
+    LDEBUG << "\tselectAI - bestscore: " << best_score << " newscore: " 
+           << expand_score;
     if( expand_score >= best_score )
     {
         Move move;
-        chooseRandomMove( m_color, m_board, 0.5f,
-                          m_expansions, m_explorations,
-                          move );
+        if( m_board.numStones( m_color ) == 0 || drand48() < 0.7 )
+        {
+            chooseRandomExploration( m_color, m_board, m_explorations, move );
+        }
+        else
+        {
+            std::random_shuffle( m_expansions.begin(), m_expansions.end() );
+            chooseRandomExploration( m_color, m_board, m_expansions, move );
+        }
         if( !move.empty() )
         {
             *node = new Node( this, move );
@@ -219,6 +230,7 @@ bool Node::selectAIMove( Node** node )
 
 bool Node::selectOppMove( Node** node )
 {
+    LDEBUG << "\tselectOpp from " << m_children.size() << " children";
     //
     // We are selecting our opponent's move, choose pessimal score
     //
@@ -226,7 +238,7 @@ bool Node::selectOppMove( Node** node )
     float best_score   = std::numeric_limits<float>::max();
     Node* best_node    = 0;
 
-    if( m_children.size() < T )
+    if( m_children.size() >= T )
     {
         for( Children::iterator it = m_children.begin();
              it != m_children.end();
@@ -244,12 +256,20 @@ bool Node::selectOppMove( Node** node )
     }
 
     float expand_score = uct( 0, 0, m_num_visits );
+    LDEBUG << "\tselectOpp - bestscore: " << best_score << " newscore: " 
+           << expand_score;
     if( expand_score <= best_score )
     {
         Move move;
-        chooseRandomMove( m_color, m_board, 0.5f,
-                          m_expansions, m_explorations,
-                          move );
+        if( m_board.numStones( m_color ) == 0 || drand48() < 0.7 )
+        {
+            chooseRandomExploration( m_color, m_board, m_explorations, move );
+        }
+        else
+        {
+            std::random_shuffle( m_expansions.begin(), m_expansions.end() );
+            chooseRandomExploration( m_color, m_board, m_expansions, move );
+        }
         if( !move.empty() )
         {
             *node = new Node( this, move );
@@ -265,8 +285,7 @@ bool Node::selectOppMove( Node** node )
 
 bool Node::select( Node** node, Color ai_color )
 {
-    LDEBUG << "        selecting from " << m_children.size() << " children";
-    if( m_color == ai_color )
+    if( m_color != ai_color )
     {
         return selectAIMove( node );
     }
@@ -468,14 +487,14 @@ void MCTSAI::doGetMove( Move& move )
         std::random_shuffle( expansion_seeds.begin(),
                              expansion_seeds.end() ); 
 
-        LDEBUG << "sim board begin: \n" << sim_board << std::endl;;
+        //LDEBUG << "sim board begin: \n" << sim_board << std::endl;;
         while( !sim_board.gameFinished() )
         {
             chooseRandomMove( cur_color, sim_board, 0.5f,
                               exploration_seeds, expansion_seeds,
                               move );
             sim_board.set( move, cur_color );
-            LDEBUG << "    sim board now: \n" << sim_board << std::endl;;
+            //LDEBUG << "    sim board now: \n" << sim_board << std::endl;;
 
             cur_color = (cur_color == WHITE ? BLACK : WHITE );
         }
