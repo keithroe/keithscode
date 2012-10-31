@@ -49,16 +49,11 @@ public:
     virtual ~RandomAI() {}
 
 
-    virtual void chooseMove( 
-            Color color,
-            const Board& board,
-            Move& move
-            );
 protected:
+    virtual void doGetMove( Move& move );
 
     std::vector<unsigned char> m_explorations;
     std::vector<unsigned char> m_expansions;
-
 };
 
 

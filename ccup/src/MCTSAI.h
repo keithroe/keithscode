@@ -34,81 +34,21 @@
 //
 //------------------------------------------------------------------------------
 
+
+class Node;
+
 class MCTSAI : public AI
 {
 public:
     MCTSAI();
-
     ~MCTSAI();
 
+protected:
+    void doGetMove( Move& move );
+    void updateTreeWithOppMove( const Move& move );
 
-    void chooseMove( 
-            Color color,
-            const Board& board,
-            Move& move
-            );
-
-    class Node
-    {
-    public:
-        Node( Node* parent )
-            : m_parent( parent ),
-              m_num_wins( 0 ),
-              m_num_visits( 0 ),
-              m_explorations( NUM_GRID_CELLS ),
-              m_expansions( NUM_GRID_CELLS )
-        {
-            for( int i = 0; i < NUM_GRID_CELLS; ++i )
-                m_explorations[i] = m_expansions[i] = i;
-
-            std::random_shuffle( m_explorations.begin(), m_explorations.end() );
-            std::random_shuffle( m_expansions.begin(), m_expansions.end() ); 
-        }
-
-        const Board& board()const       { return m_board; }
-        Board& board()                  { return m_board; }
-
-        int numWins()const              { return m_num_wins;   }
-        int numVisits()const            { return m_num_visits; }
-
-        void addResult( int score )     { ++m_num_visits; m_num_wins += score; }
-
-        void addChild( Node* child )    { m_children.push_back( child ); }
-
-        void  setParent( Node* parent ) { m_parent = parent; }
-        Node* parent()                  { return m_parent; }
-
-        const Move& move()const         { return m_move; }
-
-        const std::vector<Node*>& children()const { return m_children; }
-        std::vector<Node*>& children()            { return m_children; }
-
-        Node* bestMove();
-
-        float score()const;             
-
-        void deleteTree();
-
-        bool select( Node** next, Color color );
-
-    private:
-        Node*              m_parent;
-        Move               m_move;
-        int                m_num_wins;
-        int                m_num_visits;
-        Board              m_board;
-
-        std::vector<Node*>          m_children;
-        std::vector<unsigned char>  m_explorations;
-        std::vector<unsigned char>  m_expansions;
-    };
-
-    static void printGraph( const Node* node, const std::string& filename );
-    static void printGraphNode( const Node* node, std::ostream& out );
-
-    unsigned m_move_number;
-    Node* m_root;
-
+    Node*  m_root;
+    double m_time_budget;
 };
 
 

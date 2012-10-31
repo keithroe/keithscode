@@ -32,26 +32,82 @@
 
 //------------------------------------------------------------------------------
 //
-// AI
+// AI base class
 //   
-// TODO: fix the board/color coupling problem
-//
 //------------------------------------------------------------------------------
 
 class AI
 {
 public:
+    AI();
+
     virtual ~AI() {}
 
+    void opponentMove( const Move& move );
+    void getMove( Move& move );
     
-    virtual void chooseMove( Move& move )=0;
+    const Board& board()const;
 
 protected:
-    Color          m_player_color;
-    std::string    m_last_opp_move;
-    Board          m_board
+    virtual void doGetMove( Move& move )=0;
+
+    Board               m_board;         // Current game state
+    int                 m_move_number;   // Move number
+    Color               m_color;         // AI player's color
+    Color               m_opp_color;     // Opponent's color
+    std::vector<Move>   m_moves;         // AI player's moves
+    std::vector<Move>   m_opp_moves;     // Opponent's moves
 };
 
+
+inline
+AI::AI()
+    : m_move_number( 1 ),
+      m_color( NONE ),
+      m_opp_color( NONE )
+{
+}
+
+
+inline 
+void AI::opponentMove( const Move& move )
+{
+    if( m_color == NONE )
+    {
+        m_color     = BLACK;
+        m_opp_color = WHITE;
+    }
+    m_board.set( move, m_opp_color );
+    m_opp_moves.push_back( move );
+    
+    if( m_opp_color == BLACK )
+        m_move_number++;
+}
+
+
+inline
+void AI::getMove( Move& move )
+{
+    if( m_color == NONE )
+    {
+        m_color     = WHITE;
+        m_opp_color = BLACK;
+    }
+
+    doGetMove( move );
+    m_board.set( move, m_color );
+    m_moves.push_back( move );
+
+    if( m_color == BLACK )
+        m_move_number++;
+}
+
+
+inline
+const Board& AI::board()const
+{
+    return m_board;
+}
 
 #endif // CCUP_AI_H__
 

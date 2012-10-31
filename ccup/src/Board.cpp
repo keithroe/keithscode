@@ -25,6 +25,7 @@
 #include "Board.h"
 
 #include <cassert>
+#include <cstring>
 #include <iostream>
 #include <iomanip>
 
@@ -251,3 +252,16 @@ std::ostream& operator<<( std::ostream& out, const Board& board )
 
     return out;
 }
+
+bool operator==( const Board& b0, const Board& b1 )
+{
+    //return !memcmp( b0.grid(), b1.grid() );
+    const Point* g0 = b0.grid();
+    const Point* g1 = b1.grid();
+    for( int i = 0; i < NUM_GRID_CELLS; ++i )
+        if( g0[i].color != g1[i].color )
+            return false;
+    return true;
+}
+
+
