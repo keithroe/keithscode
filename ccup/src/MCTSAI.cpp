@@ -210,11 +210,15 @@ bool Node::selectAIMove( Node** node )
         if( m_board.numStones( m_color ) == 0 || drand48() < 0.7 )
         {
             chooseRandomExploration( m_color, m_board, m_explorations, move );
+            LDEBUG << "Choosing exploration ... " 
+                   << (move.empty() ? "FAIL" : "SUCCESS" );
         }
         else
         {
             std::random_shuffle( m_expansions.begin(), m_expansions.end() );
-            chooseRandomExploration( m_color, m_board, m_expansions, move );
+            chooseRandomExpansion( m_color, m_board, m_expansions, move );
+            LDEBUG << "Choosing expansion... " 
+                   << (move.empty() ? "FAIL" : "SUCCESS" );
         }
         if( !move.empty() )
         {
@@ -264,11 +268,15 @@ bool Node::selectOppMove( Node** node )
         if( m_board.numStones( m_color ) == 0 || drand48() < 0.7 )
         {
             chooseRandomExploration( m_color, m_board, m_explorations, move );
+            LDEBUG << "Choosing exploration ... " 
+                   << (move.empty() ? "FAIL" : "SUCCESS" );
         }
         else
         {
             std::random_shuffle( m_expansions.begin(), m_expansions.end() );
-            chooseRandomExploration( m_color, m_board, m_expansions, move );
+            chooseRandomExpansion( m_color, m_board, m_expansions, move );
+            LDEBUG << "Choosing expansion... " 
+                   << (move.empty() ? "FAIL" : "SUCCESS" );
         }
         if( !move.empty() )
         {
@@ -403,12 +411,9 @@ void MCTSAI::doGetMove( Move& move )
         updateTreeWithOppMove( m_opp_moves.back() );
     }
 
-    std::cerr << "Board: \n" << m_board << std::endl;
-    std::cerr << "root Board: \n" << m_root->board() << std::endl;
     assert( m_root->board() == m_board );
 
-    std::cerr << " sim board :" << m_move_number << std::endl << m_root->board()
-              << std::endl;
+    LDEBUG << "MCTSAI board :" << m_move_number << "\n" << m_root->board();
 
     //
     // Update our random walk seeds
@@ -426,7 +431,8 @@ void MCTSAI::doGetMove( Move& move )
     unsigned iter_count = 0u;
     unsigned max_depth = 0u;
 
-    while( timer.getTimeElapsed() < m_time_budget )
+    //while( timer.getTimeElapsed() < m_time_budget )
+    while( iter_count < 500 )
     {
         iter_count++;
         LDEBUG << " Iteration: " << iter_count << std::endl;
@@ -557,6 +563,7 @@ void MCTSAI::updateTreeWithOppMove( const Move& move )
         if( child->board() == m_board )
         {
             new_root = child;
+            new_root->setParent( 0 );
         }
         else
         {
