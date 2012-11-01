@@ -54,14 +54,6 @@ std::string Player::doMove( const std::string& opponent_move )
     Move move; 
     m_ai->getMove( move );
 
-    // TODO: ostream iterator and copy
-    std::ostringstream oss;
-    for( Move::iterator it = move.begin(); it != move.end(); ++it )
-    {
-        oss << toString( it->first, it->second );
-        if( it + 1 != move.end() )
-            oss << "-";
-    }
-    return oss.str(); 
+    return toString( move );
 }
 

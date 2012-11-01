@@ -42,6 +42,8 @@ int main( int argc, char** argv )
 {
     if( argc > 1 && std::string( argv[1] ) == "-v" )
         Log::setReportingLevel( Log::DEBUG );
+    else if( argc > 1 && std::string( argv[1] ) == "-V" )
+        Log::setReportingLevel( Log::DEBUG1 );
     else
         Log::setReportingLevel( Log::INFO );
     

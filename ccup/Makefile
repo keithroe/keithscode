@@ -1,7 +1,7 @@
 
 CXX=g++
-#CXXFLAGS=-Wall -O2 -g 
-CXXFLAGS=-Wall  -g  -DLOCAL
+CXXFLAGS=-Wall -O2 -g 
+#CXXFLAGS=-Wall  -g  -DLOCAL
 #CXXFLAGS=-Wall -O2 -g -DLOCAL
 LDFLAGS=-lm
 
