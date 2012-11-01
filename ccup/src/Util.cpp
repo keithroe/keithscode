@@ -103,6 +103,7 @@ bool chooseRandomExpansion(
         Move& move 
         )
 {
+    LDEBUG1 << "expansion time...";
     assert( board.numStones( color ) != 0 );
     
     move.clear();

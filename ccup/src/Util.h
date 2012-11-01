@@ -28,6 +28,7 @@
 
 #include <vector>
 #include <string>
+#include <sstream>
 #include <cmath>
 
 
@@ -61,11 +62,13 @@ int extractCol( const std::string& position );
 void toCoord( const std::string& position, int& x, int& y );
 
 std::string toString( int x, int y );
+std::string toString( const Move& move );
 void        toMove( const std::string& str_move, Move& move );
 
 int to1D( int x, int y );
 void to2D( int i, int& x, int& y );
 
+Color otherColor( Color c );
 
 void chooseRandomMove( 
         Color color,
@@ -184,6 +187,28 @@ inline float uctOpp( float score, float num_visits, float num_visits_parent )
     const float C = 0.1f;
     return score - C * sqrtf( ( logf( num_visits_parent+1.0f ) ) / 
                               ( num_visits+1.0f ) );
+}
+
+
+inline Color otherColor( Color c )
+{
+    return c == WHITE ?
+           BLACK      :
+           WHITE      ;
+}
+
+
+inline std::string toString( const Move& move )
+{
+    // TODO: ostream iterator and copy
+    std::ostringstream oss;
+    for( Move::const_iterator it = move.begin(); it != move.end(); ++it )
+    {
+        oss << toString( it->first, it->second );
+        if( it + 1 != move.end() )
+            oss << "-";
+    }
+    return oss.str();
 }
 
 #endif // CCUP_UTIL_H__

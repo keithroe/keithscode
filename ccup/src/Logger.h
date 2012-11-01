@@ -29,7 +29,7 @@
 
 #ifndef KLOG_MAX_LEVEL
 #  ifdef LOCAL
-#     define KLOG_MAX_LEVEL Log::DEBUG
+#     define KLOG_MAX_LEVEL Log::DEBUG1
 #  else
 #     define KLOG_MAX_LEVEL Log::NONE
 #  endif

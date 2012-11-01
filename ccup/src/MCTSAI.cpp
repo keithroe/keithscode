@@ -49,10 +49,10 @@ public:
     const Board& board()const        { return m_board; }
     Board& board()                   { return m_board; }
 
-    int numWins()const               { return m_num_wins;   }
+    int accumScore()const            { return m_accum_score;   }
     int numVisits()const             { return m_num_visits; }
 
-    void addResult( int score )      { ++m_num_visits; m_num_wins += score; }
+    void addResult( int score )      { ++m_num_visits; m_accum_score += score; }
 
     void addChild( Node* child )     { m_children.push_back( child ); }
 
@@ -63,7 +63,7 @@ public:
     const Move& move()const          { return m_move; }
 
     const Children& children()const  { return m_children; }
-    Children& children()             { return m_children; }
+    //Children& children()             { return m_children; }
 
     Node* bestMove();
 
@@ -74,13 +74,14 @@ public:
     bool select( Node** next, Color ai_color );
 
 private:
+    void createNewMove( Move& move );
     bool selectAIMove( Node** node );
     bool selectOppMove( Node** node );
 
     Node*              m_parent;
     Color              m_color;
     Move               m_move;
-    int                m_num_wins;
+    int                m_accum_score;
     int                m_num_visits;
     Board              m_board;
 
@@ -95,7 +96,7 @@ private:
 Node::Node( Color color )
     : m_parent( 0 ),
       m_color( color ),
-      m_num_wins( 0 ),
+      m_accum_score( 0 ),
       m_num_visits( 0 ),
       m_explorations( NUM_GRID_CELLS ),
       m_expansions( NUM_GRID_CELLS )
@@ -112,7 +113,7 @@ Node::Node( Node* parent, const Move& move )
     : m_parent( parent ),
       m_color( parent->m_color == WHITE ? BLACK : WHITE ),
       m_move( move ),
-      m_num_wins( 0 ),
+      m_accum_score( 0 ),
       m_num_visits( 0 ),
       m_board( parent->board() ),
       m_explorations( NUM_GRID_CELLS ),
@@ -132,7 +133,7 @@ Node* Node::bestMove()
 {
     assert( !m_children.empty() );
 
-    float max_score = -1.0f; 
+    float max_score = -std::numeric_limits<float>::max(); 
     Node* best = 0;
 
     for( Children::iterator it = m_children.begin();
@@ -154,7 +155,7 @@ Node* Node::bestMove()
 float Node::score()const
 { 
     assert( m_num_visits ); 
-    return static_cast<float>( m_num_wins ) / 
+    return static_cast<float>( m_accum_score ) / 
            static_cast<float>( m_num_visits );
 }
 
@@ -171,32 +172,78 @@ void Node::deleteTree()
     }
 }
 
-
-bool Node::selectAIMove( Node** node )
+void Node::createNewMove( Move& move )
 {
-    LDEBUG << "\tselectAI from " << m_children.size() << " children";
-    //
-    // We are selecting our own move, choose optimal score
-    //
+    LDEBUG << "Create new move ...";
+    move.clear();
+    Color move_color = otherColor( m_color );
 
-    float best_score   = 0.0f; 
-    Node* best_node    = 0;
+    bool explore_valid = !m_explorations.empty();
+    bool expand_valid  = m_board.numStones( move_color ) != 0;
+    if( !explore_valid && !expand_valid )
+        return;
 
-    if( m_children.size() >= T )
+    if( explore_valid && ( !expand_valid || drand48() < 0.7 ) )
     {
+        LDEBUG << "\tTrying exploration ...";
+        chooseRandomExploration( move_color, m_board, m_explorations, move );
+    }
+
+    if( expand_valid && move.empty() )
+    {
+        LDEBUG << "\tTrying expansion... ";
+        std::random_shuffle( m_expansions.begin(), m_expansions.end() );
+        if( !chooseRandomExpansion( move_color, m_board, m_expansions, move ) )
+            chooseRandomExploration(move_color, m_board, m_explorations, move);
+
+    }
+
+    if( !move.empty() )
+    {
+        LDEBUG << "\t\t\tSUCCESS";
+
+        // Now check for duplicate move
+        // TODO: there could still be a duplicate board with expansions
+        //       with different move orders
         for( Children::iterator it = m_children.begin();
              it != m_children.end();
              ++it )
         {
-            Node* c = *it;
-
-            float score = uct( c->score(), c->numVisits(), m_num_visits );
-            LDEBUG << "\t\t" << "child score: " << score;
-            if( score > best_score )
+            Node* child = *it;
+            if( move == child->move() )
             {
-                best_node  = c;
-                best_score = score;
+                LDEBUG << "\t\t\t\tDUPLICATE MOVE -- clearing";
+                move.clear();
+                break;
             }
+        }
+    }
+}
+
+bool Node::selectAIMove( Node** node )
+{
+    // TODO: handle finished games -- 
+    LDEBUG << "\tselectAI from " << m_children.size() << " children";
+
+    //
+    // We are selecting our own move, choose optimal score
+    //
+    
+    float best_score   = -std::numeric_limits<float>::max(); 
+    Node* best_node    = 0;
+
+    for( Children::iterator it = m_children.begin();
+         it != m_children.end();
+         ++it )
+    {
+        Node* c = *it;
+
+        float score = uct( c->score(), c->numVisits(), m_num_visits );
+        LDEBUG << "\t\tchild score: " << score;
+        if( score > best_score )
+        {
+            best_node  = c;
+            best_score = score;
         }
     }
 
@@ -204,37 +251,31 @@ bool Node::selectAIMove( Node** node )
 
     LDEBUG << "\tselectAI - bestscore: " << best_score << " newscore: " 
            << expand_score;
+    //if( m_children.size() < T || expand_score >= best_score )
     if( expand_score >= best_score )
     {
         Move move;
-        if( m_board.numStones( m_color ) == 0 || drand48() < 0.7 )
-        {
-            chooseRandomExploration( m_color, m_board, m_explorations, move );
-            LDEBUG << "Choosing exploration ... " 
-                   << (move.empty() ? "FAIL" : "SUCCESS" );
-        }
-        else
-        {
-            std::random_shuffle( m_expansions.begin(), m_expansions.end() );
-            chooseRandomExpansion( m_color, m_board, m_expansions, move );
-            LDEBUG << "Choosing expansion... " 
-                   << (move.empty() ? "FAIL" : "SUCCESS" );
-        }
+        createNewMove( move );
         if( !move.empty() )
         {
+            LDEBUG << "\t\tcreated new move " << toString( move );
             *node = new Node( this, move );
             return false;
         }
+        LDEBUG << "\t\tcreate new move FAILED" << toString( move );
     }
 
+    LDEBUG << "\tUsing best preexisting move " << toString( best_node->move() );
     assert( best_node );
     *node = best_node;
     return true;
 }
 
+
 bool Node::selectOppMove( Node** node )
 {
     LDEBUG << "\tselectOpp from " << m_children.size() << " children";
+
     //
     // We are selecting our opponent's move, choose pessimal score
     //
@@ -242,49 +283,38 @@ bool Node::selectOppMove( Node** node )
     float best_score   = std::numeric_limits<float>::max();
     Node* best_node    = 0;
 
-    if( m_children.size() >= T )
+    for( Children::iterator it = m_children.begin();
+         it != m_children.end();
+         ++it )
     {
-        for( Children::iterator it = m_children.begin();
-             it != m_children.end();
-             ++it )
-        {
-            Node* c = *it;
+        Node* c = *it;
 
-            float score = uctOpp( c->score(), c->numVisits(), m_num_visits );
-            if( score < best_score )
-            {
-                best_node  = c;
-                best_score = score;
-            }
+        float score = uctOpp( c->score(), c->numVisits(), m_num_visits );
+        if( score < best_score )
+        {
+            best_node  = c;
+            best_score = score;
         }
     }
 
-    float expand_score = uct( 0, 0, m_num_visits );
+    float expand_score = uctOpp( 0, 0, m_num_visits );
     LDEBUG << "\tselectOpp - bestscore: " << best_score << " newscore: " 
            << expand_score;
+    //if m_children.size() < T || expand_score <= best_score )
     if( expand_score <= best_score )
     {
         Move move;
-        if( m_board.numStones( m_color ) == 0 || drand48() < 0.7 )
-        {
-            chooseRandomExploration( m_color, m_board, m_explorations, move );
-            LDEBUG << "Choosing exploration ... " 
-                   << (move.empty() ? "FAIL" : "SUCCESS" );
-        }
-        else
-        {
-            std::random_shuffle( m_expansions.begin(), m_expansions.end() );
-            chooseRandomExpansion( m_color, m_board, m_expansions, move );
-            LDEBUG << "Choosing expansion... " 
-                   << (move.empty() ? "FAIL" : "SUCCESS" );
-        }
+        createNewMove( move );
         if( !move.empty() )
         {
+            LDEBUG << "\t\tcreated new move " << toString( move );
             *node = new Node( this, move );
             return false;
         }
+        LDEBUG << "\t\tcreate new move FAILED" << toString( move );
     }
 
+    LDEBUG << "\tUsing best preexisting move " << toString( best_node->move() );
     assert( best_node );
     *node = best_node;
     return true;
@@ -293,12 +323,15 @@ bool Node::selectOppMove( Node** node )
 
 bool Node::select( Node** node, Color ai_color )
 {
+    //LDEBUG1 << "selecting on board:\n" << m_board;
     if( m_color != ai_color )
     {
+        LDEBUG << "selecting for AI...";
         return selectAIMove( node );
     }
     else
     {
+        LDEBUG << "selecting for OPP...";
         return selectOppMove( node );
     }
 }
@@ -329,8 +362,8 @@ namespace
                 out << "-";
         }
         out << "\\n";
-        out << "Wins  : " << n->numWins() << "\\n";
-        out << "Visits: " << n->numVisits();
+        out << "Accum score: " << n->accumScore() << "\\n";
+        out << "Visits     : " << n->numVisits();
         out << "\"];\n";
 
         for( Node::Children::const_iterator it = n->children().begin();
@@ -382,7 +415,7 @@ namespace
 MCTSAI::MCTSAI()
     : AI(),
       m_root( 0 ),
-      m_time_budget( 0.5 ) // seconds
+      m_time_budget( 0.75 ) // seconds
 {
 }
 
@@ -432,7 +465,7 @@ void MCTSAI::doGetMove( Move& move )
     unsigned max_depth = 0u;
 
     //while( timer.getTimeElapsed() < m_time_budget )
-    while( iter_count < 500 )
+    while( iter_count < 5000 )
     {
         iter_count++;
         LDEBUG << " Iteration: " << iter_count << std::endl;
@@ -451,62 +484,74 @@ void MCTSAI::doGetMove( Move& move )
         //
         LDEBUG << "    SELECT: ";
 
+        int score; 
+        bool  game_finished = false;
         Node* cur  = m_root;
         Node* next = 0;
+
 
         unsigned depth = 1u;
         while( cur->select( &next, m_color ) )
         {
-            depth++;
-            cur = next;
-
-            if( cur->board().gameFinished() )
+            if( next->board().gameFinished() )
             {
+                // TODO: handle this finished game state better
                 LDEBUG << "Reached finished game state during select!";
+                score = next->board().winner() == m_color ? 1 : -1;
+                game_finished = true;
                 break;
             }
+
+            depth++;
+            cur = next;
         }
 
         if( depth > max_depth )
             max_depth = depth;
 
-        //
-        // EXPAND: add new node to  the tree
-        //
-        LDEBUG << "    EXPAND";
-        cur->addChild( next );
-
-        //
-        // SIMULATE: Run simulation TODO: funcify
-        //
-        LDEBUG << "    SIMULATE";
-        Board     sim_board = next->board();
-        Color     cur_color = m_color;
-        Move      move;
-
-        exploration_seeds.resize( NUM_GRID_CELLS );
-        for( int i = 0; i < NUM_GRID_CELLS; ++i )
-            exploration_seeds[i] = i;
-        
-        std::random_shuffle( exploration_seeds.begin(),
-                             exploration_seeds.end() ); 
-        std::random_shuffle( expansion_seeds.begin(),
-                             expansion_seeds.end() ); 
-
-        //LDEBUG << "sim board begin: \n" << sim_board << std::endl;;
-        while( !sim_board.gameFinished() )
+        if( !game_finished )
         {
-            chooseRandomMove( cur_color, sim_board, 0.5f,
-                              exploration_seeds, expansion_seeds,
-                              move );
-            sim_board.set( move, cur_color );
-            //LDEBUG << "    sim board now: \n" << sim_board << std::endl;;
+            //
+            // EXPAND: add new node to  the tree
+            //
+            LDEBUG << "    EXPAND";
+            cur->addChild( next );
 
-            cur_color = (cur_color == WHITE ? BLACK : WHITE );
+            //
+            // SIMULATE: Run simulation TODO: funcify
+            //
+            LDEBUG << "    SIMULATE";
+            Board     sim_board = next->board();
+            Color     cur_color = next->color();
+            Move      move;
+
+            exploration_seeds.resize( NUM_GRID_CELLS );
+            for( int i = 0; i < NUM_GRID_CELLS; ++i )
+                exploration_seeds[i] = i;
+            
+            std::random_shuffle( exploration_seeds.begin(),
+                                 exploration_seeds.end() ); 
+            std::random_shuffle( expansion_seeds.begin(),
+                                 expansion_seeds.end() ); 
+
+            while( !sim_board.gameFinished() )
+            {
+                cur_color = ( cur_color == WHITE ? BLACK : WHITE );
+                chooseRandomMove( cur_color, sim_board, 0.5f,
+                                  expansion_seeds, exploration_seeds,
+                                  move );
+                sim_board.set( move, cur_color );
+            }
+
+            /*
+            LDEBUG << "sim finished.  winner is: " << sim_board.winner();
+            LDEBUG << "\t: " << sim_board.score( m_color ) << "-"
+                             << sim_board.score( otherColor( m_color ) );
+            LDEBUG << "\n" << sim_board;
+            */
+            assert( sim_board.winner() != NONE );
+            score = sim_board.winner() == m_color ? 1 : -1;
         }
-
-        assert( sim_board.winner() != NONE );
-        const int score = sim_board.winner() == m_color ? 1 : 0;
 
         //
         // PROPAGATE: Back propagate the score
@@ -524,15 +569,17 @@ void MCTSAI::doGetMove( Move& move )
     std::cerr << "iter count: " << iter_count << std::endl;
     std::cerr << "max_depth : " << max_depth << std::endl;
 
+#ifdef LOCAL
     std::ostringstream oss;
     oss << "graph_" << m_move_number << "_final.dot";
     ::printGraph( m_root, oss.str() );
+#endif //LOCAL
 
     Node* new_root = m_root->bestMove();
     new_root->setParent( 0 );
 
     // Delete unused portion of tree
-    for( Node::Children::iterator it = m_root->children().begin();
+    for( Node::Children::const_iterator it = m_root->children().begin();
          it != m_root->children().end();
          ++it )
     {
@@ -555,13 +602,14 @@ void MCTSAI::updateTreeWithOppMove( const Move& move )
 {
     Node* new_root = 0;
 
-    for( Node::Children::iterator it = m_root->children().begin();
+    for( Node::Children::const_iterator it = m_root->children().begin();
          it != m_root->children().end();
          ++it )
     {
         Node* child = *it;
         if( child->board() == m_board )
         {
+            LDEBUG << "*****************Reusing oppmove tree!!!!!";
             new_root = child;
             new_root->setParent( 0 );
         }
